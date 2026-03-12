@@ -1,0 +1,34 @@
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
+from app.routers import news, injuries, betting, schedule, stats, tweets, birthdays
+from app.scheduler import start_scheduler, shutdown_scheduler
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_scheduler()
+    yield
+    shutdown_scheduler()
+
+app = FastAPI(title="KnicksHub API", version="0.1.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(news.router,      prefix="/api/news",      tags=["News"])
+app.include_router(injuries.router,  prefix="/api/injuries",  tags=["Injuries"])
+app.include_router(betting.router,   prefix="/api/betting",   tags=["Betting"])
+app.include_router(schedule.router,  prefix="/api/schedule",  tags=["Schedule"])
+app.include_router(stats.router,     prefix="/api/stats",     tags=["Stats"])
+app.include_router(tweets.router,    prefix="/api/tweets",    tags=["Tweets"])
+app.include_router(birthdays.router, prefix="/api/birthdays", tags=["Birthdays"])
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "KnicksHub API"}
