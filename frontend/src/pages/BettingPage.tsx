@@ -109,7 +109,7 @@ function TimeBlock({ value, label }: { value: number; label: string }) {
 
 function GameOddsCard({ game }: { game: any }) {
   const bookmakers = game.bookmakers ?? []
-  const isKnicksHome = game.home_team.includes("Knicks") || game.home_team.includes("New York")
+  // isKnicksHome removed
 
   // Aggregate best odds across bookmakers
   const spreads: any[] = [], totals: any[] = [], moneylines: any[] = []
