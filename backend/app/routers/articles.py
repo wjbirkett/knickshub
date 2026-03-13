@@ -110,3 +110,14 @@ async def delete_article(slug: str):
     db = get_supabase()
     db.table("articles").delete().eq("slug", slug).execute()
     return {"deleted": slug}
+@router.get("/debug/test")
+async def debug_test():
+    from app.db import get_supabase
+    db = get_supabase()
+    if not db:
+        return {"error": "Supabase not connected"}
+    try:
+        result = db.table("articles").select("slug").execute()
+        return {"count": len(result.data), "data": result.data}
+    except Exception as e:
+        return {"error": str(e)}
