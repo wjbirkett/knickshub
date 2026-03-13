@@ -4,6 +4,6 @@
     <loc>https://knickshub.vercel.app/sitemap-static.xml</loc>
   </sitemap>
   <sitemap>
-    <loc>https://enthusiastic-miracle-production-1b16.up.railway.app/api/articles/sitemap.xml</loc>
+    <loc>https://knickshub.vercel.app/sitemap-articles.xml</loc>
   </sitemap>
 </sitemapindex>

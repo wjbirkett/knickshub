@@ -1,3 +1,6 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/sitemap-articles.xml", "destination": "https://enthusiastic-miracle-production-1b16.up.railway.app/api/articles/sitemap.xml" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
