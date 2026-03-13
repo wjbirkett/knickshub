@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List
+import os
 
 class Settings(BaseSettings):
     SUPABASE_URL: str = ""
@@ -19,3 +20,6 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
 
 settings = Settings()
+print(f"DEBUG: ANTHROPIC_API_KEY={'SET' if settings.ANTHROPIC_API_KEY else 'NOT SET'}")
+print(f"DEBUG: SUPABASE_KEY={'SET' if settings.SUPABASE_KEY else 'NOT SET'}")
+print(f"DEBUG: ODDS_API_KEY={'SET' if settings.ODDS_API_KEY else 'NOT SET'}")
