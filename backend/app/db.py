@@ -12,4 +12,4 @@ def get_supabase():
         return client
     except Exception as e:
         logger.error(f"Supabase init failed: {e}")
-        return None
+        raise e

@@ -113,15 +113,11 @@ async def delete_article(slug: str):
 @router.get("/debug/test")
 async def debug_test():
     from app.config import settings
-    from app.db import get_supabase
-    url_set = bool(settings.SUPABASE_URL)
-    key_set = bool(settings.SUPABASE_KEY)
-    key_prefix = settings.SUPABASE_KEY[:10] if settings.SUPABASE_KEY else "empty"
-    db = get_supabase()
-    if not db:
-        return {"url_set": url_set, "key_set": key_set, "key_prefix": key_prefix, "error": "Supabase not connected"}
+    key_prefix = settings.SUPABASE_KEY[:15] if settings.SUPABASE_KEY else "empty"
     try:
+        from supabase import create_client
+        db = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
         result = db.table("articles").select("slug").execute()
         return {"count": len(result.data), "data": result.data}
     except Exception as e:
-        return {"error": str(e)}
+        return {"key_prefix": key_prefix, "error": str(e), "error_type": type(e).__name__}
