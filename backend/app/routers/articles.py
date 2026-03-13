@@ -112,10 +112,14 @@ async def delete_article(slug: str):
     return {"deleted": slug}
 @router.get("/debug/test")
 async def debug_test():
+    from app.config import settings
     from app.db import get_supabase
+    url_set = bool(settings.SUPABASE_URL)
+    key_set = bool(settings.SUPABASE_KEY)
+    key_prefix = settings.SUPABASE_KEY[:10] if settings.SUPABASE_KEY else "empty"
     db = get_supabase()
     if not db:
-        return {"error": "Supabase not connected"}
+        return {"url_set": url_set, "key_set": key_set, "key_prefix": key_prefix, "error": "Supabase not connected"}
     try:
         result = db.table("articles").select("slug").execute()
         return {"count": len(result.data), "data": result.data}
