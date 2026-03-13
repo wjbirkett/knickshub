@@ -1,6 +1,7 @@
 import anthropic, logging, re
 from datetime import datetime, timezone
 from app.config import settings
+from app.services.nba_stats_service import get_knicks_last5, get_h2h_this_season, get_knicks_team_stats
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,17 @@ async def generate_game_preview(
 ) -> dict:
     client = _get_client()
     injury_text = "\n".join([f"- {i['player_name']}: {i['status']} ({i['reason']})" for i in injuries]) or "None reported"
+    try:
+    import asyncio
+    loop2 = asyncio.get_event_loop()
+    recent_text = await loop2.run_in_executor(None, get_knicks_last5)
+    h2h_text = await loop2.run_in_executor(None, get_h2h_this_season, away_team if away_team != "New York Knicks" else home_team)
+    team_stats_text = await loop2.run_in_executor(None, get_knicks_team_stats)
+except Exception as e:
+    logger.warning(f"nba_api enrichment failed, using fallback: {e}")
     recent_text = "\n".join([f"- {g['away_team']} @ {g['home_team']}: {g['away_score']}-{g['home_score']}" for g in recent_games[-5:]]) or "No recent games"
+    h2h_text = "H2H data unavailable"
+    team_stats_text = "Team stats unavailable"
     stats_text = "\n".join([f"- {s.get('player_name','?')}: {s.get('points_per_game',0)}pts {s.get('rebounds_per_game',0)}reb {s.get('assists_per_game',0)}ast" for s in top_stats[:5]]) or "Stats unavailable"
 
     prompt = f"""You are a sports analyst writing a prediction article for a New York Knicks fan site called KnicksHub.
@@ -56,6 +67,12 @@ Knicks Injury Report (live data):
 
 Recent Knicks Results:
 {recent_text}
+
+Knicks Season Stats:
+{team_stats_text}
+
+Knicks vs {home_team if away_team == "New York Knicks" else away_team} This Season (H2H):
+{h2h_text}
 
 Top Knicks Players This Season (stats):
 {stats_text}
