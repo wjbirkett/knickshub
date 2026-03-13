@@ -25,7 +25,7 @@ def refresh_odds():
 
 def generate_article():
     from datetime import date
-    from app.services.article_service import generate_game_preview, save_article, get_article_by_slug, slugify
+    from app.services.article_service import generate_game_preview, generate_best_bet, generate_player_prop, save_article, get_article_by_slug, slugify
     from app.services.nba_service import fetch_schedule, fetch_injury_report, fetch_player_stats
     from app.services.odds_service import fetch_knicks_lines
 
@@ -50,7 +50,7 @@ def generate_article():
             slug = slugify(f"{next_game['away_team']}-vs-{next_game['home_team']}-prediction-{game_date_str}")
             existing = await get_article_by_slug(slug)
             if existing:
-                logger.info(f"Cron: article already exists for {slug}, skipping")
+                logger.info(f"Cron: articles already exist for {game_date_str}, skipping")
                 return
 
             injuries_raw = await fetch_injury_report()
@@ -79,6 +79,7 @@ def generate_article():
                 if ou is not None:
                     over_under = f"{ou}"
 
+            # Generate prediction article
             article = await generate_game_preview(
                 home_team=next_game["home_team"],
                 away_team=next_game["away_team"],
@@ -91,7 +92,37 @@ def generate_article():
                 top_stats=top_stats,
             )
             await save_article(article)
-            logger.info(f"Cron: article generated for {slug}")
+            logger.info(f"Cron: prediction article generated for {slug}")
+
+            # Generate best bet article
+            best_bet = await generate_best_bet(
+                home_team=next_game["home_team"],
+                away_team=next_game["away_team"],
+                game_date=game_date_str,
+                spread=spread,
+                moneyline=moneyline,
+                over_under=over_under,
+                injuries=injuries,
+                top_stats=top_stats,
+            )
+            await save_article(best_bet)
+            logger.info(f"Cron: best bet article generated")
+
+            # Generate Brunson prop article
+            brunson_stats = next((s for s in top_stats if "Brunson" in s.get("player_name", "")), None)
+            prop = await generate_player_prop(
+                player="Jalen Brunson",
+                home_team=next_game["home_team"],
+                away_team=next_game["away_team"],
+                game_date=game_date_str,
+                player_stats=brunson_stats,
+                injuries=injuries,
+                top_stats=top_stats,
+                over_under=over_under,
+            )
+            await save_article(prop)
+            logger.info(f"Cron: prop article generated")
+
         except Exception as e:
             logger.error(f"Cron: article generation failed: {e}")
 
@@ -101,7 +132,7 @@ def start_scheduler():
     _scheduler.add_job(refresh_news,     CronTrigger(minute="*/15"))
     _scheduler.add_job(refresh_injuries, CronTrigger(hour="*/3"))
     _scheduler.add_job(refresh_odds,     CronTrigger(hour="*/1"))
-    # Generate article every day at 9 AM ET (UTC-5, so 14:00 UTC)
+    # Generate all 3 articles every day at 9 AM ET (14:00 UTC)
     _scheduler.add_job(generate_article, CronTrigger(hour=14, minute=0, timezone="UTC"))
     _scheduler.start()
     logger.info("Scheduler started")
