@@ -1,23 +1,31 @@
 import { useQuery } from "@tanstack/react-query"
-import { getNews, getInjuries, getBirthdays, getSchedule, getStandings } from "../utils/api"
+import { getNews, getInjuries, getBirthdays, getSchedule, getStandings, getArticles } from "../utils/api"
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 
+const ARTICLE_BADGE: Record<string, { bg: string; color: string; label: string }> = {
+  prediction: { bg: "#0c1a4b", color: "#93c5fd", label: "PREDICTION" },
+  best_bet:   { bg: "#14532d", color: "#86efac", label: "BEST BET" },
+  prop:       { bg: "#4a1d1d", color: "#fca5a5", label: "PROP BET" },
+}
+
 export default function Dashboard() {
-  const { data: news } = useQuery({ queryKey: ["news"], queryFn: () => getNews(undefined) })
-  const { data: injuries } = useQuery({ queryKey: ["injuries"], queryFn: getInjuries })
+  const { data: news }      = useQuery({ queryKey: ["news"],      queryFn: () => getNews(undefined) })
+  const { data: injuries }  = useQuery({ queryKey: ["injuries"],  queryFn: getInjuries })
   const { data: birthdays } = useQuery({ queryKey: ["birthdays"], queryFn: getBirthdays })
-  const { data: games } = useQuery({ queryKey: ["schedule"], queryFn: getSchedule })
+  const { data: games }     = useQuery({ queryKey: ["schedule"],  queryFn: getSchedule })
   const { data: standings } = useQuery({ queryKey: ["standings"], queryFn: getStandings })
+  const { data: articles }  = useQuery({ queryKey: ["articles"],  queryFn: () => getArticles(6) })
 
   const today = new Date().toISOString().slice(0, 10)
   const nextGame = (games ?? []).find((g: any) => g.game_date >= today && g.status !== "Final")
   const lastGame = (games ?? []).filter((g: any) => g.status === "Final").slice(-1)[0]
-  const knicks = (standings ?? []).find((t: any) => t.team_name.includes("Knicks"))
+  const knicks   = (standings ?? []).find((t: any) => t.team_name.includes("Knicks"))
 
   const knicksWon = (g: any) =>
     (g.home_team.includes("Knicks") && g.home_score > g.away_score) ||
     (g.away_team.includes("Knicks") && g.away_score > g.home_score)
+
   const finishedGames = (games ?? []).filter((g: any) => g.status === "Final").slice().reverse()
   let streak = "—"
   if (finishedGames.length > 0) {
@@ -26,6 +34,8 @@ export default function Dashboard() {
     for (const g of finishedGames) { if (knicksWon(g) === first) count++; else break }
     streak = `${first ? "W" : "L"}${count}`
   }
+
+  const recentArticles = (articles ?? []).slice(0, 3)
 
   return (
     <div style={{ maxWidth: "1200px" }}>
@@ -39,16 +49,13 @@ export default function Dashboard() {
 
       {/* Record bar */}
       {knicks && (
-        <div style={{
-          display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.75rem",
-          marginBottom: "1.5rem"
-        }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>
           {[
-            { label: "Record", value: `${knicks.wins}-${knicks.losses}` },
-            { label: "Win %", value: (knicks.win_pct * 100).toFixed(1) + "%" },
-            { label: "East Rank", value: `#${knicks.conference_rank}` },
+            { label: "Record",     value: `${knicks.wins}-${knicks.losses}` },
+            { label: "Win %",      value: (knicks.win_pct * 100).toFixed(1) + "%" },
+            { label: "East Rank",  value: `#${knicks.conference_rank}` },
             { label: "Games Back", value: knicks.games_back === 0 ? "—" : knicks.games_back.toFixed(1) },
-            { label: "Streak", value: streak },
+            { label: "Streak",     value: streak },
           ].map(s => (
             <div key={s.label} style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.5rem", padding: "0.75rem", textAlign: "center" }}>
               <p style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{s.label}</p>
@@ -102,6 +109,53 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* ── LATEST PREDICTIONS (above news) ── */}
+      {recentArticles.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+            <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>
+              LATEST PREDICTIONS
+            </h2>
+            <Link to="/predictions" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View all →</Link>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+            {recentArticles.map((a: any) => {
+              const badge = ARTICLE_BADGE[a.article_type] ?? ARTICLE_BADGE.prediction
+              return (
+                <Link
+                  key={a.slug}
+                  to={`/predictions/${a.slug}`}
+                  style={{ textDecoration: "none" }}
+                >
+                  <div
+                    style={{
+                      background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem",
+                      padding: "1rem", height: "100%", transition: "border-color 0.15s",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = "#1f2937")}
+                  >
+                    <span style={{
+                      display: "inline-block", background: badge.bg, color: badge.color,
+                      fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em",
+                      padding: "0.2rem 0.6rem", borderRadius: "999px", marginBottom: "0.6rem"
+                    }}>
+                      {badge.label}
+                    </span>
+                    <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.5rem", lineHeight: 1.4 }}>
+                      {a.title}
+                    </p>
+                    <p style={{ color: "#4b5563", fontSize: "0.72rem", margin: 0 }}>
+                      {new Date(a.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </p>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Main 2-col grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "1.5rem", alignItems: "start" }}>
 
@@ -152,16 +206,15 @@ export default function Dashboard() {
             </div>
           )}
 
-
           {/* Quick Links */}
           <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
             <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.2rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>QUICK LINKS</h2>
             {[
-              { label: "nba.com/knicks", url: "https://www.nba.com/team/1610612752/knicks" },
-              { label: "NY Post Knicks", url: "https://nypost.com/sports/knicks/" },
-              { label: "ESPN Knicks", url: "https://www.espn.com/nba/team/_/name/ny/new-york-knicks" },
-              { label: "Knicks Twitter/X", url: "https://twitter.com/nyknicks" },
-              { label: "MSG Networks", url: "https://www.msgsports.com/knicks/" },
+              { label: "nba.com/knicks",  url: "https://www.nba.com/team/1610612752/knicks" },
+              { label: "NY Post Knicks",  url: "https://nypost.com/sports/knicks/" },
+              { label: "ESPN Knicks",     url: "https://www.espn.com/nba/team/_/name/ny/new-york-knicks" },
+              { label: "Knicks Twitter/X",url: "https://twitter.com/nyknicks" },
+              { label: "MSG Networks",    url: "https://www.msgsports.com/knicks/" },
             ].map(l => (
               <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{
                 display: "block", color: "#006BB6", fontSize: "0.85rem", padding: "0.35rem 0",
@@ -221,8 +274,8 @@ function NewsCard({ article }: { article: any }) {
 function StatusBadge({ status }: { status: string }) {
   const s = status?.toLowerCase() ?? ""
   let bg = "#1f2937", color = "#9ca3af"
-  if (s.includes("out")) { bg = "#7f1d1d"; color = "#f87171" }
-  else if (s.includes("day")) { bg = "#78350f"; color = "#fbbf24" }
+  if (s.includes("out"))          { bg = "#7f1d1d"; color = "#f87171" }
+  else if (s.includes("day"))     { bg = "#78350f"; color = "#fbbf24" }
   else if (s.includes("questionable")) { bg = "#1e3a5f"; color = "#93c5fd" }
   return (
     <span style={{ background: bg, color, padding: "0.15rem 0.6rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, whiteSpace: "nowrap" }}>

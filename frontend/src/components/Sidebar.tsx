@@ -1,16 +1,16 @@
 import { useState } from "react"
 import { NavLink } from "react-router-dom"
-import { Home, Newspaper, Activity, TrendingUp, Calendar, BarChart2, Twitter, Target, Menu, X } from "lucide-react"
+import { Home, Target, TrendingUp, Newspaper, Activity, Calendar, BarChart2, Twitter, Menu, X } from "lucide-react"
 
 const NAV = [
   { to: "/",            label: "Dashboard",   icon: Home },
+  { to: "/predictions", label: "Predictions", icon: Target },
+  { to: "/betting",     label: "Betting",     icon: TrendingUp },
   { to: "/news",        label: "News Feed",   icon: Newspaper },
   { to: "/injuries",    label: "Injuries",    icon: Activity },
-  { to: "/betting",     label: "Betting",     icon: TrendingUp },
   { to: "/schedule",    label: "Schedule",    icon: Calendar },
   { to: "/stats",       label: "Stats",       icon: BarChart2 },
   { to: "/tweets",      label: "Tweets",      icon: Twitter },
-  { to: "/predictions", label: "Predictions", icon: Target },
 ]
 
 export default function Sidebar() {
@@ -23,7 +23,6 @@ export default function Sidebar() {
           <span style={{ fontFamily: "Bebas Neue,sans-serif", fontSize: "2.25rem", letterSpacing: "0.15em", color: "#F58426" }}>KNICKS</span>
           <span style={{ fontFamily: "Bebas Neue,sans-serif", fontSize: "2.25rem", letterSpacing: "0.15em", color: "#006BB6" }}>HUB</span>
         </div>
-        {/* Close button — mobile only */}
         <button
           onClick={() => setOpen(false)}
           style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", display: "none" }}
@@ -66,58 +65,44 @@ export default function Sidebar() {
       <style>{`
         @media (max-width: 767px) {
           .mobile-close-btn { display: block !important; }
+          .mobile-hamburger { display: block !important; }
+          .mobile-backdrop  { display: block !important; }
+          .knicks-sidebar   { transform: translateX(${open ? "0" : "-100%"}); }
         }
       `}</style>
 
-      {/* Hamburger button — mobile only */}
       <button
         onClick={() => setOpen(true)}
         style={{
           position: "fixed", top: "1rem", left: "1rem", zIndex: 60,
           background: "#0d0d0d", border: "1px solid #1f2937",
           borderRadius: "0.5rem", padding: "0.5rem",
-          color: "#F58426", cursor: "pointer",
-          display: "none",
+          color: "#F58426", cursor: "pointer", display: "none",
         }}
         className="mobile-hamburger"
       >
         <Menu size={22} />
       </button>
 
-      {/* Mobile overlay backdrop */}
       {open && (
         <div
           onClick={() => setOpen(false)}
-          style={{
-            position: "fixed", inset: 0, zIndex: 40,
-            background: "rgba(0,0,0,0.6)",
-            display: "none",
-          }}
+          style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.6)", display: "none" }}
           className="mobile-backdrop"
         />
       )}
 
-      {/* Sidebar — desktop: always visible | mobile: slide in/out */}
       <aside
         className="knicks-sidebar"
         style={{
           position: "fixed", inset: "0 auto 0 0", width: "16rem",
           background: "#0d0d0d", borderRight: "1px solid #1f2937",
-          display: "flex", flexDirection: "column",
-          zIndex: 50,
+          display: "flex", flexDirection: "column", zIndex: 50,
           transition: "transform 0.25s ease",
         }}
       >
         {sidebarContent}
       </aside>
-
-      <style>{`
-        @media (max-width: 767px) {
-          .mobile-hamburger { display: block !important; }
-          .mobile-backdrop  { display: block !important; }
-          .knicks-sidebar   { transform: translateX(${open ? "0" : "-100%"}); }
-        }
-      `}</style>
     </>
   )
 }
