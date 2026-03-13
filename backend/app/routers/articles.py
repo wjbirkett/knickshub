@@ -106,16 +106,3 @@ async def delete_article(slug: str):
     db = get_supabase()
     db.table("articles").delete().eq("slug", slug).execute()
     return {"deleted": slug}
-@router.get("/debug/test")
-async def debug_test():
-    from app.config import settings
-    from app.db import get_supabase
-    key_prefix = settings.SUPABASE_KEY[:15] if settings.SUPABASE_KEY else "empty"
-    try:
-        db = get_supabase()
-        if not db:
-            return {"error": "get_supabase returned None", "key_prefix": key_prefix}
-        result = db.table("articles").select("slug").execute()
-        return {"count": len(result.data) if isinstance(result.data, list) else 1, "data": result.data}
-    except Exception as e:
-        return {"key_prefix": key_prefix, "error": str(e), "error_type": type(e).__name__}
