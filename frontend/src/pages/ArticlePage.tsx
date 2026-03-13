@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async"
 import { useQuery } from "@tanstack/react-query"
 import { useParams, Link } from "react-router-dom"
 import { getArticle } from "../utils/api"
@@ -13,6 +14,10 @@ export default function ArticlePage() {
   if (isLoading) return <p style={{ color: "#6b7280" }}>Loading...</p>
   if (!article) return <p style={{ color: "#f87171" }}>Article not found.</p>
 
+  const opponent = article.home_team === "New York Knicks" ? article.away_team : article.home_team
+  const formattedDate = new Date(article.game_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  const description = `Knicks vs ${opponent} prediction, odds, and best bet for ${formattedDate}. Expert analysis, injury report, and picks from KnicksHub.`
+
   const renderContent = (content: string) =>
     content.split("\n").map((line, i) => {
       if (line.startsWith("## ")) return <h2 key={i} style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.5rem", letterSpacing: "0.1em", color: "#F58426", margin: "1.5rem 0 0.75rem" }}>{line.replace("## ", "")}</h2>
@@ -23,6 +28,15 @@ export default function ArticlePage() {
 
   return (
     <div style={{ maxWidth: "780px" }}>
+      <Helmet>
+        <title>{article.title} | KnicksHub</title>
+        <meta name="description" content={description} />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:type" content="article" />
+        <link rel="canonical" href={`https://knickshub.vercel.app/predictions/${slug}`} />
+      </Helmet>
+
       <Link to="/predictions" style={{ color: "#6b7280", fontSize: "0.8rem", textDecoration: "none", display: "block", marginBottom: "1rem" }}>← Back to Predictions</Link>
 
       <div style={{ marginBottom: "1.5rem" }}>
