@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     TWITTER_ACCESS_TOKEN: str = ""
     TWITTER_ACCESS_SECRET: str = ""
     TWITTER_BEARER_TOKEN: str = ""
+    ANTHROPIC_API_KEY: str = ""
     ENVIRONMENT: str = "development"
     ALLOWED_ORIGINS: List[str] = ["http://localhost:5173"]
 

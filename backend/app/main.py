@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import news, injuries, betting, schedule, stats, tweets, birthdays
+from app.routers import news, injuries, betting, schedule, stats, tweets, birthdays, articles
 from app.scheduler import start_scheduler, shutdown_scheduler
 
 @asynccontextmanager
@@ -28,6 +28,7 @@ app.include_router(schedule.router,  prefix="/api/schedule",  tags=["Schedule"])
 app.include_router(stats.router,     prefix="/api/stats",     tags=["Stats"])
 app.include_router(tweets.router,    prefix="/api/tweets",    tags=["Tweets"])
 app.include_router(birthdays.router, prefix="/api/birthdays", tags=["Birthdays"])
+app.include_router(articles.router, prefix="/api/articles", tags=["Articles"])
 
 @app.get("/health")
 async def health():
