@@ -15,9 +15,23 @@ export default function App() {
   return (
     <HelmetProvider>
       <BrowserRouter>
+        <style>{`
+          .knicks-main {
+            margin-left: 16rem;
+            padding: 1.5rem;
+            flex: 1;
+          }
+          @media (max-width: 767px) {
+            .knicks-main {
+              margin-left: 0;
+              padding: 1rem;
+              padding-top: 4rem; /* clear hamburger button */
+            }
+          }
+        `}</style>
         <div className="flex min-h-screen bg-knicks-dark text-white" style={{ fontFamily: "DM Sans, sans-serif" }}>
           <Sidebar />
-          <main style={{ marginLeft: "16rem", padding: "1.5rem", flex: 1 }}>
+          <main className="knicks-main">
             <Routes>
               <Route path="/"                  element={<Dashboard />} />
               <Route path="/news"              element={<NewsPage />} />
