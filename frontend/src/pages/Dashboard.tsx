@@ -39,6 +39,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ maxWidth: "1200px" }}>
+
       {/* Header */}
       <div style={{ marginBottom: "1.5rem" }}>
         <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>
@@ -81,7 +82,6 @@ export default function Dashboard() {
             <Countdown gameDate={nextGame.game_date} />
           </div>
         )}
-
         {lastGame && (
           <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
             <p style={{ color: "#F58426", fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", margin: "0 0 0.75rem" }}>LAST RESULT</p>
@@ -109,64 +109,67 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* ── LATEST PREDICTIONS (above news) ── */}
-      {recentArticles.length > 0 && (
-        <div style={{ marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-            <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>
-              LATEST PREDICTIONS
-            </h2>
-            <Link to="/predictions" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View all →</Link>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
-            {recentArticles.map((a: any) => {
-              const badge = ARTICLE_BADGE[a.article_type] ?? ARTICLE_BADGE.prediction
-              return (
-                <Link
-                  key={a.slug}
-                  to={`/predictions/${a.slug}`}
-                  style={{ textDecoration: "none" }}
-                >
-                  <div
-                    style={{
-                      background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem",
-                      padding: "1rem", height: "100%", transition: "border-color 0.15s",
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = "#1f2937")}
-                  >
-                    <span style={{
-                      display: "inline-block", background: badge.bg, color: badge.color,
-                      fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em",
-                      padding: "0.2rem 0.6rem", borderRadius: "999px", marginBottom: "0.6rem"
-                    }}>
-                      {badge.label}
-                    </span>
-                    <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.5rem", lineHeight: 1.4 }}>
-                      {a.title}
-                    </p>
-                    <p style={{ color: "#4b5563", fontSize: "0.72rem", margin: 0 }}>
-                      {new Date(a.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </p>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Main 2-col grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "1.5rem", alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "1.5rem", alignItems: "start" }}>
 
-        {/* Left: News */}
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-            <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>LATEST NEWS</h2>
-            <Link to="/news" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View all →</Link>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {(news ?? []).slice(0, 8).map((a: any) => <NewsCard key={a.id} article={a} />)}
+        {/* Left column: Predictions + News */}
+        <div style={{ minWidth: 0 }}>
+
+          {/* Latest Predictions */}
+          {recentArticles.length > 0 && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+                <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>
+                  LATEST PREDICTIONS
+                </h2>
+                <Link to="/predictions" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View all →</Link>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {recentArticles.map((a: any) => {
+                  const badge = ARTICLE_BADGE[a.article_type] ?? ARTICLE_BADGE.prediction
+                  return (
+                    <Link key={a.slug} to={`/predictions/${a.slug}`} style={{ textDecoration: "none" }}>
+                      <div
+                        style={{
+                          background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem",
+                          padding: "1rem", display: "flex", alignItems: "flex-start", gap: "0.75rem",
+                          transition: "border-color 0.15s",
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")}
+                        onMouseLeave={e => (e.currentTarget.style.borderColor = "#1f2937")}
+                      >
+                        <span style={{
+                          display: "inline-block", background: badge.bg, color: badge.color, flexShrink: 0,
+                          fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em",
+                          padding: "0.2rem 0.6rem", borderRadius: "999px", marginTop: "0.1rem"
+                        }}>
+                          {badge.label}
+                        </span>
+                        <div>
+                          <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.25rem", lineHeight: 1.4 }}>
+                            {a.title}
+                          </p>
+                          <p style={{ color: "#4b5563", fontSize: "0.72rem", margin: 0 }}>
+                            {new Date(a.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Latest News */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+              <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>LATEST NEWS</h2>
+              <Link to="/news" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View all →</Link>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {(news ?? []).slice(0, 8).map((a: any) => <NewsCard key={a.id} article={a} />)}
+            </div>
           </div>
         </div>
 
@@ -210,11 +213,11 @@ export default function Dashboard() {
           <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
             <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.2rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>QUICK LINKS</h2>
             {[
-              { label: "nba.com/knicks",  url: "https://www.nba.com/team/1610612752/knicks" },
-              { label: "NY Post Knicks",  url: "https://nypost.com/sports/knicks/" },
-              { label: "ESPN Knicks",     url: "https://www.espn.com/nba/team/_/name/ny/new-york-knicks" },
-              { label: "Knicks Twitter/X",url: "https://twitter.com/nyknicks" },
-              { label: "MSG Networks",    url: "https://www.msgsports.com/knicks/" },
+              { label: "nba.com/knicks",   url: "https://www.nba.com/team/1610612752/knicks" },
+              { label: "NY Post Knicks",   url: "https://nypost.com/sports/knicks/" },
+              { label: "ESPN Knicks",      url: "https://www.espn.com/nba/team/_/name/ny/new-york-knicks" },
+              { label: "Knicks Twitter/X", url: "https://twitter.com/nyknicks" },
+              { label: "MSG Networks",     url: "https://www.msgsports.com/knicks/" },
             ].map(l => (
               <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{
                 display: "block", color: "#006BB6", fontSize: "0.85rem", padding: "0.35rem 0",
@@ -274,8 +277,8 @@ function NewsCard({ article }: { article: any }) {
 function StatusBadge({ status }: { status: string }) {
   const s = status?.toLowerCase() ?? ""
   let bg = "#1f2937", color = "#9ca3af"
-  if (s.includes("out"))          { bg = "#7f1d1d"; color = "#f87171" }
-  else if (s.includes("day"))     { bg = "#78350f"; color = "#fbbf24" }
+  if (s.includes("out"))               { bg = "#7f1d1d"; color = "#f87171" }
+  else if (s.includes("day"))          { bg = "#78350f"; color = "#fbbf24" }
   else if (s.includes("questionable")) { bg = "#1e3a5f"; color = "#93c5fd" }
   return (
     <span style={{ background: bg, color, padding: "0.15rem 0.6rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, whiteSpace: "nowrap" }}>
