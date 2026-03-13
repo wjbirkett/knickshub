@@ -7,6 +7,8 @@ import BettingPage from "./pages/BettingPage"
 import SchedulePage from "./pages/SchedulePage"
 import StatsPage from "./pages/StatsPage"
 import TweetsPage from "./pages/TweetsPage"
+import PredictionsPage from "./pages/PredictionsPage"
+import ArticlePage from "./pages/ArticlePage"
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
             <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/stats"    element={<StatsPage />} />
             <Route path="/tweets"   element={<TweetsPage />} />
+<Route path="/predictions" element={<PredictionsPage />} />
+<Route path="/predictions/:slug" element={<ArticlePage />} />
           </Routes>
         </main>
       </div>

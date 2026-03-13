@@ -1,14 +1,15 @@
 import { NavLink } from "react-router-dom"
-import { Home, Newspaper, Activity, TrendingUp, Calendar, BarChart2, Twitter } from "lucide-react"
+import { Home, Newspaper, Activity, TrendingUp, Calendar, BarChart2, Twitter, Target } from "lucide-react"
 
 const NAV = [
-  { to: "/",         label: "Dashboard", icon: Home },
-  { to: "/news",     label: "News Feed", icon: Newspaper },
-  { to: "/injuries", label: "Injuries",  icon: Activity },
-  { to: "/betting",  label: "Betting",   icon: TrendingUp },
-  { to: "/schedule", label: "Schedule",  icon: Calendar },
-  { to: "/stats",    label: "Stats",     icon: BarChart2 },
-  { to: "/tweets",   label: "Tweets",    icon: Twitter },
+  { to: "/",           label: "Dashboard",   icon: Home },
+  { to: "/news",       label: "News Feed",   icon: Newspaper },
+  { to: "/injuries",   label: "Injuries",    icon: Activity },
+  { to: "/betting",    label: "Betting",     icon: TrendingUp },
+  { to: "/schedule",   label: "Schedule",    icon: Calendar },
+  { to: "/stats",      label: "Stats",       icon: BarChart2 },
+  { to: "/tweets",     label: "Tweets",      icon: Twitter },
+  { to: "/predictions",label: "Predictions", icon: Target },
 ]
 
 export default function Sidebar() {

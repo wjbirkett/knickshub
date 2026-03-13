@@ -13,3 +13,6 @@ export const getStandings = ()                => api.get("/api/schedule/standing
 export const getStats     = ()                => api.get("/api/stats/").then(r => r.data)
 export const getTweets    = ()                => api.get("/api/tweets/").then(r => r.data)
 export const getBirthdays = ()                => api.get("/api/birthdays/upcoming").then(r => r.data)
+export const getArticles = (limit = 20) => api.get("/api/articles/", { params: { limit } }).then(r => r.data)
+export const getArticle = (slug: string) => api.get(`/api/articles/${slug}`).then(r => r.data)
+export const generateNextGameArticle = () => api.post("/api/articles/generate/next-game").then(r => r.data)
