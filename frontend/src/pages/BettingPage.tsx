@@ -108,23 +108,12 @@ function TimeBlock({ value, label }: { value: number; label: string }) {
 }
 
 function GameOddsCard({ game }: { game: any }) {
-  const bookmakers = game.bookmakers ?? []
-  // isKnicksHome removed
+  const isKnicksAway = game.away_team.includes("Knicks") || game.away_team.includes("New York")
 
-  // Aggregate best odds across bookmakers
-  const spreads: any[] = [], totals: any[] = [], moneylines: any[] = []
-  for (const bm of bookmakers) {
-    for (const market of bm.markets ?? []) {
-      if (market.key === "spreads") spreads.push({ book: bm.title, outcomes: market.outcomes })
-      if (market.key === "totals") totals.push({ book: bm.title, outcomes: market.outcomes })
-      if (market.key === "h2h") moneylines.push({ book: bm.title, outcomes: market.outcomes })
-    }
-  }
-
-  const knicksML = moneylines[0]?.outcomes?.find((o: any) => o.name.includes("Knicks") || o.name.includes("New York"))
-  const oppML = moneylines[0]?.outcomes?.find((o: any) => !o.name.includes("Knicks") && !o.name.includes("New York"))
-  const knicksSpread = spreads[0]?.outcomes?.find((o: any) => o.name.includes("Knicks") || o.name.includes("New York"))
-  const total = totals[0]?.outcomes?.find((o: any) => o.name === "Over")
+  const knicksML = isKnicksAway ? game.moneyline_away : game.moneyline_home
+  const oppML = isKnicksAway ? game.moneyline_home : game.moneyline_away
+  const rawSpread = game.spread
+  const knicksSpread = rawSpread != null ? (isKnicksAway ? -rawSpread : rawSpread) : null
 
   return (
     <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
@@ -133,21 +122,18 @@ function GameOddsCard({ game }: { game: any }) {
           {game.away_team} @ {game.home_team}
         </p>
         <p style={{ color: "#6b7280", fontSize: "0.8rem", margin: 0 }}>
-          {new Date(game.commence_time).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+          {new Date(game.commence_time).toLocaleDateString("en-US", {
+            weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
+          })}
+          {game.bookmaker && <span style={{ color: "#374151" }}> · {game.bookmaker}</span>}
         </p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
-        <OddsBox label="KNICKS ML" value={knicksML ? formatOdds(knicksML.price) : "—"} sub={oppML ? `Opp: ${formatOdds(oppML.price)}` : ""} />
-        <OddsBox label="SPREAD" value={knicksSpread ? `${knicksSpread.point > 0 ? "+" : ""}${knicksSpread.point}` : "—"} sub={knicksSpread ? formatOdds(knicksSpread.price) : ""} />
-        <OddsBox label="O/U" value={total ? `O ${total.point}` : "—"} sub={total ? formatOdds(total.price) : ""} />
+        <OddsBox label="KNICKS ML" value={knicksML != null ? formatOdds(knicksML) : "—"} sub={oppML != null ? `Opp: ${formatOdds(oppML)}` : ""} />
+        <OddsBox label="SPREAD" value={knicksSpread != null ? `${knicksSpread > 0 ? "+" : ""}${knicksSpread}` : "—"} sub="" />
+        <OddsBox label="O/U" value={game.over_under != null ? `O ${game.over_under}` : "—"} sub="" />
       </div>
-
-      {bookmakers.length > 0 && (
-        <p style={{ color: "#374151", fontSize: "0.7rem", marginTop: "0.75rem", textAlign: "right" }}>
-          via {bookmakers[0].title}{bookmakers.length > 1 ? ` +${bookmakers.length - 1} more` : ""}
-        </p>
-      )}
     </div>
   )
 }

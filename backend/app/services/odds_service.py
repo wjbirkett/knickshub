@@ -17,10 +17,11 @@ async def fetch_knicks_lines() -> List[BettingLine]:
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.get(f"{BASE_URL}/sports/basketball_nba/odds", params={
-                "apiKey": settings.ODDS_API_KEY, "regions": "us",
-                "markets": "spreads,h2h,totals", "oddsFormat": "american",
-                "bookmakers": ",".join(BOOKMAKER_PREF),
-            })
+    "apiKey": settings.ODDS_API_KEY,
+    "regions": "us",
+    "markets": "spreads,h2h,totals",
+    "oddsFormat": "american",
+})
             resp.raise_for_status()
             data = resp.json()
             logger.info(f"Odds API: {resp.headers.get('x-requests-used','?')} used, {resp.headers.get('x-requests-remaining','?')} remaining")
