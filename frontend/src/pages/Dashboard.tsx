@@ -39,10 +39,23 @@ export default function Dashboard() {
 
   return (
     <div style={{ maxWidth: "1200px" }}>
+      <style>{`
+        .db-header { margin-bottom: 1.5rem; }
+        .db-title  { font-family: "Bebas Neue, sans-serif"; font-size: 3rem; letter-spacing: 0.15em; color: #F58426; margin: 0; padding-left: 0; }
+        .db-record { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+        .db-games  { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        .db-main   { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
+        @media (max-width: 767px) {
+          .db-title  { padding-left: 3rem; font-size: 2.2rem; }
+          .db-record { grid-template-columns: repeat(3, 1fr); }
+          .db-games  { grid-template-columns: 1fr; }
+          .db-main   { grid-template-columns: 1fr; }
+        }
+      `}</style>
 
       {/* Header */}
-      <div style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>
+      <div className="db-header">
+        <h1 className="db-title" style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>
           DASHBOARD
         </h1>
         <p style={{ color: "#6b7280", margin: "0.25rem 0 0", fontSize: "0.875rem" }}>Everything Knicks, all in one place.</p>
@@ -50,7 +63,7 @@ export default function Dashboard() {
 
       {/* Record bar */}
       {knicks && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.75rem", marginBottom: "1.5rem" }}>
+        <div className="db-record">
           {[
             { label: "Record",     value: `${knicks.wins}-${knicks.losses}` },
             { label: "Win %",      value: (knicks.win_pct * 100).toFixed(1) + "%" },
@@ -66,8 +79,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Next game + last game row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+      {/* Next game + last game */}
+      <div className="db-games">
         {nextGame && (
           <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
             <p style={{ color: "#F58426", fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", margin: "0 0 0.75rem" }}>NEXT GAME</p>
@@ -110,12 +123,11 @@ export default function Dashboard() {
       </div>
 
       {/* Main 2-col grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "1.5rem", alignItems: "start" }}>
+      <div className="db-main">
 
-        {/* Left column: Predictions + News */}
+        {/* Left: Predictions + News */}
         <div style={{ minWidth: 0 }}>
 
-          {/* Latest Predictions */}
           {recentArticles.length > 0 && (
             <div style={{ marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
@@ -161,7 +173,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Latest News */}
+          {/* News */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
               <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>LATEST NEWS</h2>
@@ -175,8 +187,6 @@ export default function Dashboard() {
 
         {/* Right column */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-
-          {/* Injury Report */}
           <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
               <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.2rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>INJURY REPORT</h2>
@@ -194,7 +204,6 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Birthdays */}
           {(birthdays ?? []).length > 0 && (
             <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
               <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.2rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>🎂 BIRTHDAYS</h2>
@@ -209,7 +218,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Quick Links */}
           <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
             <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.2rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>QUICK LINKS</h2>
             {[
@@ -240,7 +248,6 @@ function NewsCard({ article }: { article: any }) {
   const sourceColors: Record<string, string> = { espn: "#FF6B35", nypost: "#E4002B", knicks: "#006BB6", nba: "#006BB6", bleacher: "#F5A623" }
   const sourceLabels: Record<string, string> = { espn: "ESPN", nypost: "NY Post", knicks: "Knicks.com", nba: "NBA.com", bleacher: "BR" }
   const color = sourceColors[article.source] ?? "#6b7280"
-
   const timeAgo = (iso: string) => {
     if (!iso) return ""
     const diff = (Date.now() - new Date(iso).getTime()) / 1000
@@ -248,7 +255,6 @@ function NewsCard({ article }: { article: any }) {
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
     return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" })
   }
-
   return (
     <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
       <div style={{ display: "flex", gap: "0.75rem", padding: "0.9rem 0", borderBottom: "1px solid #1f2937" }}
@@ -260,9 +266,7 @@ function NewsCard({ article }: { article: any }) {
             onError={e => { (e.target as HTMLImageElement).style.display = "none" }} />
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.35rem", lineHeight: 1.4 }}>
-            {article.title}
-          </p>
+          <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.35rem", lineHeight: 1.4 }}>{article.title}</p>
           <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", fontSize: "0.72rem" }}>
             <span style={{ color, fontWeight: 700 }}>{sourceLabels[article.source] ?? article.source.toUpperCase()}</span>
             <span style={{ color: "#374151" }}>·</span>
