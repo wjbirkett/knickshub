@@ -32,4 +32,4 @@ app.include_router(articles.router, prefix="/api/articles", tags=["Articles"])
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "KnicksHub API"}
+    return {"status": "ok"}
