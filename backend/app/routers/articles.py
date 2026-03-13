@@ -27,7 +27,7 @@ async def get_article(slug: str):
     return article
 
 @router.post("/generate/next-game")
-async def generate_next_game_article(background_tasks: BackgroundTasks):
+async def generate_next_game_article(background_tasks: BackgroundTasks, force: bool = False):
     today = date.today()
 
     # Get next game
@@ -46,12 +46,13 @@ async def generate_next_game_article(background_tasks: BackgroundTasks):
 
     game_date_str = str(next_game["game_date"])[:10]
 
-    # Check if article already exists
+    # Check if article already exists (skip if force=True)
     from app.services.article_service import slugify
     slug = slugify(f"{next_game['away_team']}-vs-{next_game['home_team']}-prediction-{game_date_str}")
-    existing = await get_article_by_slug(slug)
-    if existing:
-        return {"message": "Article already exists", "slug": slug, "article": existing}
+    if not force:
+        existing = await get_article_by_slug(slug)
+        if existing:
+            return {"message": "Article already exists", "slug": slug, "article": existing}
 
     # Gather injuries
     injuries_raw = await fetch_injury_report()
@@ -61,7 +62,7 @@ async def generate_next_game_article(background_tasks: BackgroundTasks):
     stats_raw = await fetch_player_stats()
     top_stats = [to_dict(s) for s in stats_raw[:8]] if stats_raw else []
 
-    # Get odds
+    # Get odds — service returns flat BettingLine objects
     odds_raw = await fetch_knicks_lines()
     odds = [to_dict(o) for o in odds_raw]
     spread = "N/A"
@@ -69,25 +70,20 @@ async def generate_next_game_article(background_tasks: BackgroundTasks):
     over_under = "N/A"
 
     if odds:
-        game_odds = odds[0]
-        for bm in game_odds.get("bookmakers", []):
-            bm = to_dict(bm) if hasattr(bm, "dict") else bm
-            for market in bm.get("markets", []):
-                market = to_dict(market) if hasattr(market, "dict") else market
-                outcomes = market.get("outcomes", [])
-                if market["key"] == "spreads":
-                    knicks_s = next((o for o in outcomes if "Knicks" in str(o.get("name","")) or "New York" in str(o.get("name",""))), None)
-                    if knicks_s:
-                        spread = f"{float(knicks_s.get('point',0)):+.1f} ({int(knicks_s.get('price',0)):+d})"
-                if market["key"] == "h2h":
-                    knicks_ml = next((o for o in outcomes if "Knicks" in str(o.get("name","")) or "New York" in str(o.get("name",""))), None)
-                    if knicks_ml:
-                        moneyline = f"{int(knicks_ml.get('price',0)):+d}"
-                if market["key"] == "totals":
-                    over = next((o for o in outcomes if o.get("name") == "Over"), None)
-                    if over:
-                        over_under = f"{over.get('point','?')} ({int(over.get('price',0)):+d})"
-            break
+        o = odds[0]
+        is_knicks_away = "Knicks" in o.get("away_team", "") or "New York" in o.get("away_team", "")
+        raw_spread = o.get("spread")
+        ml_home = o.get("moneyline_home")
+        ml_away = o.get("moneyline_away")
+        ou = o.get("over_under")
+        knicks_ml = ml_away if is_knicks_away else ml_home
+        knicks_spread = (-raw_spread if is_knicks_away else raw_spread) if raw_spread is not None else None
+        if knicks_spread is not None:
+            spread = f"{knicks_spread:+.1f}"
+        if knicks_ml is not None:
+            moneyline = f"{knicks_ml:+d}"
+        if ou is not None:
+            over_under = f"{ou}"
 
     # Generate article
     article = await generate_game_preview(
