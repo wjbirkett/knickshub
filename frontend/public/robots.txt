@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://knickshub.vercel.app/sitemap.xml
