@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi.responses import Response
 from app.services.article_service import (
     generate_game_preview, save_article, get_articles, get_article_by_slug
 )
@@ -16,7 +17,6 @@ def to_dict(obj):
     return obj
 
 def get_odds_for_game(games, next_game):
-    """Shared odds parsing logic."""
     spread = moneyline = over_under = "N/A"
     if games:
         o = games[0]
@@ -35,6 +35,24 @@ def get_odds_for_game(games, next_game):
             over_under = f"{ou}"
     return spread, moneyline, over_under
 
+@router.get("/sitemap.xml")
+async def articles_sitemap():
+    articles = await get_articles(limit=200)
+    urls = "\n".join([
+        f"""  <url>
+    <loc>https://knickshub.vercel.app/predictions/{a['slug']}</loc>
+    <lastmod>{a.get('updated_at', a.get('created_at', ''))[:10]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>"""
+        for a in articles
+    ])
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{urls}
+</urlset>"""
+    return Response(content=xml, media_type="application/xml")
+
 @router.get("/")
 async def list_articles(limit: int = 20):
     return await get_articles(limit)
@@ -49,7 +67,6 @@ async def get_article(slug: str):
 @router.post("/generate/next-game")
 async def generate_next_game_article(background_tasks: BackgroundTasks, force: bool = False):
     today = date.today()
-
     games_raw = await fetch_schedule()
     games = [to_dict(g) for g in games_raw]
 
@@ -74,10 +91,8 @@ async def generate_next_game_article(background_tasks: BackgroundTasks, force: b
 
     injuries_raw = await fetch_injury_report()
     injuries = [to_dict(i) for i in injuries_raw]
-
     stats_raw = await fetch_player_stats()
     top_stats = [to_dict(s) for s in stats_raw[:8]] if stats_raw else []
-
     odds_raw = await fetch_knicks_lines()
     odds = [to_dict(o) for o in odds_raw]
     spread, moneyline, over_under = get_odds_for_game(odds, next_game)
@@ -93,7 +108,6 @@ async def generate_next_game_article(background_tasks: BackgroundTasks, force: b
         recent_games=games,
         top_stats=top_stats,
     )
-
     saved = await save_article(article)
     return {"message": "Article generated", "slug": saved["slug"], "article": saved}
 
@@ -101,7 +115,6 @@ async def generate_next_game_article(background_tasks: BackgroundTasks, force: b
 @router.post("/generate/player-prop")
 async def generate_player_prop_article(background_tasks: BackgroundTasks, player: str = "Jalen Brunson", force: bool = False):
     today = date.today()
-
     games_raw = await fetch_schedule()
     games = [to_dict(g) for g in games_raw]
 
@@ -127,13 +140,9 @@ async def generate_player_prop_article(background_tasks: BackgroundTasks, player
 
     injuries_raw = await fetch_injury_report()
     injuries = [to_dict(i) for i in injuries_raw]
-
     stats_raw = await fetch_player_stats()
     top_stats = [to_dict(s) for s in stats_raw[:8]] if stats_raw else []
-
-    # Find this player's stats
     player_stats = next((s for s in top_stats if player.lower() in s.get("player_name", "").lower()), None)
-
     odds_raw = await fetch_knicks_lines()
     odds = [to_dict(o) for o in odds_raw]
     spread, moneyline, over_under = get_odds_for_game(odds, next_game)
@@ -149,7 +158,6 @@ async def generate_player_prop_article(background_tasks: BackgroundTasks, player
         top_stats=top_stats,
         over_under=over_under,
     )
-
     saved = await save_article(article)
     return {"message": "Article generated", "slug": saved["slug"], "article": saved}
 
@@ -157,7 +165,6 @@ async def generate_player_prop_article(background_tasks: BackgroundTasks, player
 @router.post("/generate/best-bet")
 async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bool = False):
     today = date.today()
-
     games_raw = await fetch_schedule()
     games = [to_dict(g) for g in games_raw]
 
@@ -182,10 +189,8 @@ async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bo
 
     injuries_raw = await fetch_injury_report()
     injuries = [to_dict(i) for i in injuries_raw]
-
     stats_raw = await fetch_player_stats()
     top_stats = [to_dict(s) for s in stats_raw[:8]] if stats_raw else []
-
     odds_raw = await fetch_knicks_lines()
     odds = [to_dict(o) for o in odds_raw]
     spread, moneyline, over_under = get_odds_for_game(odds, next_game)
@@ -201,7 +206,6 @@ async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bo
         injuries=injuries,
         top_stats=top_stats,
     )
-
     saved = await save_article(article)
     return {"message": "Article generated", "slug": saved["slug"], "article": saved}
 
