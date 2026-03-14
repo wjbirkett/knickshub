@@ -7,7 +7,7 @@ import InjuriesPage from "./pages/InjuriesPage"
 import BettingPage from "./pages/BettingPage"
 import SchedulePage from "./pages/SchedulePage"
 import StatsPage from "./pages/StatsPage"
-import TweetsPage from "./pages/TweetsPage"
+import BettingTrendsPage from "./pages/TweetsPage"
 import PredictionsPage from "./pages/PredictionsPage"
 import ArticlePage from "./pages/ArticlePage"
 import AboutPage from "./pages/AboutPage"
@@ -49,7 +49,7 @@ export default function App() {
                 <Route path="/betting"           element={<BettingPage />} />
                 <Route path="/schedule"          element={<SchedulePage />} />
                 <Route path="/stats"             element={<StatsPage />} />
-                <Route path="/tweets"            element={<TweetsPage />} />
+                <Route path="/tweets"            element={<BettingTrendsPage />} />
                 <Route path="/predictions"       element={<PredictionsPage />} />
                 <Route path="/predictions/:slug" element={<ArticlePage />} />
                 <Route path="/about"             element={<AboutPage />} />
