@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query"
 import { getArticles } from "../utils/api"
 import { TYPE_CONFIG } from "./ArticlePage"
 
-function opponentFromArticle(a: any): string {
-  if (a.home_team?.includes("Knicks")) return a.away_team
+function opponentFromArticle(a: any): string | null {
+  if (a.article_type === "history") return null
+  if (a.home_team?.includes("Knicks") || a.home_team?.includes("New York")) return a.away_team
   return a.home_team
 }
 
@@ -23,19 +24,16 @@ export default function MatchupArchivePage() {
 
   const matchupArticles = (allArticles ?? []).filter((a: any) => {
     const opp = opponentFromArticle(a)
-    return opp?.toLowerCase().includes(opponentName.toLowerCase()) ||
-           opponentName.toLowerCase().includes(opp?.toLowerCase() ?? "")
+    if (!opp) return false
+    return opp.toLowerCase() === opponentName.toLowerCase()
   })
 
-  // Group by game_date
   const byDate: Record<string, any[]> = {}
   for (const a of matchupArticles) {
     if (!byDate[a.game_date]) byDate[a.game_date] = []
     byDate[a.game_date].push(a)
   }
   const sortedDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a))
-
-  // Count unique games (dates)
   const totalGames = sortedDates.length
 
   if (isLoading) return <p style={{ color: "#6b7280" }}>Loading...</p>
@@ -70,7 +68,6 @@ export default function MatchupArchivePage() {
           const dateLabel = new Date(gameDate + "T12:00:00").toLocaleDateString("en-US", {
             weekday: "long", month: "long", day: "numeric", year: "numeric"
           })
-
           return (
             <div key={gameDate} style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", overflow: "hidden" }}>
               <div style={{ padding: "0.75rem 1.25rem", borderBottom: "1px solid #1f2937", background: "#0d1117" }}>
@@ -82,11 +79,7 @@ export default function MatchupArchivePage() {
                 {articles.map((a: any) => {
                   const badge = TYPE_CONFIG[a.article_type] ?? { label: "ARTICLE", bg: "#1f2937", color: "#9ca3af" }
                   return (
-                    <Link
-                      key={a.slug}
-                      to={`/predictions/${a.slug}`}
-                      style={{ textDecoration: "none" }}
-                    >
+                    <Link key={a.slug} to={`/predictions/${a.slug}`} style={{ textDecoration: "none" }}>
                       <div
                         style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem", padding: "0.875rem 1.25rem", borderBottom: "1px solid #1f2937", transition: "background 0.15s" }}
                         onMouseEnter={e => (e.currentTarget.style.background = "#0d1117")}
