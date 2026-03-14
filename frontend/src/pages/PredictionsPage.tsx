@@ -1,9 +1,8 @@
-// src/pages/predictions/PredictionsPage.tsx
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
-import { getArticles } from "../../utils/api"
-import { TYPE_CONFIG } from "../../utils/typeConfig"
+import { getArticles } from "../utils/api"           // ✅ fixed path
+import { TYPE_CONFIG } from "./ArticlePage"         // ✅ fixed path
 
 export default function PredictionsPage() {
   const { data: articles, isLoading } = useQuery({
@@ -26,8 +25,7 @@ export default function PredictionsPage() {
   )
 
   return (
-    <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-      {/* Page header */}
+    <div style={{ maxWidth: "900px" }}>
       <div style={{ marginBottom: "1.5rem" }}>
         <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>
           PREDICTIONS
@@ -37,12 +35,9 @@ export default function PredictionsPage() {
         </p>
       </div>
 
-      {/* Filter buttons */}
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
         {filters.map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
+          <button key={f} onClick={() => setFilter(f)}
             style={{
               padding: "0.4rem 1rem",
               borderRadius: "999px",
@@ -63,7 +58,6 @@ export default function PredictionsPage() {
 
       {isLoading && <p style={{ color: "#6b7280" }}>Loading...</p>}
 
-      {/* Articles list */}
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         {filtered.map((a: any) => {
           const badge = TYPE_CONFIG[a.article_type] ?? { label: "PREVIEW", bg: "#1f2937", color: "#9ca3af" }
@@ -83,19 +77,17 @@ export default function PredictionsPage() {
                 onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = "#1f2937")}
               >
-                <span
-                  style={{
-                    background: badge.bg,
-                    color: badge.color,
-                    fontSize: "0.65rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.08em",
-                    padding: "0.2rem 0.6rem",
-                    borderRadius: "999px",
-                    flexShrink: 0,
-                    marginTop: "0.1rem",
-                  }}
-                >
+                <span style={{
+                  background: badge.bg,
+                  color: badge.color,
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  padding: "0.2rem 0.6rem",
+                  borderRadius: "999px",
+                  flexShrink: 0,
+                  marginTop: "0.1rem"
+                }}>
                   {badge.label}
                 </span>
                 <div>
@@ -103,11 +95,7 @@ export default function PredictionsPage() {
                     {a.title}
                   </p>
                   <p style={{ color: "#4b5563", fontSize: "0.72rem", margin: 0 }}>
-                    {new Date(a.game_date + "T12:00:00").toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    {new Date(a.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </p>
                 </div>
               </div>
