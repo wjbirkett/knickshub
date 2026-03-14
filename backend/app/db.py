@@ -18,7 +18,6 @@ class SupabaseHTTPClient:
             "Content-Type": "application/json",
             "Prefer": "return=representation"
         }
-
     def table(self, name: str):
         return SupabaseTable(self.url, self.headers, name)
 
@@ -32,6 +31,7 @@ class SupabaseTable:
         self._order = None
         self._limit = None
         self._desc = False
+        self._is_delete = False
 
     def select(self, cols="*"):
         self._select = cols
@@ -54,14 +54,32 @@ class SupabaseTable:
         self._limit = 1
         return self
 
+    def delete(self):
+        self._is_delete = True
+        return self
+
     def execute(self):
-        params = f"select={self._select}"
+        # Build filter query string
+        filter_params = ""
         for col, val in self._filters.items():
-            params += f"&{col}={val}"
+            filter_params += f"&{col}={val}"
+
+        if self._is_delete:
+            if not self._filters:
+                raise ValueError("Delete requires at least one filter to prevent wiping the table")
+            r = httpx.delete(
+                f"{self.url}/rest/v1/{self.table_name}?{filter_params.lstrip('&')}",
+                headers=self.headers
+            )
+            r.raise_for_status()
+            return type("Result", (), {"data": r.json() if r.content else []})()
+
+        params = f"select={self._select}{filter_params}"
         if self._order:
             params += f"&order={self._order}.{'desc' if self._desc else 'asc'}"
         if self._limit:
             params += f"&limit={self._limit}"
+
         r = httpx.get(
             f"{self.url}/rest/v1/{self.table_name}?{params}",
             headers=self.headers
@@ -73,22 +91,11 @@ class SupabaseTable:
         return type("Result", (), {"data": data})()
 
     def upsert(self, data: dict, on_conflict: str = None):
-        headers = {**self.headers, "Prefer": f"resolution=merge-duplicates,return=representation"}
+        headers = {**self.headers, "Prefer": "resolution=merge-duplicates,return=representation"}
         r = httpx.post(
             f"{self.url}/rest/v1/{self.table_name}",
             headers=headers,
             json=data
-        )
-        r.raise_for_status()
-        return type("Result", (), {"data": r.json()})()
-
-    def delete(self):
-        return self
-
-    def eq_delete(self, col, val):
-        r = httpx.delete(
-            f"{self.url}/rest/v1/{self.table_name}?{col}=eq.{val}",
-            headers=self.headers
         )
         r.raise_for_status()
         return type("Result", (), {"data": r.json()})()
