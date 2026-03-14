@@ -36,7 +36,8 @@ export default function MatchupArchivePage() {
   const sortedDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a))
   const totalGames = sortedDates.length
 
-  if (isLoading) return <p style={{ color: "#6b7280" }}>Loading...</p>
+  if (isLoading) return <p style={{ color: "#6b7280", padding: "1rem" }}>Loading matchup...</p>
+  if (!allArticles) return <p style={{ color: "#f87171", padding: "1rem" }}>Could not load articles.</p>
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto", padding: "1rem" }}>
@@ -58,7 +59,8 @@ export default function MatchupArchivePage() {
 
       {sortedDates.length === 0 && (
         <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "2rem", textAlign: "center" }}>
-          <p style={{ color: "#6b7280" }}>No articles found for this matchup yet.</p>
+          <p style={{ color: "#6b7280", margin: 0 }}>No articles found for this matchup yet.</p>
+          <p style={{ color: "#4b5563", fontSize: "0.75rem", margin: "0.5rem 0 0" }}>Matched against: "{opponentName}"</p>
         </div>
       )}
 
