@@ -27,15 +27,15 @@ export default function TweetsPage() {
   const awayWins = awayGames.filter(knicksWon).length
 
   const totals = finished
-    .map((g: any) => (g.home_score ?? 0) + (g.away_score ?? 0))
-    .filter((t: number) => t > 0)
+  .map((g: any) => (g.home_score ?? 0) + (g.away_score ?? 0))
+  .filter((t: number) => t > 0)
 
-  const avgTotal = totals.length
-    ? (totals.reduce((a: number, b: number) => a + b, 0) / totals.length).toFixed(1)
-    : "N/A"
+const avgTotal = totals.length
+  ? (totals.reduce((a: number, b: number) => a + b, 0) / totals.length).toFixed(1)
+  : "N/A"
 
-  const over220 = totals.filter((t: number) => t >= 220).length
-  const under220 = totals.filter((t: number) => t < 220).length
+const over220 = totals.filter((t: number) => t >= 220).length
+const under220 = totals.filter((t: number) => t < 220).length
 
   const margins = finished.map((g: any) => knicksScore(g) - oppScore(g))
 
