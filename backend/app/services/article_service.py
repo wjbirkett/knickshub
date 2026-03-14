@@ -1,4 +1,4 @@
-import anthropic, logging, re, asyncio
+import anthropic, logging, re, asyncio, json
 from datetime import datetime, timezone
 from app.config import settings
 from app.services.nba_stats_service import get_knicks_last5, get_h2h_this_season, get_knicks_team_stats
@@ -35,10 +35,24 @@ def _call_claude(prompt: str) -> str:
     client = _get_client()
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=1500,
+        max_tokens=1800,
         messages=[{"role": "user", "content": prompt}]
     )
     return message.content[0].text
+
+def _parse_key_picks(content: str) -> dict | None:
+    """Extract JSON key picks block from article content."""
+    try:
+        match = re.search(r'```json\s*(\{.*?\})\s*```', content, re.DOTALL)
+        if match:
+            return json.loads(match.group(1))
+    except Exception as e:
+        logger.warning(f"Failed to parse key_picks: {e}")
+    return None
+
+def _strip_key_picks_block(content: str) -> str:
+    """Remove the JSON block from article content."""
+    return re.sub(r'```json\s*\{.*?\}\s*```', '', content, flags=re.DOTALL).strip()
 
 SEASON_FACTS = """
 === VERIFIED 2025-26 SEASON FACTS - USE ONLY THESE, DO NOT INVENT DETAILS ===
@@ -55,6 +69,42 @@ INDIANA SEASON CONTEXT: The Pacers were eliminated from playoff contention on Ma
 
 === END VERIFIED FACTS ===
 """
+
+KEY_PICKS_INSTRUCTION = """
+At the very end of your article, after all other content, append a JSON block in exactly this format (no extra fields, no trailing commas):
+
+```json
+{
+  "spread_pick": "Knicks -8.5",
+  "spread_lean": "COVER",
+  "moneyline_pick": "Knicks ML -350",
+  "moneyline_lean": "WIN",
+  "total_pick": "Under 227.5",
+  "total_lean": "UNDER",
+  "confidence": "High"
+}
+```
+
+Replace the example values with your actual picks. confidence must be one of: "Low", "Medium", "High".
+total_lean must be "OVER" or "UNDER". spread_lean must be "COVER" or "NO COVER". moneyline_lean must be "WIN" or "LOSS".
+"""
+
+PROP_KEY_PICKS_INSTRUCTION = """
+At the very end of your article, after all other content, append a JSON block in exactly this format:
+
+```json
+{
+  "player": "Jalen Brunson",
+  "prop_type": "Points",
+  "pick": "Over 26.5",
+  "lean": "OVER",
+  "confidence": "High"
+}
+```
+
+Replace the example values with your actual picks. lean must be "OVER" or "UNDER". confidence must be one of: "Low", "Medium", "High".
+"""
+
 
 async def generate_game_preview(
     home_team: str,
@@ -117,10 +167,15 @@ Guidelines:
 - Include the phrase "bet responsibly" naturally
 - Only mention players who are actually on the current rosters
 - Target keywords: Knicks prediction, Knicks odds, {away_team} vs {home_team} prediction
+
+{KEY_PICKS_INSTRUCTION}
 """
 
     loop = asyncio.get_event_loop()
-    content = await loop.run_in_executor(None, _call_claude, prompt)
+    raw = await loop.run_in_executor(None, _call_claude, prompt)
+    key_picks = _parse_key_picks(raw)
+    content = _strip_key_picks_block(raw)
+
     title = f"{away_team} vs {home_team} Prediction, Odds & Best Bet - {game_date}"
     slug = slugify(f"{away_team}-vs-{home_team}-prediction-{game_date}")
 
@@ -128,6 +183,7 @@ Guidelines:
         "slug": slug,
         "title": title,
         "content": content,
+        "key_picks": key_picks,
         "game_date": game_date,
         "home_team": home_team,
         "away_team": away_team,
@@ -205,10 +261,15 @@ Guidelines:
 - Sound like a real analyst, not a robot
 - Include "bet responsibly" naturally
 - Target keywords: {player} prop, {player} points tonight, {player} prediction
+
+{PROP_KEY_PICKS_INSTRUCTION}
 """
 
     loop = asyncio.get_event_loop()
-    content = await loop.run_in_executor(None, _call_claude, prompt)
+    raw = await loop.run_in_executor(None, _call_claude, prompt)
+    key_picks = _parse_key_picks(raw)
+    content = _strip_key_picks_block(raw)
+
     player_slug = player.lower().replace(" ", "-")
     title = f"{player} Prop Prediction vs {opponent} - {game_date}"
     slug = slugify(f"{player_slug}-prop-prediction-{game_date}")
@@ -217,6 +278,7 @@ Guidelines:
         "slug": slug,
         "title": title,
         "content": content,
+        "key_picks": key_picks,
         "game_date": game_date,
         "home_team": home_team,
         "away_team": away_team,
@@ -277,15 +339,20 @@ Write the article in this exact structure:
 
 Guidelines:
 - Write 400-600 words
-- Use markdown formatting  
+- Use markdown formatting
 - Be direct and confident — sharp bettors don't hedge
 - Give ONE best bet, not multiple
 - Include "bet responsibly" naturally
 - Target keywords: Knicks best bet tonight, Knicks spread pick, {away_team} vs {home_team} pick
+
+{KEY_PICKS_INSTRUCTION}
 """
 
     loop = asyncio.get_event_loop()
-    content = await loop.run_in_executor(None, _call_claude, prompt)
+    raw = await loop.run_in_executor(None, _call_claude, prompt)
+    key_picks = _parse_key_picks(raw)
+    content = _strip_key_picks_block(raw)
+
     title = f"Best Knicks Bet Tonight vs {opponent} - {game_date}"
     slug = slugify(f"best-knicks-bet-{game_date}")
 
@@ -293,6 +360,7 @@ Guidelines:
         "slug": slug,
         "title": title,
         "content": content,
+        "key_picks": key_picks,
         "game_date": game_date,
         "home_team": home_team,
         "away_team": away_team,

@@ -9,6 +9,74 @@ const TYPE_CONFIG: Record<string, { label: string; bg: string; color: string }> 
   prop:       { label: "PROP BET",   bg: "#4a1d1d", color: "#fca5a5" },
 }
 
+function KeyPicksBox({ picks, articleType }: { picks: any; articleType: string }) {
+  if (!picks) return null
+
+  const isProp = articleType === "prop"
+
+  if (isProp) {
+    const leanColor = picks.lean === "OVER" ? "#4ade80" : "#f87171"
+    const leanBg   = picks.lean === "OVER" ? "#14532d" : "#7f1d1d"
+    const confColor = picks.confidence === "High" ? "#4ade80" : picks.confidence === "Medium" ? "#fbbf24" : "#f87171"
+
+    return (
+      <div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
+        <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>
+          🎯 KEY PICK
+        </p>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <PickCard
+            label={`${picks.player} ${picks.prop_type}`}
+            value={picks.pick}
+            leanBg={leanBg}
+            leanColor={leanColor}
+            lean={picks.lean}
+          />
+          <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+            <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
+            <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const totalLeanColor  = picks.total_lean === "OVER" ? "#4ade80" : "#f87171"
+  const totalLeanBg     = picks.total_lean === "OVER" ? "#14532d" : "#7f1d1d"
+  const spreadLeanColor = picks.spread_lean === "COVER" ? "#4ade80" : "#f87171"
+  const spreadLeanBg    = picks.spread_lean === "COVER" ? "#14532d" : "#7f1d1d"
+  const mlLeanColor     = picks.moneyline_lean === "WIN" ? "#4ade80" : "#f87171"
+  const mlLeanBg        = picks.moneyline_lean === "WIN" ? "#14532d" : "#7f1d1d"
+  const confColor       = picks.confidence === "High" ? "#4ade80" : picks.confidence === "Medium" ? "#fbbf24" : "#f87171"
+
+  return (
+    <div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
+      <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>
+        🎯 KEY PICKS AT A GLANCE
+      </p>
+      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        <PickCard label="Spread" value={picks.spread_pick} leanBg={spreadLeanBg} leanColor={spreadLeanColor} lean={picks.spread_lean} />
+        <PickCard label="Moneyline" value={picks.moneyline_pick} leanBg={mlLeanBg} leanColor={mlLeanColor} lean={picks.moneyline_lean} />
+        <PickCard label="Total" value={picks.total_pick} leanBg={totalLeanBg} leanColor={totalLeanColor} lean={picks.total_lean} />
+        <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+          <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
+          <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PickCard({ label, value, lean, leanBg, leanColor }: { label: string; value: string; lean: string; leanBg: string; leanColor: string }) {
+  return (
+    <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem", minWidth: "120px" }}>
+      <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
+      <span style={{ color: "#f9fafb", fontSize: "0.9rem", fontWeight: 700 }}>{value}</span>
+      <span style={{ background: leanBg, color: leanColor, fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.4rem", borderRadius: "999px", display: "inline-block", width: "fit-content" }}>{lean}</span>
+    </div>
+  )
+}
+
 export default function ArticlePage() {
   const { slug } = useParams<{ slug: string }>()
   const { data: article, isLoading } = useQuery({
@@ -29,7 +97,6 @@ export default function ArticlePage() {
   const description = `Knicks vs ${opponent} prediction, odds, and best bet for ${formattedDate}. Expert analysis, injury report, and picks from KnicksHub.`
   const badge = TYPE_CONFIG[article.article_type] ?? { label: article.article_type?.toUpperCase() ?? "PREVIEW", bg: "#1f2937", color: "#9ca3af" }
 
-  // Related articles: same game date, different slug
   const related = (allArticles ?? []).filter(
     (a: any) => a.game_date === article.game_date && a.slug !== slug
   )
@@ -63,11 +130,14 @@ export default function ArticlePage() {
         </div>
       </div>
 
+      {/* Key Picks Box */}
+      <KeyPicksBox picks={article.key_picks} articleType={article.article_type} />
+
       <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "2rem", marginBottom: "1.5rem" }}>
         {renderContent(article.content)}
       </div>
 
-      {/* Related Articles — internal linking for SEO */}
+      {/* Related Articles */}
       {related.length > 0 && (
         <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
           <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>MORE FOR THIS GAME</p>
