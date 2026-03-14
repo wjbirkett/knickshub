@@ -1,50 +1,70 @@
-import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { Link, useParams } from "react-router-dom"
-import { getArticle, getArticles } from "../../utils/api"
-import { TYPE_CONFIG } from "./ArticlePage"
+// frontend/src/pages/predictions/[matchup].tsx
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { getArticle } from "../../utils/api";
+import { TYPE_CONFIG } from "./ArticlePage";
+
+interface Article {
+  slug: string;
+  title: string;
+  content: string;
+  article_type: string;
+  game_date: string;
+}
 
 export default function MatchupPage() {
-  const { matchup } = useParams<{ matchup: string }>()
-  const { data: article, isLoading } = useQuery({
-    queryKey: ["article", matchup],
-    queryFn: () => getArticle(matchup!),
-    enabled: !!matchup,
-  })
+  const { matchup } = useParams<{ matchup: string }>();
+  const [article, setArticle] = useState<Article | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const { data: allArticles } = useQuery({
-    queryKey: ["articles"],
-    queryFn: () => getArticles(),
-  })
+  useEffect(() => {
+    if (matchup) {
+      setLoading(true);
+      getArticle(matchup)
+        .then((data: Article) => {
+          setArticle(data);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [matchup]);
 
-  const [filter, setFilter] = useState("ALL")
+  if (loading) return <p style={{ color: "#6b7280" }}>Loading matchup...</p>;
+  if (!article) return <p style={{ color: "#6b7280" }}>Matchup not found.</p>;
 
-  if (isLoading) return <p style={{ color: "#6b7280" }}>Loading...</p>
-  if (!article) return <p style={{ color: "#f87171" }}>Article not found.</p>
-
-  const related = (allArticles ?? []).filter(
-    (a: any) => a.game_date === article.game_date && a.slug !== matchup
-  )
+  const badge = TYPE_CONFIG[article.article_type] ?? { label: "PREVIEW", bg: "#1f2937", color: "#9ca3af" };
 
   return (
-    <div style={{ maxWidth: "780px" }}>
-      <Link to="/predictions" style={{ color: "#6b7280", fontSize: "0.8rem", textDecoration: "none", display: "block", marginBottom: "1rem" }}>
-        ← Back to Predictions
-      </Link>
-      <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "2.5rem", color: "#F58426" }}>
+    <div style={{ maxWidth: "900px", margin: "0 auto", padding: "1rem" }}>
+      <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", marginBottom: "0.5rem" }}>
         {article.title}
       </h1>
-      <p>{article.article_type}</p>
-      {related.length > 0 && (
-        <div>
-          <h2>More for this game</h2>
-          {related.map((a: any) => (
-            <Link key={a.slug} to={`/predictions/${a.slug}`}>
-              <p>{a.title}</p>
-            </Link>
-          ))}
-        </div>
-      )}
+      <span
+        style={{
+          background: badge.bg,
+          color: badge.color,
+          fontSize: "0.75rem",
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          padding: "0.2rem 0.6rem",
+          borderRadius: "999px",
+          marginBottom: "1rem",
+          display: "inline-block",
+        }}
+      >
+        {badge.label}
+      </span>
+      <p style={{ color: "#4b5563", fontSize: "0.875rem", marginBottom: "2rem" }}>
+        {new Date(article.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+      </p>
+
+      <div
+        style={{ color: "#f9fafb", fontSize: "0.95rem", lineHeight: 1.5, whiteSpace: "pre-line" }}
+        dangerouslySetInnerHTML={{ __html: article.content }}
+      />
+
+      <Link to="/predictions" style={{ display: "inline-block", marginTop: "2rem", color: "#1d4ed8", textDecoration: "underline" }}>
+        ← Back to Predictions
+      </Link>
     </div>
-  )
+  );
 }
