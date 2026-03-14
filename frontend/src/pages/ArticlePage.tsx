@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async"
 import { useQuery } from "@tanstack/react-query"
 import { useParams, Link } from "react-router-dom"
+import { useState } from "react"
 import { getArticle, getArticles } from "../utils/api"
 
 const TYPE_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
@@ -11,27 +12,17 @@ const TYPE_CONFIG: Record<string, { label: string; bg: string; color: string }> 
 
 function KeyPicksBox({ picks, articleType }: { picks: any; articleType: string }) {
   if (!picks) return null
-
   const isProp = articleType === "prop"
 
   if (isProp) {
     const leanColor = picks.lean === "OVER" ? "#4ade80" : "#f87171"
     const leanBg   = picks.lean === "OVER" ? "#14532d" : "#7f1d1d"
     const confColor = picks.confidence === "High" ? "#4ade80" : picks.confidence === "Medium" ? "#fbbf24" : "#f87171"
-
     return (
       <div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-        <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>
-          🎯 KEY PICK
-        </p>
+        <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>🎯 KEY PICK</p>
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-          <PickCard
-            label={`${picks.player} ${picks.prop_type}`}
-            value={picks.pick}
-            leanBg={leanBg}
-            leanColor={leanColor}
-            lean={picks.lean}
-          />
+          <PickCard label={`${picks.player} ${picks.prop_type}`} value={picks.pick} leanBg={leanBg} leanColor={leanColor} lean={picks.lean} />
           <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
             <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
             <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>
@@ -51,9 +42,7 @@ function KeyPicksBox({ picks, articleType }: { picks: any; articleType: string }
 
   return (
     <div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-      <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>
-        🎯 KEY PICKS AT A GLANCE
-      </p>
+      <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>🎯 KEY PICKS AT A GLANCE</p>
       <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
         <PickCard label="Spread" value={picks.spread_pick} leanBg={spreadLeanBg} leanColor={spreadLeanColor} lean={picks.spread_lean} />
         <PickCard label="Moneyline" value={picks.moneyline_pick} leanBg={mlLeanBg} leanColor={mlLeanColor} lean={picks.moneyline_lean} />
@@ -73,6 +62,56 @@ function PickCard({ label, value, lean, leanBg, leanColor }: { label: string; va
       <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
       <span style={{ color: "#f9fafb", fontSize: "0.9rem", fontWeight: 700 }}>{value}</span>
       <span style={{ background: leanBg, color: leanColor, fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.4rem", borderRadius: "999px", display: "inline-block", width: "fit-content" }}>{lean}</span>
+    </div>
+  )
+}
+
+function ShareButtons({ title, slug }: { title: string; slug: string }) {
+  const [copied, setCopied] = useState(false)
+  const url = `https://knickshub.vercel.app/predictions/${slug}`
+
+  const tweetText = encodeURIComponent(`${title}\n\n${url}\n\n#Knicks #NBA #KnicksTape`)
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
+      <span style={{ color: "#6b7280", fontSize: "0.75rem" }}>Share:</span>
+      <a
+        href={twitterUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "flex", alignItems: "center", gap: "0.4rem",
+          background: "#0d1117", border: "1px solid #1f2937",
+          color: "#f9fafb", padding: "0.35rem 0.75rem",
+          borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 600,
+          textDecoration: "none", transition: "border-color 0.15s",
+        }}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = "#1f2937")}
+      >
+        𝕏 Post
+      </a>
+      <button
+        onClick={handleCopy}
+        style={{
+          display: "flex", alignItems: "center", gap: "0.4rem",
+          background: "#0d1117", border: "1px solid #1f2937",
+          color: copied ? "#4ade80" : "#f9fafb",
+          padding: "0.35rem 0.75rem", borderRadius: "0.4rem",
+          fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
+          transition: "all 0.15s",
+        }}
+      >
+        {copied ? "✓ Copied!" : "🔗 Copy Link"}
+      </button>
     </div>
   )
 }
@@ -124,9 +163,12 @@ export default function ArticlePage() {
 
       <div style={{ marginBottom: "1.5rem" }}>
         <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "2.5rem", letterSpacing: "0.1em", color: "#F58426", lineHeight: 1.2 }}>{article.title}</h1>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginTop: "0.75rem" }}>
-          <span style={{ background: badge.bg, color: badge.color, padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700 }}>{badge.label}</span>
-          <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>{new Date(article.game_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.75rem", flexWrap: "wrap", gap: "0.75rem" }}>
+          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+            <span style={{ background: badge.bg, color: badge.color, padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700 }}>{badge.label}</span>
+            <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>{new Date(article.game_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</span>
+          </div>
+          <ShareButtons title={article.title} slug={slug!} />
         </div>
       </div>
 
