@@ -28,6 +28,7 @@ def generate_article():
     from app.services.article_service import generate_game_preview, generate_best_bet, generate_player_prop, save_article, get_article_by_slug, slugify
     from app.services.nba_service import fetch_schedule, fetch_injury_report, fetch_player_stats
     from app.services.odds_service import fetch_knicks_lines
+    from app.services.twitter_service import post_article_tweet
 
     async def _generate():
         try:
@@ -79,7 +80,7 @@ def generate_article():
                 if ou is not None:
                     over_under = f"{ou}"
 
-            # Generate prediction article
+            # Generate prediction article + tweet
             article = await generate_game_preview(
                 home_team=next_game["home_team"],
                 away_team=next_game["away_team"],
@@ -93,8 +94,9 @@ def generate_article():
             )
             await save_article(article)
             logger.info(f"Cron: prediction article generated for {slug}")
+            await post_article_tweet(article)
 
-            # Generate best bet article
+            # Generate best bet article + tweet
             best_bet = await generate_best_bet(
                 home_team=next_game["home_team"],
                 away_team=next_game["away_team"],
@@ -107,8 +109,9 @@ def generate_article():
             )
             await save_article(best_bet)
             logger.info(f"Cron: best bet article generated")
+            await post_article_tweet(best_bet)
 
-            # Generate Brunson prop article
+            # Generate Brunson prop article + tweet
             brunson_stats = next((s for s in top_stats if "Brunson" in s.get("player_name", "")), None)
             prop = await generate_player_prop(
                 player="Jalen Brunson",
@@ -122,6 +125,7 @@ def generate_article():
             )
             await save_article(prop)
             logger.info(f"Cron: prop article generated")
+            await post_article_tweet(prop)
 
         except Exception as e:
             logger.error(f"Cron: article generation failed: {e}")
@@ -132,7 +136,6 @@ def start_scheduler():
     _scheduler.add_job(refresh_news,     CronTrigger(minute="*/15"))
     _scheduler.add_job(refresh_injuries, CronTrigger(hour="*/3"))
     _scheduler.add_job(refresh_odds,     CronTrigger(hour="*/1"))
-    # Generate all 3 articles every day at 9 AM ET (14:00 UTC)
     _scheduler.add_job(generate_article, CronTrigger(hour=14, minute=0, timezone="UTC"))
     _scheduler.start()
     logger.info("Scheduler started")

@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
 from typing import List
-import os
 
 class Settings(BaseSettings):
     SUPABASE_URL: str = ""
@@ -9,7 +8,7 @@ class Settings(BaseSettings):
     TWITTER_API_KEY: str = ""
     TWITTER_API_SECRET: str = ""
     TWITTER_ACCESS_TOKEN: str = ""
-    TWITTER_ACCESS_SECRET: str = ""
+    TWITTER_ACCESS_TOKEN_SECRET: str = ""  # renamed from TWITTER_ACCESS_SECRET
     TWITTER_BEARER_TOKEN: str = ""
     ANTHROPIC_API_KEY: str = ""
     ENVIRONMENT: str = "development"
