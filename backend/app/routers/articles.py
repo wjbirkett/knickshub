@@ -209,6 +209,7 @@ async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bo
     saved = await save_article(article)
     return {"message": "Article generated", "slug": saved["slug"], "article": saved}
 
+
 @router.post("/test-tweet")
 async def test_tweet():
     from app.services.twitter_service import post_article_tweet
@@ -227,8 +228,23 @@ async def test_tweet():
             "confidence": "High"
         }
     }
-    result = await post_article_tweet(test_article)
-    return {"tweet_url": result}
+    try:
+        result = await post_article_tweet(test_article)
+        return {"tweet_url": result}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.get("/debug-twitter")
+async def debug_twitter():
+    from app.config import settings
+    return {
+        "api_key": bool(settings.TWITTER_API_KEY),
+        "api_secret": bool(settings.TWITTER_API_SECRET),
+        "access_token": bool(settings.TWITTER_ACCESS_TOKEN),
+        "access_token_secret": bool(settings.TWITTER_ACCESS_TOKEN_SECRET),
+    }
+
 
 @router.delete("/{slug}")
 async def delete_article(slug: str):
