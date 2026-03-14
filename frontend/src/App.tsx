@@ -10,6 +10,7 @@ import StatsPage from "./pages/StatsPage"
 import BettingTrendsPage from "./pages/TweetsPage"
 import PredictionsPage from "./pages/PredictionsPage"
 import ArticlePage from "./pages/ArticlePage"
+import MatchupArchivePage from "./pages/MatchupArchivePage"
 import AboutPage from "./pages/AboutPage"
 import TermsPage from "./pages/TermsPage"
 import PrivacyPage from "./pages/PrivacyPage"
@@ -43,51 +44,33 @@ export default function App() {
           <main className="knicks-main">
             <div className="knicks-content">
               <Routes>
-                <Route path="/"                  element={<Dashboard />} />
-                <Route path="/news"              element={<NewsPage />} />
-                <Route path="/injuries"          element={<InjuriesPage />} />
-                <Route path="/betting"           element={<BettingPage />} />
-                <Route path="/schedule"          element={<SchedulePage />} />
-                <Route path="/stats"             element={<StatsPage />} />
-                <Route path="/tweets"            element={<BettingTrendsPage />} />
-                <Route path="/predictions"       element={<PredictionsPage />} />
-                <Route path="/predictions/:slug" element={<ArticlePage />} />
-                <Route path="/about"             element={<AboutPage />} />
-                <Route path="/terms"             element={<TermsPage />} />
-                <Route path="/privacy"           element={<PrivacyPage />} />
+                <Route path="/"                        element={<Dashboard />} />
+                <Route path="/news"                    element={<NewsPage />} />
+                <Route path="/injuries"                element={<InjuriesPage />} />
+                <Route path="/betting"                 element={<BettingPage />} />
+                <Route path="/schedule"                element={<SchedulePage />} />
+                <Route path="/stats"                   element={<StatsPage />} />
+                <Route path="/tweets"                  element={<BettingTrendsPage />} />
+                <Route path="/predictions"             element={<PredictionsPage />} />
+                <Route path="/predictions/:slug"       element={<ArticlePage />} />
+                <Route path="/matchup/:opponent"       element={<MatchupArchivePage />} />
+                <Route path="/about"                   element={<AboutPage />} />
+                <Route path="/terms"                   element={<TermsPage />} />
+                <Route path="/privacy"                 element={<PrivacyPage />} />
               </Routes>
             </div>
 
-            {/* Footer */}
-            <footer style={{
-              borderTop: "1px solid #1f2937",
-              marginTop: "3rem",
-              padding: "1.5rem 0",
-            }}>
+            <footer style={{ borderTop: "1px solid #1f2937", marginTop: "3rem", padding: "1.5rem 0" }}>
               <div style={{ maxWidth: "1200px" }}>
-                {/* Responsible gambling banner */}
-                <div style={{
-                  background: "#0d1117",
-                  border: "1px solid #374151",
-                  borderRadius: "0.5rem",
-                  padding: "0.75rem 1rem",
-                  marginBottom: "1.25rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  flexWrap: "wrap",
-                }}>
+                <div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.5rem", padding: "0.75rem 1rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "1rem" }}>🎰</span>
                   <p style={{ color: "#6b7280", fontSize: "0.75rem", margin: 0, lineHeight: 1.5 }}>
                     <strong style={{ color: "#fbbf24" }}>Gamble Responsibly.</strong>{" "}
                     Sports betting is for entertainment only. Never bet more than you can afford to lose.
                     If you need help: <a href="tel:18005224700" style={{ color: "#F58426", fontWeight: 700 }}>1-800-522-4700</a> (National Problem Gambling Helpline) or{" "}
-                    <a href="tel:18887897777" style={{ color: "#F58426", fontWeight: 700 }}>1-888-789-7777</a> (Connecticut).
-                    Must be 21+.
+                    <a href="tel:18887897777" style={{ color: "#F58426", fontWeight: 700 }}>1-888-789-7777</a> (Connecticut). Must be 21+.
                   </p>
                 </div>
-
-                {/* Footer links */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
                   <div style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
                     <span style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.1rem", letterSpacing: "0.15em", color: "#F58426" }}>KNICKS</span>
@@ -103,9 +86,7 @@ export default function App() {
                       <Link key={to} to={to} style={{ color: "#4b5563", fontSize: "0.75rem", textDecoration: "none" }}
                         onMouseEnter={e => (e.currentTarget.style.color = "#F58426")}
                         onMouseLeave={e => (e.currentTarget.style.color = "#4b5563")}
-                      >
-                        {label}
-                      </Link>
+                      >{label}</Link>
                     ))}
                     <span style={{ color: "#374151", fontSize: "0.75rem" }}>Not affiliated with the NBA or New York Knicks.</span>
                   </div>
