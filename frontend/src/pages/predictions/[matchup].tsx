@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getArticle } from "../../utils/api";
-import { TYPE_CONFIG } from "./ArticlePage";
+import { TYPE_CONFIG } from "../utils/typeConfig";
 
 interface Article {
   slug: string;

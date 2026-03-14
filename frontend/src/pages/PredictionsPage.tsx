@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { getArticles } from "../../utils/api"; // fixed relative path
+import { getArticles } from "../utils/api"; // fixed relative path
 import { TYPE_CONFIG } from "./ArticlePage";
 
 export default function PredictionsPage() {
