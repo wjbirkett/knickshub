@@ -235,7 +235,7 @@ async def test_tweet():
         return {"error": str(e)}
 
 
-@router.get("/debug-twitter")
+@router.post("/debug-twitter")
 async def debug_twitter():
     from app.config import settings
     return {
