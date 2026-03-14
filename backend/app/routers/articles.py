@@ -209,6 +209,26 @@ async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bo
     saved = await save_article(article)
     return {"message": "Article generated", "slug": saved["slug"], "article": saved}
 
+@router.post("/test-tweet")
+async def test_tweet():
+    from app.services.twitter_service import post_article_tweet
+    test_article = {
+        "slug": "test-article",
+        "title": "Test Tweet from KnicksHub",
+        "article_type": "best_bet",
+        "game_date": "2026-03-16",
+        "home_team": "New York Knicks",
+        "away_team": "Golden State Warriors",
+        "key_picks": {
+            "spread_pick": "Knicks -7.5",
+            "spread_lean": "COVER",
+            "total_pick": "Under 227.5",
+            "total_lean": "UNDER",
+            "confidence": "High"
+        }
+    }
+    result = await post_article_tweet(test_article)
+    return {"tweet_url": result}
 
 @router.delete("/{slug}")
 async def delete_article(slug: str):
