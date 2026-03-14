@@ -110,7 +110,7 @@ async def post_article_tweet(article: dict) -> str | None:
             lambda: client.create_tweet(text=tweet_text)
         )
         tweet_id = response.data["id"]
-        tweet_url = f"https://twitter.com/KnicksHub/status/{tweet_id}"
+        tweet_url = f"https://twitter.com/pantyraidaa/status/{tweet_id}"
         logger.info(f"Tweet posted: {tweet_url}")
         return tweet_url
     except Exception as e:
