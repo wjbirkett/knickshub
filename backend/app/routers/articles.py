@@ -210,6 +210,24 @@ async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bo
     return {"message": "Article generated", "slug": saved["slug"], "article": saved}
 
 
+@router.post("/generate/history")
+async def generate_history_article_endpoint(force: bool = False):
+    from datetime import datetime
+    from app.services.article_service import generate_history_article, slugify
+    today_str = str(date.today())
+    dt = datetime.strptime(today_str, "%Y-%m-%d")
+    month = dt.strftime("%B")
+    day = dt.day
+    slug = slugify(f"this-day-in-knicks-history-{month}-{day}")
+    if not force:
+        existing = await get_article_by_slug(slug)
+        if existing:
+            return {"message": "History article already exists", "slug": slug, "article": existing}
+    article = await generate_history_article(today_str)
+    saved = await save_article(article)
+    return {"message": "History article generated", "slug": saved["slug"], "article": saved}
+
+
 @router.post("/test-tweet")
 async def test_tweet():
     from app.services.twitter_service import post_article_tweet

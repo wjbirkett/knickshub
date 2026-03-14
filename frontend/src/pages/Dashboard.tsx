@@ -7,6 +7,7 @@ const ARTICLE_BADGE: Record<string, { bg: string; color: string; label: string }
   prediction: { bg: "#0c1a4b", color: "#93c5fd", label: "PREDICTION" },
   best_bet:   { bg: "#14532d", color: "#86efac", label: "BEST BET" },
   prop:       { bg: "#4a1d1d", color: "#fca5a5", label: "PROP BET" },
+  history:    { bg: "#2e1a4b", color: "#d8b4fe", label: "HISTORY" },
 }
 
 export default function Dashboard() {
@@ -36,6 +37,9 @@ export default function Dashboard() {
   }
 
   const recentArticles = (articles ?? []).slice(0, 3)
+  const sectionTitle = recentArticles.length > 0 && recentArticles[0]?.article_type === "history"
+    ? "THIS DAY IN KNICKS HISTORY"
+    : "LATEST PREDICTIONS"
 
   return (
     <div style={{ maxWidth: "1200px" }}>
@@ -53,7 +57,6 @@ export default function Dashboard() {
         }
       `}</style>
 
-      {/* Header */}
       <div className="db-header">
         <h1 className="db-title" style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>
           DASHBOARD
@@ -61,7 +64,6 @@ export default function Dashboard() {
         <p style={{ color: "#6b7280", margin: "0.25rem 0 0", fontSize: "0.875rem" }}>Everything Knicks, all in one place.</p>
       </div>
 
-      {/* Record bar */}
       {knicks && (
         <div className="db-record">
           {[
@@ -79,7 +81,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Next game + last game */}
       <div className="db-games">
         {nextGame && (
           <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
@@ -110,10 +111,7 @@ export default function Dashboard() {
               const kWon = (lastGame.home_team.includes("Knicks") && lastGame.home_score > lastGame.away_score) ||
                            (lastGame.away_team.includes("Knicks") && lastGame.away_score > lastGame.home_score)
               return (
-                <span style={{
-                  display: "inline-block", padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700,
-                  background: kWon ? "#14532d" : "#7f1d1d", color: kWon ? "#4ade80" : "#f87171"
-                }}>
+                <span style={{ display: "inline-block", padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700, background: kWon ? "#14532d" : "#7f1d1d", color: kWon ? "#4ade80" : "#f87171" }}>
                   {kWon ? "WIN" : "LOSS"}
                 </span>
               )
@@ -122,17 +120,14 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Main 2-col grid */}
       <div className="db-main">
-
-        {/* Left: Predictions + News */}
         <div style={{ minWidth: 0 }}>
 
           {recentArticles.length > 0 && (
             <div style={{ marginBottom: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
                 <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>
-                  LATEST PREDICTIONS
+                  {sectionTitle}
                 </h2>
                 <Link to="/predictions" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View all →</Link>
               </div>
@@ -142,25 +137,15 @@ export default function Dashboard() {
                   return (
                     <Link key={a.slug} to={`/predictions/${a.slug}`} style={{ textDecoration: "none" }}>
                       <div
-                        style={{
-                          background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem",
-                          padding: "1rem", display: "flex", alignItems: "flex-start", gap: "0.75rem",
-                          transition: "border-color 0.15s",
-                        }}
+                        style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1rem", display: "flex", alignItems: "flex-start", gap: "0.75rem", transition: "border-color 0.15s" }}
                         onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")}
                         onMouseLeave={e => (e.currentTarget.style.borderColor = "#1f2937")}
                       >
-                        <span style={{
-                          display: "inline-block", background: badge.bg, color: badge.color, flexShrink: 0,
-                          fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em",
-                          padding: "0.2rem 0.6rem", borderRadius: "999px", marginTop: "0.1rem"
-                        }}>
+                        <span style={{ display: "inline-block", background: badge.bg, color: badge.color, flexShrink: 0, fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", padding: "0.2rem 0.6rem", borderRadius: "999px", marginTop: "0.1rem" }}>
                           {badge.label}
                         </span>
                         <div>
-                          <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.25rem", lineHeight: 1.4 }}>
-                            {a.title}
-                          </p>
+                          <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.25rem", lineHeight: 1.4 }}>{a.title}</p>
                           <p style={{ color: "#4b5563", fontSize: "0.72rem", margin: 0 }}>
                             {new Date(a.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                           </p>
@@ -173,7 +158,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* News */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
               <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>LATEST NEWS</h2>
@@ -185,7 +169,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right column */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
@@ -227,15 +210,10 @@ export default function Dashboard() {
               { label: "Knicks Twitter/X", url: "https://twitter.com/nyknicks" },
               { label: "MSG Networks",     url: "https://www.msgsports.com/knicks/" },
             ].map(l => (
-              <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{
-                display: "block", color: "#006BB6", fontSize: "0.85rem", padding: "0.35rem 0",
-                textDecoration: "none", borderBottom: "1px solid #1f2937"
-              }}
+              <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", color: "#006BB6", fontSize: "0.85rem", padding: "0.35rem 0", textDecoration: "none", borderBottom: "1px solid #1f2937" }}
                 onMouseEnter={e => (e.currentTarget.style.color = "#F58426")}
                 onMouseLeave={e => (e.currentTarget.style.color = "#006BB6")}
-              >
-                {l.label}
-              </a>
+              >{l.label}</a>
             ))}
           </div>
         </div>

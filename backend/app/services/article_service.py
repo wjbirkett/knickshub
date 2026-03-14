@@ -14,6 +14,9 @@ def slugify(text: str) -> str:
     text = re.sub(r'[\s_-]+', '-', text)
     return text
 
+def _ordinal(n: int) -> str:
+    return str(n) + ("th" if 11 <= n <= 13 else {1:"st",2:"nd",3:"rd"}.get(n%10,"th"))
+
 def _format_injuries(injuries):
     return "\n".join([f"- {i['player_name']}: {i['status']} ({i['reason']})" for i in injuries]) or "None reported"
 
@@ -41,7 +44,6 @@ def _call_claude(prompt: str) -> str:
     return message.content[0].text
 
 def _parse_key_picks(content: str) -> dict | None:
-    """Extract JSON key picks block from article content."""
     try:
         match = re.search(r'```json\s*(\{.*?\})\s*```', content, re.DOTALL)
         if match:
@@ -51,7 +53,6 @@ def _parse_key_picks(content: str) -> dict | None:
     return None
 
 def _strip_key_picks_block(content: str) -> str:
-    """Remove the JSON block from article content."""
     return re.sub(r'```json\s*\{.*?\}\s*```', '', content, flags=re.DOTALL).strip()
 
 SEASON_FACTS = """
@@ -107,15 +108,9 @@ Replace the example values with your actual picks. lean must be "OVER" or "UNDER
 
 
 async def generate_game_preview(
-    home_team: str,
-    away_team: str,
-    game_date: str,
-    spread: str = "N/A",
-    moneyline: str = "N/A",
-    over_under: str = "N/A",
-    injuries: list = [],
-    recent_games: list = [],
-    top_stats: list = [],
+    home_team: str, away_team: str, game_date: str,
+    spread: str = "N/A", moneyline: str = "N/A", over_under: str = "N/A",
+    injuries: list = [], recent_games: list = [], top_stats: list = [],
 ) -> dict:
     opponent = away_team if away_team != "New York Knicks" else home_team
     injury_text = _format_injuries(injuries)
@@ -175,46 +170,24 @@ Guidelines:
     raw = await loop.run_in_executor(None, _call_claude, prompt)
     key_picks = _parse_key_picks(raw)
     content = _strip_key_picks_block(raw)
-
     title = f"{away_team} vs {home_team} Prediction, Odds & Best Bet - {game_date}"
     slug = slugify(f"{away_team}-vs-{home_team}-prediction-{game_date}")
-
     return {
-        "slug": slug,
-        "title": title,
-        "content": content,
-        "key_picks": key_picks,
-        "game_date": game_date,
-        "home_team": home_team,
-        "away_team": away_team,
-        "article_type": "prediction",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "slug": slug, "title": title, "content": content, "key_picks": key_picks,
+        "game_date": game_date, "home_team": home_team, "away_team": away_team,
+        "article_type": "prediction", "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
 async def generate_player_prop(
-    player: str,
-    home_team: str,
-    away_team: str,
-    game_date: str,
-    player_stats: dict = None,
-    injuries: list = [],
-    top_stats: list = [],
-    over_under: str = "N/A",
+    player: str, home_team: str, away_team: str, game_date: str,
+    player_stats: dict = None, injuries: list = [], top_stats: list = [], over_under: str = "N/A",
 ) -> dict:
     opponent = away_team if away_team != "New York Knicks" else home_team
     injury_text = _format_injuries(injuries)
     stats_text = _format_stats(top_stats)
     recent_text, h2h_text, team_stats_text = await _fetch_nba_context(opponent)
-
-    player_line = ""
-    if player_stats:
-        ppg = player_stats.get("points_per_game", "N/A")
-        rpg = player_stats.get("rebounds_per_game", "N/A")
-        apg = player_stats.get("assists_per_game", "N/A")
-        player_line = f"{player} season averages: {ppg} PPG, {rpg} RPG, {apg} APG"
-    else:
-        player_line = f"{player} stats unavailable"
+    player_line = f"{player} season averages: {player_stats.get('points_per_game','N/A')} PPG, {player_stats.get('rebounds_per_game','N/A')} RPG, {player_stats.get('assists_per_game','N/A')} APG" if player_stats else f"{player} stats unavailable"
 
     prompt = f"""You are a sports analyst writing a player prop prediction article for a New York Knicks fan site called KnicksHub.
 
@@ -269,33 +242,20 @@ Guidelines:
     raw = await loop.run_in_executor(None, _call_claude, prompt)
     key_picks = _parse_key_picks(raw)
     content = _strip_key_picks_block(raw)
-
     player_slug = player.lower().replace(" ", "-")
     title = f"{player} Prop Prediction vs {opponent} - {game_date}"
     slug = slugify(f"{player_slug}-prop-prediction-{game_date}")
-
     return {
-        "slug": slug,
-        "title": title,
-        "content": content,
-        "key_picks": key_picks,
-        "game_date": game_date,
-        "home_team": home_team,
-        "away_team": away_team,
-        "article_type": "prop",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "slug": slug, "title": title, "content": content, "key_picks": key_picks,
+        "game_date": game_date, "home_team": home_team, "away_team": away_team,
+        "article_type": "prop", "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
 async def generate_best_bet(
-    home_team: str,
-    away_team: str,
-    game_date: str,
-    spread: str = "N/A",
-    moneyline: str = "N/A",
-    over_under: str = "N/A",
-    injuries: list = [],
-    top_stats: list = [],
+    home_team: str, away_team: str, game_date: str,
+    spread: str = "N/A", moneyline: str = "N/A", over_under: str = "N/A",
+    injuries: list = [], top_stats: list = [],
 ) -> dict:
     opponent = away_team if away_team != "New York Knicks" else home_team
     injury_text = _format_injuries(injuries)
@@ -352,20 +312,56 @@ Guidelines:
     raw = await loop.run_in_executor(None, _call_claude, prompt)
     key_picks = _parse_key_picks(raw)
     content = _strip_key_picks_block(raw)
-
     title = f"Best Knicks Bet Tonight vs {opponent} - {game_date}"
     slug = slugify(f"best-knicks-bet-{game_date}")
-
     return {
-        "slug": slug,
-        "title": title,
-        "content": content,
-        "key_picks": key_picks,
-        "game_date": game_date,
-        "home_team": home_team,
-        "away_team": away_team,
-        "article_type": "best_bet",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "slug": slug, "title": title, "content": content, "key_picks": key_picks,
+        "game_date": game_date, "home_team": home_team, "away_team": away_team,
+        "article_type": "best_bet", "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+async def generate_history_article(game_date: str) -> dict:
+    """Generate a 'This Day in Knicks History' article for a given date."""
+    dt = datetime.strptime(game_date, "%Y-%m-%d")
+    month = dt.strftime("%B")
+    day = dt.day
+    day_str = _ordinal(day)
+
+    prompt = f"""You are a New York Knicks historian writing a "This Day in Knicks History" article for KnicksHub.
+
+Today's date: {month} {day_str}
+
+Write a deep-dive article about ONE significant, well-documented event in New York Knicks history that occurred on {month} {day_str} in any year.
+
+Choose the most historically significant or memorable event you are CERTAIN happened on this date. Only write about events you are highly confident about — major games, trades, draft picks, milestones, championships, or franchise moments that are well-documented in NBA history.
+
+Write the article in this exact structure:
+1. # This Day in Knicks History: {month} {day_str} (use this exact heading)
+2. A compelling intro paragraph (2-3 sentences setting the scene and the year)
+3. ## The Story (full narrative of what happened, who was involved, the context, the drama)
+4. ## Why It Still Matters (the lasting significance for the franchise and its fans)
+5. ## By The Numbers (4-6 key stats or facts from the event, formatted as a clean list)
+
+Guidelines:
+- Write 400-600 words total
+- Use markdown formatting
+- Be specific with years, players, scores, opponents, and context
+- Write with the passion and knowledge of a lifelong Knicks fan
+- If you cannot recall a specific well-documented event for this exact date with HIGH confidence, write about the most significant event from within a few days of this date in any year and note the actual date in your intro
+- DO NOT invent or fabricate statistics, scores, or events — accuracy is critical
+- End with one sentence connecting the historical moment to the current Knicks era
+- Target keywords: Knicks history, New York Knicks {month} {day_str}, this day in Knicks history
+"""
+
+    loop = asyncio.get_event_loop()
+    content = await loop.run_in_executor(None, _call_claude, prompt)
+    title = f"This Day in Knicks History: {month} {day_str}"
+    slug = slugify(f"this-day-in-knicks-history-{month}-{day}")
+    return {
+        "slug": slug, "title": title, "content": content, "key_picks": None,
+        "game_date": game_date, "home_team": "New York Knicks", "away_team": "New York Knicks",
+        "article_type": "history", "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 

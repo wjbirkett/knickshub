@@ -4,14 +4,15 @@ import { useParams, Link } from "react-router-dom"
 import { useState } from "react"
 import { getArticle, getArticles } from "../utils/api"
 
-const TYPE_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
+export const TYPE_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
   prediction: { label: "PREDICTION", bg: "#0c1a4b", color: "#93c5fd" },
   best_bet:   { label: "BEST BET",   bg: "#14532d", color: "#86efac" },
   prop:       { label: "PROP BET",   bg: "#4a1d1d", color: "#fca5a5" },
+  history:    { label: "HISTORY",    bg: "#2e1a4b", color: "#d8b4fe" },
 }
 
 function KeyPicksBox({ picks, articleType }: { picks: any; articleType: string }) {
-  if (!picks) return null
+  if (!picks || articleType === "history") return null
   const isProp = articleType === "prop"
 
   if (isProp) {
@@ -69,7 +70,6 @@ function PickCard({ label, value, lean, leanBg, leanColor }: { label: string; va
 function ShareButtons({ title, slug }: { title: string; slug: string }) {
   const [copied, setCopied] = useState(false)
   const url = `https://knickshub.vercel.app/predictions/${slug}`
-
   const tweetText = encodeURIComponent(`${title}\n\n${url}\n\n#Knicks #NBA #KnicksTape`)
   const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`
 
@@ -83,35 +83,14 @@ function ShareButtons({ title, slug }: { title: string; slug: string }) {
   return (
     <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
       <span style={{ color: "#6b7280", fontSize: "0.75rem" }}>Share:</span>
-      <a
-        href={twitterUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          display: "flex", alignItems: "center", gap: "0.4rem",
-          background: "#0d1117", border: "1px solid #1f2937",
-          color: "#f9fafb", padding: "0.35rem 0.75rem",
-          borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 600,
-          textDecoration: "none", transition: "border-color 0.15s",
-        }}
+      <a href={twitterUrl} target="_blank" rel="noopener noreferrer"
+        style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "#0d1117", border: "1px solid #1f2937", color: "#f9fafb", padding: "0.35rem 0.75rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 600, textDecoration: "none" }}
         onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")}
         onMouseLeave={e => (e.currentTarget.style.borderColor = "#1f2937")}
-      >
-        𝕏 Post
-      </a>
-      <button
-        onClick={handleCopy}
-        style={{
-          display: "flex", alignItems: "center", gap: "0.4rem",
-          background: "#0d1117", border: "1px solid #1f2937",
-          color: copied ? "#4ade80" : "#f9fafb",
-          padding: "0.35rem 0.75rem", borderRadius: "0.4rem",
-          fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
-          transition: "all 0.15s",
-        }}
-      >
-        {copied ? "✓ Copied!" : "🔗 Copy Link"}
-      </button>
+      >𝕏 Post</a>
+      <button onClick={handleCopy}
+        style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "#0d1117", border: "1px solid #1f2937", color: copied ? "#4ade80" : "#f9fafb", padding: "0.35rem 0.75rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}
+      >{copied ? "✓ Copied!" : "🔗 Copy Link"}</button>
     </div>
   )
 }
@@ -131,13 +110,16 @@ export default function ArticlePage() {
   if (isLoading) return <p style={{ color: "#6b7280" }}>Loading...</p>
   if (!article) return <p style={{ color: "#f87171" }}>Article not found.</p>
 
+  const isHistory = article.article_type === "history"
   const opponent = article.home_team === "New York Knicks" ? article.away_team : article.home_team
   const formattedDate = new Date(article.game_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
-  const description = `Knicks vs ${opponent} prediction, odds, and best bet for ${formattedDate}. Expert analysis, injury report, and picks from KnicksHub.`
-  const badge = TYPE_CONFIG[article.article_type] ?? { label: article.article_type?.toUpperCase() ?? "PREVIEW", bg: "#1f2937", color: "#9ca3af" }
+  const description = isHistory
+    ? `${article.title} — Knicks history and memorable moments from KnicksHub.`
+    : `Knicks vs ${opponent} prediction, odds, and best bet for ${formattedDate}. Expert analysis, injury report, and picks from KnicksHub.`
+  const badge = TYPE_CONFIG[article.article_type] ?? { label: "PREVIEW", bg: "#1f2937", color: "#9ca3af" }
 
   const related = (allArticles ?? []).filter(
-    (a: any) => a.game_date === article.game_date && a.slug !== slug
+    (a: any) => a.game_date === article.game_date && a.slug !== slug && a.article_type !== "history"
   )
 
   const renderContent = (content: string) =>
@@ -145,7 +127,7 @@ export default function ArticlePage() {
       if (line.startsWith("## ")) return <h2 key={i} style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.5rem", letterSpacing: "0.1em", color: "#F58426", margin: "1.5rem 0 0.75rem" }}>{line.replace("## ", "")}</h2>
       if (line.startsWith("# ")) return <h1 key={i} style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "2rem", letterSpacing: "0.1em", color: "#F58426", margin: "1.5rem 0 0.75rem" }}>{line.replace("# ", "")}</h1>
       if (line.trim() === "") return <br key={i} />
-      return <p key={i} style={{ color: "#d1d5db", lineHeight: 1.75, margin: "0 0 0.75rem", fontSize: "0.95rem" }} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") }} />
+      return <p key={i} style={{ color: "#d1d5db", lineHeight: 1.75, margin: "0 0 0.75rem", fontSize: "0.95rem" }} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\*(.*?)\*/g, "<em>$1</em>") }} />
     })
 
   return (
@@ -172,14 +154,12 @@ export default function ArticlePage() {
         </div>
       </div>
 
-      {/* Key Picks Box */}
       <KeyPicksBox picks={article.key_picks} articleType={article.article_type} />
 
       <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "2rem", marginBottom: "1.5rem" }}>
         {renderContent(article.content)}
       </div>
 
-      {/* Related Articles */}
       {related.length > 0 && (
         <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
           <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>MORE FOR THIS GAME</p>
@@ -197,19 +177,22 @@ export default function ArticlePage() {
         </div>
       )}
 
-      {/* DraftKings CTA */}
-      <div style={{ background: "#0c1a4b", border: "1px solid #1d4ed8", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-        <div>
-          <p style={{ color: "#f9fafb", fontWeight: 700, margin: "0 0 0.25rem" }}>Ready to bet on the Knicks?</p>
-          <p style={{ color: "#93c5fd", fontSize: "0.8rem", margin: 0 }}>Get a welcome bonus at DraftKings Sportsbook</p>
+      {!isHistory && (
+        <div style={{ background: "#0c1a4b", border: "1px solid #1d4ed8", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <p style={{ color: "#f9fafb", fontWeight: 700, margin: "0 0 0.25rem" }}>Ready to bet on the Knicks?</p>
+            <p style={{ color: "#93c5fd", fontSize: "0.8rem", margin: 0 }}>Get a welcome bonus at DraftKings Sportsbook</p>
+          </div>
+          <a href="https://www.draftkings.com" target="_blank" rel="noopener noreferrer" style={{ background: "#F58426", color: "#000", padding: "0.6rem 1.25rem", borderRadius: "0.5rem", fontWeight: 700, fontSize: "0.875rem", textDecoration: "none" }}>
+            Bet at DraftKings →
+          </a>
         </div>
-        <a href="https://www.draftkings.com" target="_blank" rel="noopener noreferrer" style={{ background: "#F58426", color: "#000", padding: "0.6rem 1.25rem", borderRadius: "0.5rem", fontWeight: 700, fontSize: "0.875rem", textDecoration: "none" }}>
-          Bet at DraftKings →
-        </a>
-      </div>
+      )}
 
       <p style={{ color: "#374151", fontSize: "0.7rem", textAlign: "center" }}>
-        Predictions are for entertainment purposes only. Must be 21+ and located in a state where sports betting is legal. Please bet responsibly.
+        {isHistory
+          ? "Historical content is AI-generated for entertainment. Always verify facts independently."
+          : "Predictions are for entertainment purposes only. Must be 21+ and located in a state where sports betting is legal. Please bet responsibly."}
       </p>
     </div>
   )

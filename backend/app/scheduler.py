@@ -43,10 +43,16 @@ def generate_article():
 
             next_game = next((g for g in games if get_date(g) >= today and g["status"] != "Final"), None)
             if not next_game:
-                logger.info("Cron: no upcoming game found, skipping article generation")
+                logger.info("Cron: no upcoming game found, skipping betting article generation")
                 return
 
             game_date_str = str(next_game["game_date"])[:10]
+
+            # Only generate if next game is TODAY
+            if game_date_str != str(today):
+                logger.info(f"Cron: next game is {game_date_str}, not today — skipping betting articles")
+                return
+
             slug = slugify(f"{next_game['away_team']}-vs-{next_game['home_team']}-prediction-{game_date_str}")
             existing = await get_article_by_slug(slug)
             if existing:
@@ -55,10 +61,8 @@ def generate_article():
 
             injuries_raw = await fetch_injury_report()
             injuries = [i.model_dump() if hasattr(i, "model_dump") else i for i in injuries_raw]
-
             stats_raw = await fetch_player_stats()
             top_stats = [s.model_dump() if hasattr(s, "model_dump") else s for s in stats_raw[:8]] if stats_raw else []
-
             odds_raw = await fetch_knicks_lines()
             odds = [o.model_dump() if hasattr(o, "model_dump") else o for o in odds_raw]
             spread = moneyline = over_under = "N/A"
@@ -72,53 +76,31 @@ def generate_article():
                 ou = o.get("over_under")
                 knicks_ml = ml_away if is_knicks_away else ml_home
                 knicks_spread = (-raw_spread if is_knicks_away else raw_spread) if raw_spread is not None else None
-                if knicks_spread is not None:
-                    spread = f"{knicks_spread:+.1f}"
-                if knicks_ml is not None:
-                    moneyline = f"{knicks_ml:+d}"
-                if ou is not None:
-                    over_under = f"{ou}"
+                if knicks_spread is not None: spread = f"{knicks_spread:+.1f}"
+                if knicks_ml is not None: moneyline = f"{knicks_ml:+d}"
+                if ou is not None: over_under = f"{ou}"
 
-            # Generate prediction article
             article = await generate_game_preview(
-                home_team=next_game["home_team"],
-                away_team=next_game["away_team"],
-                game_date=game_date_str,
-                spread=spread,
-                moneyline=moneyline,
-                over_under=over_under,
-                injuries=injuries,
-                recent_games=games,
-                top_stats=top_stats,
+                home_team=next_game["home_team"], away_team=next_game["away_team"],
+                game_date=game_date_str, spread=spread, moneyline=moneyline, over_under=over_under,
+                injuries=injuries, recent_games=games, top_stats=top_stats,
             )
             await save_article(article)
             logger.info(f"Cron: prediction article generated for {slug}")
 
-            # Generate best bet article
             best_bet = await generate_best_bet(
-                home_team=next_game["home_team"],
-                away_team=next_game["away_team"],
-                game_date=game_date_str,
-                spread=spread,
-                moneyline=moneyline,
-                over_under=over_under,
-                injuries=injuries,
-                top_stats=top_stats,
+                home_team=next_game["home_team"], away_team=next_game["away_team"],
+                game_date=game_date_str, spread=spread, moneyline=moneyline, over_under=over_under,
+                injuries=injuries, top_stats=top_stats,
             )
             await save_article(best_bet)
             logger.info(f"Cron: best bet article generated")
 
-            # Generate Brunson prop article
             brunson_stats = next((s for s in top_stats if "Brunson" in s.get("player_name", "")), None)
             prop = await generate_player_prop(
-                player="Jalen Brunson",
-                home_team=next_game["home_team"],
-                away_team=next_game["away_team"],
-                game_date=game_date_str,
-                player_stats=brunson_stats,
-                injuries=injuries,
-                top_stats=top_stats,
-                over_under=over_under,
+                player="Jalen Brunson", home_team=next_game["home_team"], away_team=next_game["away_team"],
+                game_date=game_date_str, player_stats=brunson_stats,
+                injuries=injuries, top_stats=top_stats, over_under=over_under,
             )
             await save_article(prop)
             logger.info(f"Cron: prop article generated")
@@ -128,11 +110,65 @@ def generate_article():
 
     _run_async(_generate())
 
+
+def generate_history_article():
+    from datetime import date
+    from app.services.article_service import generate_history_article as gen_history, save_article, get_article_by_slug, slugify
+    from app.services.nba_service import fetch_schedule
+
+    async def _generate():
+        try:
+            today = date.today()
+            today_str = str(today)
+
+            # Check if there's a game today — skip history article on game days
+            games_raw = await fetch_schedule()
+            games = [g.model_dump() if hasattr(g, "model_dump") else g for g in games_raw]
+
+            def get_date(g):
+                d = g["game_date"]
+                if isinstance(d, date):
+                    return d
+                return date.fromisoformat(str(d)[:10])
+
+            has_game_today = any(
+                str(get_date(g)) == today_str and g["status"] != "Final"
+                for g in games
+            )
+
+            if has_game_today:
+                logger.info("Cron: game today — skipping history article")
+                return
+
+            # Check if history article already exists for today
+            from datetime import datetime
+            dt = datetime.strptime(today_str, "%Y-%m-%d")
+            month = dt.strftime("%B")
+            day = dt.day
+            slug = slugify(f"this-day-in-knicks-history-{month}-{day}")
+            existing = await get_article_by_slug(slug)
+            if existing:
+                logger.info(f"Cron: history article already exists for {today_str}, skipping")
+                return
+
+            article = await gen_history(today_str)
+            await save_article(article)
+            logger.info(f"Cron: history article generated for {today_str}")
+
+        except Exception as e:
+            logger.error(f"Cron: history article generation failed: {e}")
+
+    _run_async(_generate())
+
+
 def start_scheduler():
-    _scheduler.add_job(refresh_news,     CronTrigger(minute="*/15"))
-    _scheduler.add_job(refresh_injuries, CronTrigger(hour="*/3"))
-    _scheduler.add_job(refresh_odds,     CronTrigger(hour="*/1"))
-    _scheduler.add_job(generate_article, CronTrigger(hour=14, minute=0, timezone="UTC"))
+    _scheduler.add_job(refresh_news,             CronTrigger(minute="*/15"))
+    _scheduler.add_job(refresh_injuries,         CronTrigger(hour="*/3"))
+    _scheduler.add_job(refresh_odds,             CronTrigger(hour="*/1"))
+    # Betting articles: game days only, 9am ET (14:00 UTC)
+    _scheduler.add_job(generate_article,         CronTrigger(hour=14, minute=0, timezone="UTC"))
+    # History articles: off days only, 10am ET (15:00 UTC)
+    _scheduler.add_job(generate_history_article, CronTrigger(hour=15, minute=0, timezone="UTC"))
     _scheduler.start()
     logger.info("Scheduler started")
 
