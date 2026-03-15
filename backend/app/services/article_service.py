@@ -34,6 +34,41 @@ async def _fetch_nba_context(opponent):
         logger.warning(f"nba_api enrichment failed: {e}")
         return "Recent game data unavailable", "H2H data unavailable", "Team stats unavailable"
 
+
+async def _fetch_opponent_injuries(opponent: str) -> str:
+    try:
+        import httpx
+        TEAM_IDS = {"atlanta hawks": "1", "boston celtics": "2", "brooklyn nets": "17", "charlotte hornets": "30", "chicago bulls": "4", "cleveland cavaliers": "5", "dallas mavericks": "6", "denver nuggets": "7", "detroit pistons": "8", "golden state warriors": "9", "houston rockets": "10", "indiana pacers": "11", "la clippers": "12", "los angeles clippers": "12", "los angeles lakers": "13", "memphis grizzlies": "29", "miami heat": "14", "milwaukee bucks": "15", "minnesota timberwolves": "16", "new orleans pelicans": "3", "new york knicks": "18", "oklahoma city thunder": "25", "orlando magic": "19", "philadelphia 76ers": "20", "phoenix suns": "21", "portland trail blazers": "22", "sacramento kings": "23", "san antonio spurs": "24", "toronto raptors": "28", "utah jazz": "26", "washington wizards": "27"}
+        team_key = opponent.lower().strip()
+        team_id = TEAM_IDS.get(team_key)
+        if not team_id:
+            for key, val in TEAM_IDS.items():
+                if any(word in team_key for word in key.split() if len(word) > 3):
+                    team_id = val
+                    break
+        if not team_id:
+            return f"Opponent injury data unavailable for {opponent}"
+        url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{team_id}/injuries"
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            data = resp.json()
+        injuries = data.get("injuries", [])
+        if not injuries:
+            return f"No injuries reported for {opponent}"
+        lines = []
+        for inj in injuries:
+            athlete = inj.get("athlete", {})
+            name = athlete.get("displayName", "Unknown")
+            status = inj.get("status", "Unknown")
+            detail = inj.get("details", {})
+            reason = detail.get("type", inj.get("longComment", "Undisclosed"))
+            lines.append(f"- {name}: {status} ({reason})")
+        return "\n".join(lines) if lines else f"No injuries reported for {opponent}"
+    except Exception as e:
+        logger.warning(f"Opponent injury fetch failed for {opponent}: {e}")
+        return f"Opponent injury data unavailable for {opponent}"
+
 def _call_claude(prompt: str) -> str:
     client = _get_client()
     message = client.messages.create(
