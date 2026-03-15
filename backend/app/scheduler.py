@@ -106,7 +106,8 @@ def generate_article(force: bool = False):
                     return d
                 return date.fromisoformat(str(d)[:10])
 
-            next_game = next((g for g in games if get_date(g) == today and g["status"] != "Final"), None)
+            tomorrow = today + timedelta(days=1)
+            next_game = next((g for g in games if get_date(g) in (today, tomorrow) and g["status"] != "Final"), None)
             if not next_game:
                 logger.info("Cron: could not find today's game in schedule — skipping")
                 return
