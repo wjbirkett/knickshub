@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
 from fastapi.responses import Response
 from app.services.article_service import (
@@ -166,7 +167,7 @@ async def generate_player_prop_article(background_tasks: BackgroundTasks, player
             over_under=over_under,
         )
         await save_article(article)
-    background_tasks.add_task(_gen)
+    asyncio.create_task(_gen())
     return {"message": "Article generation started", "slug": slug}
 
 
@@ -216,7 +217,7 @@ async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bo
             top_stats=top_stats,
         )
         await save_article(article)
-    background_tasks.add_task(_gen_best_bet)
+    asyncio.create_task(_gen_best_bet())
     return {"message": "Article generation started", "slug": slug}
 
 
