@@ -95,17 +95,20 @@ def _strip_key_picks_block(content: str) -> str:
     return re.sub(r'```json\s*\{.*?\}\s*```', '', content, flags=re.DOTALL).strip()
 
 SEASON_FACTS = """
-=== VERIFIED 2025-26 SEASON FACTS - USE ONLY THESE, DO NOT INVENT DETAILS ===
+=== VERIFIED 2025-26 SEASON FACTS ===
 
-KNICKS HEAD COACH: Mike Brown (hired July 2025, replaced Tom Thibodeau who was fired)
+KNICKS HEAD COACH: Mike Brown (hired July 7, 2025, replaced Tom Thibodeau)
 KNICKS STARTING FIVE: Jalen Brunson (PG), Mikal Bridges (SG), OG Anunoby (SF), Karl-Anthony Towns (PF/C), Mitchell Robinson (C)
-KNICKS KEY BENCH: Josh Hart, Miles McBride
-PLAYERS NO LONGER ON THE KNICKS (do not mention): Precious Achiuwa, Donte DiVincenzo, Quentin Grimes, Isaiah Hartenstein
+KNICKS KEY BENCH: Josh Hart, Miles McBride, Jordan Clarkson, Guerschon Yabusele
+PLAYERS NO LONGER ON THE KNICKS: Precious Achiuwa, Donte DiVincenzo, Quentin Grimes, Isaiah Hartenstein
 
-INDIANA PACERS HEAD COACH: Rick Carlisle
-INDIANA PACERS KEY FACT: Tyrese Haliburton is OUT FOR THE ENTIRE 2025-26 SEASON with a torn Achilles suffered in Game 7 of the 2025 NBA Finals.
-INDIANA WITHOUT HALIBURTON: They have one of the worst records in the league. Andrew Nembhard is their starting PG. Pascal Siakam leads them in scoring. Jarace Walker has been playing well recently. Ivica Zubac was recently acquired from the Clippers.
-INDIANA SEASON CONTEXT: The Pacers were eliminated from playoff contention on March 10, 2026.
+=== CRITICAL RULES FOR OPPONENT ROSTER/INJURIES ===
+- The live opponent injury data provided above is your ONLY source for opponent player information
+- ONLY mention opponent players that explicitly appear in the live injury data provided
+- DO NOT use your training knowledge for opponent rosters - it is outdated and WILL be wrong
+- DO NOT invent statistics (e.g. rankings, percentages) you cannot verify from the data provided
+- If a player is listed OUT in the injury report, they are definitively NOT playing tonight
+- Chris Paul is RETIRED and NOT on any NBA roster - never mention him
 
 === END VERIFIED FACTS ===
 """
