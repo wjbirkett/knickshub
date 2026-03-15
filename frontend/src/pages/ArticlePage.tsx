@@ -13,9 +13,9 @@ export const TYPE_CONFIG: Record<string, { label: string; bg: string; color: str
 
 function KeyPicksBox({ picks, articleType }: { picks: any; articleType: string }) {
   if (!picks || articleType === "history") return null
-  const isProp = articleType === "prop"
+  const isMultiProp = picks.points_pick || picks.rebounds_pick || picks.assists_pick || picks.threes_pick
 
-  if (isProp) {
+  if (articleType === "prop") {
     const leanColor = picks.lean === "OVER" ? "#4ade80" : "#f87171"
     const leanBg   = picks.lean === "OVER" ? "#14532d" : "#7f1d1d"
     const confColor = picks.confidence === "High" ? "#4ade80" : picks.confidence === "Medium" ? "#fbbf24" : "#f87171"
