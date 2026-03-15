@@ -56,10 +56,48 @@ async def articles_sitemap():
 
 @router.post("/trigger-all")
 async def trigger_all_articles():
-    from app.scheduler import generate_article
+    from app.scheduler import _run_async
+    from app.services.article_service import generate_game_preview, generate_best_bet, generate_player_prop, save_article
+    from app.services.nba_service import fetch_schedule, fetch_injury_report, fetch_player_stats
+    from app.services.odds_service import fetch_knicks_lines
+    from datetime import date
     import threading
-    threading.Thread(target=lambda: generate_article(force=True), daemon=True).start()
-    return {"message": "Article generation triggered in background"}
+    async def _gen():
+        try:
+            today = date.today()
+            games_raw = await fetch_schedule()
+            games = [g.model_dump() if hasattr(g, "model_dump") else g for g in games_raw]
+            next_game = games[0] if games else None
+            if not next_game: return
+            injuries_raw = await fetch_injury_report()
+            injuries = [i.model_dump() if hasattr(i, "model_dump") else i for i in injuries_raw]
+            stats_raw = await fetch_player_stats()
+            top_stats = [s.model_dump() if hasattr(s, "model_dump") else s for s in stats_raw[:8]] if stats_raw else []
+            odds_raw = await fetch_knicks_lines()
+            odds = [o.model_dump() if hasattr(o, "model_dump") else o for o in odds_raw]
+            spread = moneyline = over_under = "N/A"
+            if odds:
+                o = odds[0]
+                is_away = "Knicks" in o.get("away_team","") or "New York" in o.get("away_team","")
+                raw_s = o.get("spread"); ml_h = o.get("moneyline_home"); ml_a = o.get("moneyline_away"); ou = o.get("over_under")
+                ks = (-raw_s if is_away else raw_s) if raw_s is not None else None
+                km = ml_a if is_away else ml_h
+                if ks is not None: spread = f"{ks:+.1f}"
+                if km is not None: moneyline = f"{km:+d}"
+                if ou is not None: over_under = f"{ou}"
+            gd = str(today)
+            art = await generate_game_preview(home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,spread=spread,moneyline=moneyline,over_under=over_under,injuries=injuries,recent_games=games,top_stats=top_stats)
+            await save_article(art)
+            bb = await generate_best_bet(home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,spread=spread,moneyline=moneyline,over_under=over_under,injuries=injuries,top_stats=top_stats)
+            await save_article(bb)
+            for player in ["Jalen Brunson","Karl-Anthony Towns","OG Anunoby"]:
+                ps = next((s for s in top_stats if player.split()[0].lower() in s.get("player_name","").lower()),None)
+                prop = await generate_player_prop(player=player,home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,player_stats=ps,injuries=injuries,top_stats=top_stats,over_under=over_under)
+                await save_article(prop)
+        except Exception as e:
+            import logging; logging.getLogger(__name__).error(f"trigger-all failed: {e}")
+    threading.Thread(target=lambda: _run_async(_gen()), daemon=True).start()
+    return {"message": "Article generation triggered"}
 
 @router.get("/debug-injuries")
 async def debug_injuries(opponent: str = "Golden State Warriors"):
