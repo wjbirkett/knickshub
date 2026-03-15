@@ -263,18 +263,19 @@ Knicks vs {opponent} H2H This Season:
 {h2h_text}
 
 Write the article in this exact structure:
-1. Compelling intro (2-3 sentences about {player}'s role tonight)
-2. ## {player} Season Averages (stats breakdown)
-3. ## Tonight's Matchup (how the opponent defends his position)
-4. ## Recent Form (last 5 games performance)
-5. ## Injury Report (any factors affecting his play)
-6. ## Prop Predictions (analyze ALL FOUR: points, rebounds, assists, made threes — give a specific line and over/under pick for each)
-7. ## Final Prediction (summarize all four picks with confidence level)
+1. Compelling intro (2-3 sentences about {player}'s role tonight — immediately mention any key {opponent} injuries and how they specifically benefit {player})
+2. ## {player} Season Averages (points, rebounds, assists, threes per game)
+3. ## Tonight's Matchup (how {opponent} defends {player}'s position — specifically name each key {opponent} injury and explain how it helps {player} tonight)
+4. ## Injury Report (Knicks injuries affecting {player}'s usage, plus detailed {opponent} injury analysis with direct impact on {player})
+5. ## Prop Analysis (discuss all four props with likely lines — points, rebounds, assists, made threes — rank them by value and identify ONE as the single strongest play)
+6. ## Best Bet (ONE prop pick only — state the line, direction, and exactly why this is stronger than the other three)
 
 Guidelines:
 - Write 600-800 words
 - Use markdown formatting
-- Give specific line recommendations for ALL FOUR props (e.g. "Over 27.5 points", "Over 3.5 rebounds", "Under 7.5 assists", "Over 2.5 threes")
+- Give ONE final prop pick as the best bet — not all four
+- Mention all four props in Prop Analysis but only commit to one
+- Always connect opponent injuries directly to {player}'s specific advantages tonight
 - Sound like a real analyst, not a robot
 - Include "bet responsibly" naturally
 - Target keywords: {player} prop, {player} points tonight, {player} prediction, {player} rebounds prop, {player} assists prop
