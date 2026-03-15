@@ -48,12 +48,16 @@ async def _fetch_opponent_injuries(opponent: str) -> str:
                     break
         if not team_id:
             return f"Opponent injury data unavailable for {opponent}"
-        url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{team_id}/injuries"
+        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries"
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.get(url)
             resp.raise_for_status()
             data = resp.json()
-        injuries = data.get("injuries", [])
+        all_teams = data.get("injuries", [])
+        team_data = next((t for t in all_teams if t.get("id") == team_id), None)
+        if not team_data:
+            return f"No injuries reported for {opponent}"
+        injuries = team_data.get("injuries", [])
         if not injuries:
             return f"No injuries reported for {opponent}"
         lines = []
