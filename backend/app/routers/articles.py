@@ -204,18 +204,20 @@ async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bo
     spread, moneyline, over_under = get_odds_for_game(odds, next_game)
 
     from app.services.article_service import generate_best_bet
-    article = await generate_best_bet(
-        home_team=next_game["home_team"],
-        away_team=next_game["away_team"],
-        game_date=game_date_str,
-        spread=spread,
-        moneyline=moneyline,
-        over_under=over_under,
-        injuries=injuries,
-        top_stats=top_stats,
-    )
-    saved = await save_article(article)
-    return {"message": "Article generated", "slug": saved["slug"], "article": saved}
+    async def _gen_best_bet():
+        article = await generate_best_bet(
+            home_team=next_game["home_team"],
+            away_team=next_game["away_team"],
+            game_date=game_date_str,
+            spread=spread,
+            moneyline=moneyline,
+            over_under=over_under,
+            injuries=injuries,
+            top_stats=top_stats,
+        )
+        await save_article(article)
+    background_tasks.add_task(_gen_best_bet)
+    return {"message": "Article generation started", "slug": slug}
 
 
 @router.post("/generate/history")

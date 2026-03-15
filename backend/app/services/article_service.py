@@ -98,7 +98,7 @@ SEASON_FACTS = """
 
 KNICKS HEAD COACH: Mike Brown (hired July 7, 2025, replaced Tom Thibodeau)
 KNICKS STARTING FIVE: Jalen Brunson (PG), Mikal Bridges (SG), OG Anunoby (SF), Karl-Anthony Towns (PF/C), Mitchell Robinson (C)
-KNICKS KEY BENCH: Josh Hart, Miles McBride, Jordan Clarkson, Guerschon Yabusele
+KNICKS KEY BENCH: Josh Hart, Miles McBride, Jordan Clarkson, Guerschon Yabusele, Jeremy Sochan (acquired from San Antonio Spurs mid-season — HE IS ON THE KNICKS, NOT THE SPURS)
 PLAYERS NO LONGER ON THE KNICKS: Precious Achiuwa, Donte DiVincenzo, Quentin Grimes, Isaiah Hartenstein
 
 === CRITICAL RULES FOR OPPONENT ROSTER/INJURIES ===
