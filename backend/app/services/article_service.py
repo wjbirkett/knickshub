@@ -135,14 +135,19 @@ At the very end of your article, after all other content, append a JSON block in
 ```json
 {
   "player": "Jalen Brunson",
-  "prop_type": "Points",
-  "pick": "Over 26.5",
-  "lean": "OVER",
+  "points_pick": "Over 26.5",
+  "points_lean": "OVER",
+  "rebounds_pick": "Over 3.5",
+  "rebounds_lean": "OVER",
+  "assists_pick": "Under 7.5",
+  "assists_lean": "UNDER",
+  "threes_pick": "Over 2.5",
+  "threes_lean": "OVER",
   "confidence": "High"
 }
 ```
 
-Replace the example values with your actual picks. lean must be "OVER" or "UNDER". confidence must be one of: "Low", "Medium", "High".
+Replace the example values with your actual picks. Each lean must be "OVER" or "UNDER". confidence must be one of: "Low", "Medium", "High".
 """
 
 
@@ -263,16 +268,16 @@ Write the article in this exact structure:
 3. ## Tonight's Matchup (how the opponent defends his position)
 4. ## Recent Form (last 5 games performance)
 5. ## Injury Report (any factors affecting his play)
-6. ## Points Prop Prediction (over/under analysis with a specific line recommendation)
-7. ## Final Prediction (clear over or under pick with confidence level)
+6. ## Prop Predictions (analyze ALL FOUR: points, rebounds, assists, made threes — give a specific line and over/under pick for each)
+7. ## Final Prediction (summarize all four picks with confidence level)
 
 Guidelines:
-- Write 500-700 words
+- Write 600-800 words
 - Use markdown formatting
-- Give a specific points line recommendation (e.g. "Over 27.5 points")
+- Give specific line recommendations for ALL FOUR props (e.g. "Over 27.5 points", "Over 3.5 rebounds", "Under 7.5 assists", "Over 2.5 threes")
 - Sound like a real analyst, not a robot
 - Include "bet responsibly" naturally
-- Target keywords: {player} prop, {player} points tonight, {player} prediction
+- Target keywords: {player} prop, {player} points tonight, {player} prediction, {player} rebounds prop, {player} assists prop
 
 {PROP_KEY_PICKS_INSTRUCTION}
 """
