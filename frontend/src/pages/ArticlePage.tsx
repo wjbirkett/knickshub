@@ -13,17 +13,35 @@ export const TYPE_CONFIG: Record<string, { label: string; bg: string; color: str
 
 function KeyPicksBox({ picks, articleType }: { picks: any; articleType: string }) {
   if (!picks || articleType === "history") return null
-  const isMultiProp = picks.points_pick || picks.rebounds_pick || picks.assists_pick || picks.threes_pick
-
   if (articleType === "prop") {
-    const leanColor = picks.lean === "OVER" ? "#4ade80" : "#f87171"
-    const leanBg   = picks.lean === "OVER" ? "#14532d" : "#7f1d1d"
+    const isMultiProp = picks.points_pick || picks.rebounds_pick || picks.assists_pick || picks.threes_pick
+    const leanBg = (l) => l === "OVER" ? "#14532d" : "#7f1d1d"
+    const leanCol = (l) => l === "OVER" ? "#4ade80" : "#f87171"
     const confColor = picks.confidence === "High" ? "#4ade80" : picks.confidence === "Medium" ? "#fbbf24" : "#f87171"
+    if (isMultiProp) {
+      return (
+        <div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
+          <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>KEY PROPS AT A GLANCE — {picks.player}</p>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            {picks.points_pick && <PickCard label="Points" value={picks.points_pick} leanBg={leanBg(picks.points_lean)} leanColor={leanCol(picks.points_lean)} lean={picks.points_lean} />}
+            {picks.rebounds_pick && <PickCard label="Rebounds" value={picks.rebounds_pick} leanBg={leanBg(picks.rebounds_lean)} leanColor={leanCol(picks.rebounds_lean)} lean={picks.rebounds_lean} />}
+            {picks.assists_pick && <PickCard label="Assists" value={picks.assists_pick} leanBg={leanBg(picks.assists_lean)} leanColor={leanCol(picks.assists_lean)} lean={picks.assists_lean} />}
+            {picks.threes_pick && <PickCard label="Made 3s" value={picks.threes_pick} leanBg={leanBg(picks.threes_lean)} leanColor={leanCol(picks.threes_lean)} lean={picks.threes_lean} />}
+            <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+              <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
+              <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>
+            </div>
+          </div>
+        </div>
+      )
+    }
+    const leanColor = picks.lean === "OVER" ? "#4ade80" : "#f87171"
+    const leanBgLeg = picks.lean === "OVER" ? "#14532d" : "#7f1d1d"
     return (
       <div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
         <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>🎯 KEY PICK</p>
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-          <PickCard label={`${picks.player}${picks.prop_type ? " " + picks.prop_type : " Prop"}`} value={picks.pick} leanBg={leanBg} leanColor={leanColor} lean={picks.lean} />
+          <PickCard label={`${picks.player}${picks.prop_type ? " " + picks.prop_type : " Prop"}`} value={picks.pick} leanBg={leanBgLeg} leanColor={leanColor} lean={picks.lean} />
           <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
             <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
             <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>
