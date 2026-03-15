@@ -80,7 +80,7 @@ async def generate_next_game_article(background_tasks: BackgroundTasks, force: b
     if not next_game:
         raise HTTPException(status_code=404, detail="No upcoming games found")
 
-    game_date_str = str(next_game["game_date"])[:10]
+    game_date_str = str(today)
 
     from app.services.article_service import slugify
     slug = slugify(f"{next_game['away_team']}-vs-{next_game['home_team']}-prediction-{game_date_str}")
@@ -128,7 +128,7 @@ async def generate_player_prop_article(background_tasks: BackgroundTasks, player
     if not next_game:
         raise HTTPException(status_code=404, detail="No upcoming games found")
 
-    game_date_str = str(next_game["game_date"])[:10]
+    game_date_str = str(today)
 
     from app.services.article_service import slugify
     player_slug = player.lower().replace(" ", "-")
@@ -180,7 +180,7 @@ async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bo
     if not next_game:
         raise HTTPException(status_code=404, detail="No upcoming games found")
 
-    game_date_str = str(next_game["game_date"])[:10]
+    game_date_str = str(today)
 
     from app.services.article_service import slugify
     slug = slugify(f"best-knicks-bet-{game_date_str}")
