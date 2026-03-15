@@ -63,7 +63,7 @@ def generate_article(force: bool = False):
                 raw_date = event.get("date", "")
                 try:
                     event_date = datetime.strptime(raw_date[:10], "%Y-%m-%d").date()
-                    if event_date == today:
+                    if event_date == today or event_date == today + timedelta(days=1):
                         comp = event["competitions"][0]
                         status_name = comp.get("status", {}).get("type", {}).get("name", "")
                         if "FINAL" not in status_name:
