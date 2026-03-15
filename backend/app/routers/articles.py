@@ -67,7 +67,13 @@ async def trigger_all_articles():
             today = date.today()
             games_raw = await fetch_schedule()
             games = [g.model_dump() if hasattr(g, "model_dump") else g for g in games_raw]
-            next_game = games[0] if games else None
+            from datetime import date as dt
+            def get_date(g):
+                d = g["game_date"]
+                if isinstance(d, dt): return d
+                return dt.fromisoformat(str(d)[:10])
+            tomorrow = today + __import__("datetime").timedelta(days=1)
+            next_game = next((g for g in games if get_date(g) in (today, tomorrow) and g["status"] != "Final"), None)
             if not next_game: return
             injuries_raw = await fetch_injury_report()
             injuries = [i.model_dump() if hasattr(i, "model_dump") else i for i in injuries_raw]
@@ -95,7 +101,7 @@ async def trigger_all_articles():
                 prop = await generate_player_prop(player=player,home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,player_stats=ps,injuries=injuries,top_stats=top_stats,over_under=over_under)
                 await save_article(prop)
         except Exception as e:
-            import logging; logging.getLogger(__name__).error(f"trigger-all failed: {e}")
+            import logging; logging.getLogger(__name__).error(f"trigger-all failed: {e}", exc_info=True)
     threading.Thread(target=lambda: _run_async(_gen()), daemon=True).start()
     return {"message": "Article generation triggered"}
 
