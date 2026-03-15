@@ -53,6 +53,12 @@ async def articles_sitemap():
 </urlset>"""
     return Response(content=xml, media_type="application/xml")
 
+@router.get("/debug-injuries")
+async def debug_injuries(opponent: str = "Golden State Warriors"):
+    from app.services.article_service import _fetch_opponent_injuries
+    result = await _fetch_opponent_injuries(opponent)
+    return {"opponent": opponent, "injuries": result}
+
 @router.get("/")
 async def list_articles(limit: int = 20):
     return await get_articles(limit)
