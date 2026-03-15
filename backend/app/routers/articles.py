@@ -99,6 +99,22 @@ async def trigger_all_articles():
     threading.Thread(target=lambda: _run_async(_gen()), daemon=True).start()
     return {"message": "Article generation triggered"}
 
+@router.get("/debug-trigger")
+async def debug_trigger():
+    from app.services.nba_service import fetch_schedule, fetch_injury_report
+    from app.services.odds_service import fetch_knicks_lines
+    import traceback
+    try:
+        games_raw = await fetch_schedule()
+        games = [g.model_dump() if hasattr(g, "model_dump") else g for g in games_raw]
+        odds_raw = await fetch_knicks_lines()
+        odds = [o.model_dump() if hasattr(o, "model_dump") else o for o in odds_raw]
+        inj_raw = await fetch_injury_report()
+        injuries = [i.model_dump() if hasattr(i, "model_dump") else i for i in inj_raw]
+        return {"games_count": len(games), "next_game": games[0] if games else None, "odds_count": len(odds), "odds": odds[0] if odds else None, "injuries_count": len(injuries)}
+    except Exception as e:
+        return {"error": str(e), "trace": traceback.format_exc()}
+
 @router.get("/debug-injuries")
 async def debug_injuries(opponent: str = "Golden State Warriors"):
     from app.services.article_service import _fetch_opponent_injuries
