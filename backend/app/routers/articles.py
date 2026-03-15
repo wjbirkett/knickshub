@@ -54,6 +54,13 @@ async def articles_sitemap():
 </urlset>"""
     return Response(content=xml, media_type="application/xml")
 
+@router.post("/trigger-all")
+async def trigger_all_articles():
+    from app.scheduler import generate_article
+    import threading
+    threading.Thread(target=generate_article, daemon=True).start()
+    return {"message": "Article generation triggered in background"}
+
 @router.get("/debug-injuries")
 async def debug_injuries(opponent: str = "Golden State Warriors"):
     from app.services.article_service import _fetch_opponent_injuries
