@@ -208,6 +208,7 @@ Guidelines:
 - Include the phrase "bet responsibly" naturally
 - Only mention players who are actually on the current rosters
 - Target keywords: Knicks prediction, Knicks odds, {away_team} vs {home_team} prediction
+- CRITICAL: Your final score prediction MUST be consistent with your total pick. If you pick UNDER {over_under}, the combined score must be under {over_under}. If you pick OVER, the combined score must exceed {over_under}
 
 {KEY_PICKS_INSTRUCTION}
 """
@@ -267,7 +268,7 @@ Knicks vs {opponent} H2H This Season:
 Write the article in this exact structure:
 1. Compelling intro (2-3 sentences about {player}'s role tonight — immediately mention any key {opponent} injuries and how they specifically benefit {player})
 2. ## {player} Season Averages (points, rebounds, assists, threes per game)
-3. ## Tonight's Matchup (how {opponent} defends {player}'s position — specifically name each key {opponent} injury and explain how it helps {player} tonight)
+3. ## Tonight's Matchup (YOU MUST list every player from the {opponent} Injury Report by name and status, then explain exactly how each absence creates a specific advantage for {player} tonight)
 4. ## Injury Report (Knicks injuries affecting {player}'s usage, plus detailed {opponent} injury analysis with direct impact on {player})
 5. ## Prop Analysis (discuss all four props with likely lines — points, rebounds, assists, made threes — rank them by value and identify ONE as the single strongest play)
 6. ## Best Bet (ONE prop pick only — state the line, direction, and exactly why this is stronger than the other three)
@@ -351,6 +352,7 @@ Guidelines:
 - Give ONE best bet, not multiple
 - Include "bet responsibly" naturally
 - Target keywords: Knicks best bet tonight, Knicks spread pick, {away_team} vs {home_team} pick
+- CRITICAL: Your best bet total pick MUST match the game preview article total direction. Pick one side and commit to it consistently
 
 {KEY_PICKS_INSTRUCTION}
 """
