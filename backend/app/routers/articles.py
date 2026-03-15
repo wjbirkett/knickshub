@@ -1,1 +1,272 @@
-[{"id":"9fc039e6-a046-4465-8dab-2900e38395ff","slug":"this-day-in-knicks-history-march-14","title":"This Day in Knicks History: March 14th","content":"# This Day in Knicks History: March 14th\n\nOn March 12, 1970 (just two days before today's date), the New York Knicks achieved one of the most significant regular season milestones in franchise history by clinching their first division title in 17 years. This moment came during what would become the greatest season in Knicks history, setting the stage for their championship run.\n\n## The Story\n\nThe 1969-70 New York Knicks were a team destined for greatness, but their March 12th division-clinching victory represented the culmination of years of careful building by Red Holzman and the front office. Led by the brilliant backcourt tandem of Walt \"Clyde\" Frazier and Dick Barnett, the athletic prowess of Cazzie Russell, and anchored by the cerebral play of Willis Reed and Dave DeBusschere in the frontcourt, the Knicks had transformed from perennial also-rans into the NBA's most complete team.\n\nThe division title was secured with a dominant performance that showcased everything that made this Knicks team special: suffocating defense, unselfish ball movement, and clutch performances when it mattered most. Bill Bradley's Princeton-educated basketball IQ perfectly complemented the street-smart brilliance of Frazier, while Reed's leadership in the paint gave the team an identity that resonated with New York's blue-collar mentality.\n\nWhat made this achievement even more remarkable was the context of Knicks history. The franchise hadn't won a division title since 1953, enduring nearly two decades of mediocrity and false starts. The 1969-70 team represented a complete philosophical shift under Holzman, emphasizing team basketball over individual stars and defensive intensity over offensive flash.\n\nThe clinching came during a stretch where the Knicks were playing some of the most dominant basketball in NBA history. Their record would eventually reach 60-22, establishing them as the league's best team and setting expectations sky-high for the playoffs that would follow. Frazier was emerging as one of the game's premier guards, Reed was establishing himself as the heart and soul of the franchise, and the supporting cast was buying into a system that maximized everyone's strengths.\n\n## Why It Still Matters\n\nThis division title represents the foundation of everything great in Knicks history. It marked the moment when the franchise transformed from chronic underachievers into championship contenders, establishing a culture of excellence that would define the organization's golden era. The 1970 team's emphasis on teamwork, defense, and clutch performance became the blueprint for Knicks success.\n\nMore importantly, this achievement gave Knicks fans their first real taste of championship-level basketball in a generation. It proved that the methodical building process could work in New York, and it validated Red Holzman's vision of team-first basketball that would culminate in the franchise's first NBA championship just months later.\n\n## By The Numbers\n\n- **60-22**: The Knicks' final regular season record, best in the NBA\n- **17 years**: Time elapsed since the Knicks' previous division title in 1953\n- **107.0**: Points per game allowed, ranking second in the NBA in defensive efficiency\n- **18-game winning streak**: The Knicks' franchise-record run earlier that season\n- **First place**: Margin of 8 games over second-place Milwaukee in the Eastern Division\n- **Championship destiny**: This division title was the first step toward the franchise's first NBA championship\n\nToday's Knicks continue to chase the standard of excellence established by that legendary 1970 team that first tasted division championship glory in March.","game_date":"2026-03-14","home_team":"New York Knicks","away_team":"New York Knicks","article_type":"history","created_at":"2026-03-14T05:33:14.502266+00:00","updated_at":"2026-03-14T05:33:15.372797+00:00","key_picks":null},{"id":"cb323db7-aacd-41c8-b9cf-cbe444464f10","slug":"jalen-brunson-prop-prediction-2026-03-13","title":"Jalen Brunson Prop Prediction vs Indiana Pacers - 2026-03-13","content":"# Jalen Brunson Player Props Tonight: Knicks @ Pacers March 13 Prediction\n\nThe New York Knicks head to Indianapolis tonight for what should be a prime bounce-back spot against a Pacers team that's already been eliminated from playoff contention. With **Jalen Brunson** leading the charge as the team's primary offensive engine under new head coach Mike Brown, tonight's matchup presents an excellent opportunity for the All-Star point guard to stuff the stat sheet against Indiana's depleted roster.\n\n## Jalen Brunson Season Averages\n\nBrunson has been nothing short of spectacular in his third season as the Knicks' franchise cornerstone, averaging **26.2 points, 6.5 assists, and 3.5 rebounds** per game. These numbers represent the consistency that Knicks fans have come to expect from their floor general, who's seamlessly adapted to Mike Brown's offensive system after the coaching change last summer.\n\nThe 27-year-old has shouldered an even heavier offensive load this season, particularly with the team integrating new pieces like Karl-Anthony Towns and Mikal Bridges into the rotation. Brunson's scoring efficiency has remained elite while managing increased playmaking responsibilities, making him one of the most reliable **Jalen Brunson prop** bets in the league.\n\n## Tonight's Matchup\n\nIndiana presents a dream matchup for opposing point guards this season. Without Tyrese Haliburton, who's out for the entire campaign with a torn Achilles, the Pacers have struggled mightily on both ends of the floor. Andrew Nembhard has stepped into the starting point guard role, but Indiana's backcourt defense ranks among the worst in the league.\n\nThe Pacers' defensive struggles have been magnified since their playoff elimination on March 10th, with effort levels understandably inconsistent as they play out the string. Pascal Siakam leads their scoring, but the overall defensive structure lacks the intensity needed to contain elite guards like Brunson. Rick Carlisle's squad has been particularly vulnerable to penetration and pick-and-roll attacks â two areas where Brunson excels.\n\n## Recent Form\n\nWhile specific recent game data isn't available, Brunson's season-long consistency suggests he's maintained his high-level production throughout the campaign. His 26.2 scoring average indicates steady performance regardless of opponent, and facing a defensively challenged Indiana team should only enhance his opportunities.\n\nThe **Jalen Brunson points tonight** prop becomes even more attractive considering the Knicks' need to stay sharp as they gear up for their playoff push, while the Pacers are essentially playing out a lost season.\n\n## Injury Report\n\nThe Knicks are dealing with several key injury concerns that could impact tonight's game flow. Karl-Anthony Towns is listed as day-to-day with knee soreness, while Josh Hart remains questionable with his own knee issues. Most notably, Miles McBride is out following pelvis surgery.\n\nThese potential absences could increase Brunson's usage rate significantly. If Towns is limited or sits out, expect Brunson to shoulder even more of the offensive burden. Hart's absence would also mean fewer secondary playmakers, pushing more creation responsibilities onto the star point guard.\n\n## Points Prop Prediction\n\nLooking at tonight's matchup, the **Over 26.5 points** appears to offer excellent value for Brunson. Indiana's porous backcourt defense, combined with their eliminated status and lack of defensive motivation, creates a perfect storm for offensive production.\n\nThe game total of 227.5 suggests a moderate-paced affair, but Brunson should see plenty of scoring opportunities through Indiana's defensive breakdowns. With potential increased usage due to the Knicks' injury concerns, he's positioned to exceed his season average against one of the league's most generous defenses to opposing guards.\n\n## Final Prediction\n\n**Pick: Jalen Brunson Over 26.5 Points**  \n**Confidence Level: High (4/5)**\n\nThis matchup checks all the boxes for a Brunson scoring outburst. Indiana's defensive deficiencies, their season-ending elimination, and the Knicks' injury situation all point toward increased offensive opportunities for their star guard. While you should always bet responsibly, this **Jalen Brunson prediction** represents one of tonight's strongest prop values on the board.","game_date":"2026-03-13","home_team":"Indiana Pacers","away_team":"New York Knicks","article_type":"prop","created_at":"2026-03-13T19:16:54.226087+00:00","updated_at":"2026-03-13T19:16:54.468243+00:00","key_picks":null},{"id":"b4d97057-9d53-44ba-a6ef-238c52a4178b","slug":"best-knicks-bet-2026-03-13","title":"Best Knicks Bet Tonight vs Indiana Pacers - 2026-03-13","content":"The Knicks are massive 13.5-point road favorites against a Pacers team that's been officially eliminated from playoff contention, and this spread screams value on the UNDER 227.5. When a desperate playoff-bound team faces a deflated opponent in March, defensive intensity typically takes over.\n\n## The Line\n\nThe oddsmakers have set Indiana as 13.5-point home underdogs with a moneyline of +650, while the Knicks sit at -1000 to win straight up. That total of 227.5 reflects expectations of a potential blowout with garbage time scoring, but the situational dynamics suggest otherwise. The massive spread indicates the market views this as a mismatch, but the total hasn't adjusted enough for what should be a grind-it-out affair.\n\n## Why This Bet Wins\n\nâ¢ **Pace will slow dramatically in a lopsided game**: When teams are separated by double digits early, possessions naturally decrease as the trailing team extends the game through fouling and the leading team milks clock. The Pacers have nothing to play for and won't push tempo against a superior Knicks squad that excels in halfcourt sets.\n\nâ¢ **Knicks defense travels well under Mike Brown**: Since Brown replaced Thibodeau, the Knicks have embraced a more conservative defensive approach that limits explosive offensive performances. With Jalen Brunson averaging 26.2 points and Karl-Anthony Towns contributing 20.0 points per game, New York can control tempo without needing to run up the score.\n\nâ¢ **Indiana's offensive limitations without Haliburton are severe**: Pascal Siakam leads their scoring, but Andrew Nembhard running point severely limits their offensive ceiling. The Pacers have struggled to reach even average offensive efficiency all season, and facing a motivated Knicks defense on the road won't help their cause.\n\n## Injury Impact\n\nThe Knicks' injury concerns actually support the under case. With Josh Hart day-to-day with knee soreness and Karl-Anthony Towns dealing with his own knee issues, New York may lean on their defensive identity rather than pushing for style points. Miles McBride's absence removes 12.9 points per game from their second unit, naturally lowering their offensive ceiling. Jeremy Sochan's illness status adds another layer of uncertainty to their rotation depth.\n\n## The Lean\n\nThis total feels inflated by the assumption that a 13.5-point spread guarantees high scoring. The Pacers were mathematically eliminated just three days ago, creating a perfect storm for a low-energy, grind-it-out game. Mike Brown's coaching style emphasizes defensive principles, and with potential playoff seeding implications still on the line for New York, they'll focus on executing rather than entertaining. Indiana's offensive struggles without their star point guard make reaching their portion of 227.5 highly unlikely.\n\n## Best Bet\n\n**UNDER 227.5 Points - 2u**\n\nThis situational spot screams under value. A playoff-bound team facing an eliminated opponent in mid-March typically produces exactly this type of methodical, defense-first game. The Knicks have the talent advantage to control pace and dictate terms, while Indiana lacks the offensive firepower to keep up in a potential shootout. Bet responsibly and take advantage of this total that's been inflated by the large spread.\n\n**Knicks best bet tonight**: Under 227.5 total points","game_date":"2026-03-13","home_team":"Indiana Pacers","away_team":"New York Knicks","article_type":"best_bet","created_at":"2026-03-13T19:14:34.647352+00:00","updated_at":"2026-03-13T19:14:35.59097+00:00","key_picks":null},{"id":"39b6ae50-056d-4847-bb6f-c94e01feffc3","slug":"new-york-knicks-vs-indiana-pacers-prediction-2026-03-13","title":"New York Knicks vs Indiana Pacers Prediction, Odds & Best Bet - 2026-03-13","content":"# Knicks vs Pacers Prediction: New York Eyes Statement Win Against Struggling Indiana\n\nThe New York Knicks head to Indianapolis on Friday night looking to capitalize against a Pacers team that's officially been eliminated from playoff contention. With Indiana in full evaluation mode for the remainder of the season, this presents an excellent opportunity for Mike Brown's squad to build momentum as they push toward the postseason.\n\n## Game Overview\n\nWhile official betting lines haven't been released yet for this March 13th matchup, expect the Knicks to be substantial road favorites against an Indiana team that has struggled mightily all season. The Pacers have one of the worst records in the league following Tyrese Haliburton's season-ending Achilles injury suffered in last year's NBA Finals Game 7. Books will likely set New York as 8-10 point favorites with a total hovering around 225-230 points, given Indiana's inconsistent offensive output without their star floor general.\n\n## Knicks Recent Form\n\nThe Knicks' recent slate shows a mixed bag of results that don't tell the complete story of their season trajectory under new head coach Mike Brown. While specific outcomes from their last five games against Chicago, Atlanta, Boston, Toronto, and Charlotte weren't decisive, the underlying metrics suggest a team finding its identity with Brown's system replacing Tom Thibodeau's approach.\n\nJalen Brunson continues to anchor this offense brilliantly, averaging 26.2 points and 6.5 assists while shooting efficiently from all three levels. The All-Star point guard has embraced the leadership role even more under Brown's guidance, and his chemistry with Karl-Anthony Towns (20.0 points, 11.9 rebounds) has been the foundation of New York's offensive attack. The supporting cast of Mikal Bridges (15.0 PPG) and OG Anunoby (16.6 PPG) provides the two-way versatility that makes this Knicks roster so dangerous when healthy.\n\n## Injury Report\n\nThe Knicks are dealing with some concerning injury issues heading into Indianapolis. Karl-Anthony Towns is listed as day-to-day with knee soreness, which could significantly impact their frontcourt depth if he can't go. Towns has been their most reliable interior presence alongside Mitchell Robinson, and his absence would force Brown to rely more heavily on smaller lineups.\n\nJosh Hart's day-to-day status with his own knee soreness adds another layer of concern, as his energy and rebounding from the wing position has been crucial to New York's identity. Perhaps most significantly, Miles McBride remains out following pelvis surgery. McBride's 12.9 points per game off the bench and his defensive intensity will be missed, putting more pressure on the remaining rotation players to step up.\n\n## Key Matchup to Watch\n\nThe most intriguing battle will be Jalen Brunson against Indiana's makeshift backcourt led by Andrew Nembhard. With Haliburton sidelined for the entire campaign, the Pacers have lacked a true floor general who can control tempo and create quality looks for teammates. Nembhard, while solid, simply doesn't possess the same playmaking dynamism that made Indiana so dangerous last season.\n\nPascal Siakam leads the Pacers in scoring and will likely draw the assignment of guarding either Bridges or Anunoby, creating potential mismatches for New York to exploit. The recently acquired Ivica Zubac from the Clippers provides some interior presence, but the overall talent disparity is glaring. Young forward Jarace Walker has shown flashes recently and could be worth monitoring as Indiana evaluates their future pieces.\n\n## Prediction and Best Bet\n\nThis game screams \"statement win\" for the Knicks against a Pacers team that's essentially playing out the string. Indiana was mathematically eliminated from playoff contention on March 10th, and their focus has clearly shifted toward player development and lottery positioning.\n\nEven with the injury concerns surrounding Towns and Hart, New York simply has too much talent and veteran leadership to struggle against this depleted Indiana roster. Brunson should have a field day attacking Nembhard and the Pacers' porous perimeter defense, while the Knicks' own defensive improvements under Brown should limit Indiana's already-inconsistent offensive attack.\n\nThe total feels like the safer play here, as both teams have the personnel to push the pace when they want to. Indiana will likely look to get up shots for their young players, while the Knicks should be motivated to make an emphatic statement on the road. Remember to always bet responsibly and within your means.\n\n## Final Score Prediction\n\n**New York Knicks 118, Indiana Pacers 106**\n\n**Best Bet: Knicks -9 (when line is released)**\n\nThe talent gap is simply too wide, even on the road. Expect Brunson to orchestrate a professional road victory as the Knicks take care of business against an overmatched Pacers squad playing for next season.","game_date":"2026-03-13","home_team":"Indiana Pacers","away_team":"New York Knicks","article_type":"prediction","created_at":"2026-03-13T03:24:18.948197+00:00","updated_at":"2026-03-13T03:24:16.570262+00:00","key_picks":null}]
+from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi.responses import Response
+from app.services.article_service import (
+    generate_game_preview, save_article, get_articles, get_article_by_slug
+)
+from app.services.nba_service import fetch_schedule, fetch_injury_report, fetch_player_stats
+from app.services.odds_service import fetch_knicks_lines
+from datetime import date
+
+router = APIRouter()
+
+def to_dict(obj):
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()
+    if hasattr(obj, "dict"):
+        return obj.dict()
+    return obj
+
+def get_odds_for_game(games, next_game):
+    spread = moneyline = over_under = "N/A"
+    if games:
+        o = games[0]
+        is_knicks_away = "Knicks" in o.get("away_team", "") or "New York" in o.get("away_team", "")
+        raw_spread = o.get("spread")
+        ml_home = o.get("moneyline_home")
+        ml_away = o.get("moneyline_away")
+        ou = o.get("over_under")
+        knicks_ml = ml_away if is_knicks_away else ml_home
+        knicks_spread = (-raw_spread if is_knicks_away else raw_spread) if raw_spread is not None else None
+        if knicks_spread is not None:
+            spread = f"{knicks_spread:+.1f}"
+        if knicks_ml is not None:
+            moneyline = f"{knicks_ml:+d}"
+        if ou is not None:
+            over_under = f"{ou}"
+    return spread, moneyline, over_under
+
+@router.get("/sitemap.xml")
+async def articles_sitemap():
+    articles = await get_articles(limit=200)
+    urls = "\n".join([
+        f"""  <url>
+    <loc>https://knickshub.vercel.app/predictions/{a['slug']}</loc>
+    <lastmod>{a.get('updated_at', a.get('created_at', ''))[:10]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>"""
+        for a in articles
+    ])
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{urls}
+</urlset>"""
+    return Response(content=xml, media_type="application/xml")
+
+@router.get("/")
+async def list_articles(limit: int = 20):
+    return await get_articles(limit)
+
+@router.get("/{slug}")
+async def get_article(slug: str):
+    article = await get_article_by_slug(slug)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return article
+
+@router.post("/generate/next-game")
+async def generate_next_game_article(background_tasks: BackgroundTasks, force: bool = False):
+    today = date.today()
+    games_raw = await fetch_schedule()
+    games = [to_dict(g) for g in games_raw]
+
+    def get_date(g):
+        d = g["game_date"]
+        if isinstance(d, date):
+            return d
+        return date.fromisoformat(str(d)[:10])
+
+    next_game = next((g for g in games if get_date(g) >= today and g["status"] != "Final"), None)
+    if not next_game:
+        raise HTTPException(status_code=404, detail="No upcoming games found")
+
+    game_date_str = str(next_game["game_date"])[:10]
+
+    from app.services.article_service import slugify
+    slug = slugify(f"{next_game['away_team']}-vs-{next_game['home_team']}-prediction-{game_date_str}")
+    if not force:
+        existing = await get_article_by_slug(slug)
+        if existing:
+            return {"message": "Article already exists", "slug": slug, "article": existing}
+
+    injuries_raw = await fetch_injury_report()
+    injuries = [to_dict(i) for i in injuries_raw]
+    stats_raw = await fetch_player_stats()
+    top_stats = [to_dict(s) for s in stats_raw[:8]] if stats_raw else []
+    odds_raw = await fetch_knicks_lines()
+    odds = [to_dict(o) for o in odds_raw]
+    spread, moneyline, over_under = get_odds_for_game(odds, next_game)
+
+    article = await generate_game_preview(
+        home_team=next_game["home_team"],
+        away_team=next_game["away_team"],
+        game_date=game_date_str,
+        spread=spread,
+        moneyline=moneyline,
+        over_under=over_under,
+        injuries=injuries,
+        recent_games=games,
+        top_stats=top_stats,
+    )
+    saved = await save_article(article)
+    return {"message": "Article generated", "slug": saved["slug"], "article": saved}
+
+
+@router.post("/generate/player-prop")
+async def generate_player_prop_article(background_tasks: BackgroundTasks, player: str = "Jalen Brunson", force: bool = False):
+    today = date.today()
+    games_raw = await fetch_schedule()
+    games = [to_dict(g) for g in games_raw]
+
+    def get_date(g):
+        d = g["game_date"]
+        if isinstance(d, date):
+            return d
+        return date.fromisoformat(str(d)[:10])
+
+    next_game = next((g for g in games if get_date(g) >= today and g["status"] != "Final"), None)
+    if not next_game:
+        raise HTTPException(status_code=404, detail="No upcoming games found")
+
+    game_date_str = str(next_game["game_date"])[:10]
+
+    from app.services.article_service import slugify
+    player_slug = player.lower().replace(" ", "-")
+    slug = slugify(f"{player_slug}-prop-prediction-{game_date_str}")
+    if not force:
+        existing = await get_article_by_slug(slug)
+        if existing:
+            return {"message": "Article already exists", "slug": slug, "article": existing}
+
+    injuries_raw = await fetch_injury_report()
+    injuries = [to_dict(i) for i in injuries_raw]
+    stats_raw = await fetch_player_stats()
+    top_stats = [to_dict(s) for s in stats_raw[:8]] if stats_raw else []
+    player_stats = next((s for s in top_stats if player.lower() in s.get("player_name", "").lower()), None)
+    odds_raw = await fetch_knicks_lines()
+    odds = [to_dict(o) for o in odds_raw]
+    spread, moneyline, over_under = get_odds_for_game(odds, next_game)
+
+    from app.services.article_service import generate_player_prop
+    article = await generate_player_prop(
+        player=player,
+        home_team=next_game["home_team"],
+        away_team=next_game["away_team"],
+        game_date=game_date_str,
+        player_stats=player_stats,
+        injuries=injuries,
+        top_stats=top_stats,
+        over_under=over_under,
+    )
+    saved = await save_article(article)
+    return {"message": "Article generated", "slug": saved["slug"], "article": saved}
+
+
+@router.post("/generate/best-bet")
+async def generate_best_bet_article(background_tasks: BackgroundTasks, force: bool = False):
+    today = date.today()
+    games_raw = await fetch_schedule()
+    games = [to_dict(g) for g in games_raw]
+
+    def get_date(g):
+        d = g["game_date"]
+        if isinstance(d, date):
+            return d
+        return date.fromisoformat(str(d)[:10])
+
+    next_game = next((g for g in games if get_date(g) >= today and g["status"] != "Final"), None)
+    if not next_game:
+        raise HTTPException(status_code=404, detail="No upcoming games found")
+
+    game_date_str = str(next_game["game_date"])[:10]
+
+    from app.services.article_service import slugify
+    slug = slugify(f"best-knicks-bet-{game_date_str}")
+    if not force:
+        existing = await get_article_by_slug(slug)
+        if existing:
+            return {"message": "Article already exists", "slug": slug, "article": existing}
+
+    injuries_raw = await fetch_injury_report()
+    injuries = [to_dict(i) for i in injuries_raw]
+    stats_raw = await fetch_player_stats()
+    top_stats = [to_dict(s) for s in stats_raw[:8]] if stats_raw else []
+    odds_raw = await fetch_knicks_lines()
+    odds = [to_dict(o) for o in odds_raw]
+    spread, moneyline, over_under = get_odds_for_game(odds, next_game)
+
+    from app.services.article_service import generate_best_bet
+    article = await generate_best_bet(
+        home_team=next_game["home_team"],
+        away_team=next_game["away_team"],
+        game_date=game_date_str,
+        spread=spread,
+        moneyline=moneyline,
+        over_under=over_under,
+        injuries=injuries,
+        top_stats=top_stats,
+    )
+    saved = await save_article(article)
+    return {"message": "Article generated", "slug": saved["slug"], "article": saved}
+
+
+@router.post("/generate/history")
+async def generate_history_article_endpoint(force: bool = False):
+    from datetime import datetime
+    from app.services.article_service import generate_history_article, slugify
+    today_str = str(date.today())
+    dt = datetime.strptime(today_str, "%Y-%m-%d")
+    month = dt.strftime("%B")
+    day = dt.day
+    slug = slugify(f"this-day-in-knicks-history-{month}-{day}")
+    if not force:
+        existing = await get_article_by_slug(slug)
+        if existing:
+            return {"message": "History article already exists", "slug": slug, "article": existing}
+    article = await generate_history_article(today_str)
+    saved = await save_article(article)
+    return {"message": "History article generated", "slug": saved["slug"], "article": saved}
+
+
+@router.post("/test-tweet")
+async def test_tweet():
+    from app.services.twitter_service import post_article_tweet
+    test_article = {
+        "slug": "test-article",
+        "title": "Test Tweet from KnicksHub",
+        "article_type": "best_bet",
+        "game_date": "2026-03-16",
+        "home_team": "New York Knicks",
+        "away_team": "Golden State Warriors",
+        "key_picks": {
+            "spread_pick": "Knicks -7.5",
+            "spread_lean": "COVER",
+            "total_pick": "Under 227.5",
+            "total_lean": "UNDER",
+            "confidence": "High"
+        }
+    }
+    try:
+        result = await post_article_tweet(test_article)
+        return {"tweet_url": result}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.post("/debug-twitter")
+async def debug_twitter():
+    from app.config import settings
+    return {
+        "api_key": bool(settings.TWITTER_API_KEY),
+        "api_secret": bool(settings.TWITTER_API_SECRET),
+        "access_token": bool(settings.TWITTER_ACCESS_TOKEN),
+        "access_token_secret": bool(settings.TWITTER_ACCESS_TOKEN_SECRET),
+    }
+
+
+@router.delete("/{slug}")
+async def delete_article(slug: str):
+    from app.db import get_supabase
+    db = get_supabase()
+    db.table("articles").delete().eq("slug", slug).execute()
+    return {"deleted": slug}
