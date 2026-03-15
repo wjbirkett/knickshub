@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
 from fastapi.responses import Response
 from app.services.article_service import (
     generate_game_preview, save_article, get_articles, get_article_by_slug
@@ -267,8 +267,9 @@ async def debug_twitter():
 
 
 @router.patch("/{slug}")
-async def update_article(slug: str, data: dict):
+async def update_article(slug: str, request: Request):
     from app.db import get_supabase
+    data = await request.json()
     db = get_supabase()
     db.table("articles").update(data).eq("slug", slug).execute()
     return {"updated": slug}
