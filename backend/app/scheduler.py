@@ -23,7 +23,7 @@ def refresh_odds():
     from app.services.odds_service import fetch_knicks_lines
     _run_async(fetch_knicks_lines())
 
-def generate_article():
+def generate_article(force: bool = False):
     """
     Runs every hour. Checks if there's a Knicks game today and whether
     we're within 2 hours of tip-off. If so, generates all betting articles.
@@ -92,7 +92,7 @@ def generate_article():
             logger.info(f"Cron: game today at {game_time_utc.isoformat()}, {minutes_until_tip:.0f} min until tip-off")
 
             # Generate articles between 2h15min and 1h45min before tip (30-min window each hour)
-            if not (105 <= minutes_until_tip <= 135):
+            if not force and not (105 <= minutes_until_tip <= 135):
                 logger.info(f"Cron: not in generation window ({minutes_until_tip:.0f} min to tip) — skipping")
                 return
 
@@ -115,7 +115,7 @@ def generate_article():
 
             slug = slugify(f"{next_game['away_team']}-vs-{next_game['home_team']}-prediction-{game_date_str}")
             existing = await get_article_by_slug(slug)
-            if existing:
+            if existing and not force:
                 logger.info(f"Cron: articles already exist for {game_date_str}, skipping")
                 return
 

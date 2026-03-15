@@ -58,7 +58,7 @@ async def articles_sitemap():
 async def trigger_all_articles():
     from app.scheduler import generate_article
     import threading
-    threading.Thread(target=generate_article, daemon=True).start()
+    threading.Thread(target=lambda: generate_article(force=True), daemon=True).start()
     return {"message": "Article generation triggered in background"}
 
 @router.get("/debug-injuries")
