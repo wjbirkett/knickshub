@@ -23,7 +23,7 @@ function KeyPicksBox({ picks, articleType }: { picks: any; articleType: string }
       <div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
         <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>🎯 KEY PICK</p>
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-          <PickCard label={`${picks.player} ${picks.prop_type}`} value={picks.pick} leanBg={leanBg} leanColor={leanColor} lean={picks.lean} />
+          <PickCard label={`${picks.player}${picks.prop_type ? " " + picks.prop_type : " Prop"}`} value={picks.pick} leanBg={leanBg} leanColor={leanColor} lean={picks.lean} />
           <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
             <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
             <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>
@@ -148,7 +148,7 @@ export default function ArticlePage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.75rem", flexWrap: "wrap", gap: "0.75rem" }}>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <span style={{ background: badge.bg, color: badge.color, padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700 }}>{badge.label}</span>
-            <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>{new Date(article.game_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</span>
+            <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>{new Date(article.game_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</span>
           </div>
           <ShareButtons title={article.title} slug={slug!} />
         </div>
