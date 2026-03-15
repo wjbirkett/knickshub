@@ -63,11 +63,10 @@ async def _fetch_opponent_injuries(opponent: str) -> str:
         lines = []
         for inj in injuries:
             athlete = inj.get("athlete", {})
-            name = athlete.get("displayName", "Unknown")
+            name = athlete.get("displayName") or f"{athlete.get('firstName','')} {athlete.get('lastName','')}".strip() or "Unknown"
             status = inj.get("status", "Unknown")
-            detail = inj.get("details", {})
-            reason = detail.get("type", inj.get("longComment", "Undisclosed"))
-            lines.append(f"- {name}: {status} ({reason})")
+            comment = inj.get("shortComment") or inj.get("longComment", "Undisclosed")
+            lines.append(f"- {name}: {status} — {comment}")
         return "\n".join(lines) if lines else f"No injuries reported for {opponent}"
     except Exception as e:
         logger.warning(f"Opponent injury fetch failed for {opponent}: {e}")
