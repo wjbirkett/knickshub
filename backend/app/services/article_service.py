@@ -178,6 +178,9 @@ Over/Under: {over_under}
 Knicks Injury Report (live data):
 {injury_text}
 
+{opponent} Injury Report (live data — THESE PLAYERS ARE OUT AND MUST BE MENTIONED BY NAME):
+{opponent_injury_text}
+
 Recent Knicks Results:
 {recent_text}
 
@@ -256,6 +259,9 @@ All Knicks Players Stats:
 Knicks Injury Report:
 {injury_text}
 
+{opponent} Injury Report (live data — THESE PLAYERS ARE OUT AND MUST BE MENTIONED BY NAME):
+{opponent_injury_text}
+
 Recent Knicks Results:
 {recent_text}
 
@@ -324,6 +330,9 @@ Over/Under: {over_under}
 
 Knicks Injury Report:
 {injury_text}
+
+{opponent} Injury Report (live data — THESE PLAYERS ARE OUT AND MUST BE MENTIONED BY NAME IN THE MATCHUP SECTION):
+{opponent_injury_text}
 
 Recent Knicks Results:
 {recent_text}
