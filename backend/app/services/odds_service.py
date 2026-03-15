@@ -3,65 +3,89 @@ from datetime import datetime, timezone
 from typing import List, Optional
 import httpx
 from app.models.schemas import BettingLine
-from app.config import settings
 
 logger = logging.getLogger(__name__)
-BASE_URL       = "https://api.the-odds-api.com/v4"
-KNICKS_NAMES   = {"New York Knicks","Knicks"}
-BOOKMAKER_PREF = ["draftkings","fanduel","betmgm","caesars"]
+ESPN_BASE = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba"
+KNICKS_ESPN_ID = "18"
 
 async def fetch_knicks_lines() -> List[BettingLine]:
-    if not settings.ODDS_API_KEY:
-        logger.warning("ODDS_API_KEY not set")
-        return []
     try:
+        # Step 1: get today's scoreboard to find Knicks game ID
         async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.get(f"{BASE_URL}/sports/basketball_nba/odds", params={
-    "apiKey": settings.ODDS_API_KEY,
-    "regions": "us",
-    "markets": "spreads,h2h,totals",
-    "oddsFormat": "american",
-})
+            resp = await client.get("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard")
             resp.raise_for_status()
             data = resp.json()
-            logger.info(f"Odds API: {resp.headers.get('x-requests-used','?')} used, {resp.headers.get('x-requests-remaining','?')} remaining")
+        
+        game_id = None
+        home_team = away_team = None
+        commence_time = datetime.now(timezone.utc)
+        
+        for event in data.get("events", []):
+            comps = event.get("competitions", [])
+            if not comps:
+                continue
+            competitors = comps[0].get("competitors", [])
+            team_ids = [c.get("team", {}).get("id") for c in competitors]
+            if KNICKS_ESPN_ID in team_ids:
+                game_id = event.get("id")
+                for c in competitors:
+                    if c.get("homeAway") == "home":
+                        home_team = c.get("team", {}).get("displayName")
+                    else:
+                        away_team = c.get("team", {}).get("displayName")
+                try:
+                    commence_time = datetime.fromisoformat(event.get("date","").replace("Z","+00:00"))
+                except:
+                    pass
+                break
+        
+        if not game_id:
+            logger.warning("No Knicks game found in ESPN scoreboard")
+            return []
+        
+        # Step 2: fetch odds for that game
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(f"{ESPN_BASE}/events/{game_id}/competitions/{game_id}/odds")
+            resp.raise_for_status()
+            odds_data = resp.json()
+        
+        items = odds_data.get("items", [])
+        if not items:
+            logger.warning("No odds found for Knicks game")
+            return []
+        
+        # Use first provider (DraftKings is priority 1)
+        item = items[0]
+        spread = item.get("spread")  # negative = home team favored
+        over_under = item.get("current", {}).get("total", {}).get("alternateDisplayValue")
+        if not over_under:
+            over_under = item.get("overUnder")
+        
+        home_odds = item.get("homeTeamOdds", {})
+        away_odds = item.get("awayTeamOdds", {})
+        ml_home = home_odds.get("moneyLine")
+        ml_away = away_odds.get("moneyLine")
+        
+        if over_under:
+            try:
+                over_under = float(over_under)
+            except:
+                pass
+        
+        line = BettingLine(
+            game_id=game_id,
+            home_team=home_team or "New York Knicks",
+            away_team=away_team or "Unknown",
+            commence_time=commence_time,
+            bookmaker="DraftKings (ESPN)",
+            spread=spread,
+            moneyline_home=int(ml_home) if ml_home else None,
+            moneyline_away=int(ml_away) if ml_away else None,
+            over_under=float(over_under) if over_under else None,
+        )
+        logger.info(f"ESPN odds fetched: spread={spread}, ml_home={ml_home}, ml_away={ml_away}, ou={over_under}")
+        return [line]
+    
     except Exception as e:
-        logger.error(f"Odds API failed: {e}")
+        logger.error(f"ESPN odds fetch failed: {e}")
         return []
-    lines = []
-    for game in data:
-        home, away = game.get("home_team",""), game.get("away_team","")
-        if home not in KNICKS_NAMES and away not in KNICKS_NAMES:
-            continue
-        try: commence_time = datetime.fromisoformat(game.get("commence_time","").replace("Z","+00:00"))
-        except: commence_time = datetime.now(timezone.utc)
-        bk = _pick_bookmaker(game.get("bookmakers",[]))
-        if not bk: continue
-        spread, ml_home, ml_away, ou = _extract_markets(bk, home, away)
-        lines.append(BettingLine(
-            game_id=game.get("id",""), home_team=home, away_team=away,
-            commence_time=commence_time, bookmaker=bk.get("title","Unknown"),
-            spread=spread, moneyline_home=ml_home, moneyline_away=ml_away, over_under=ou,
-        ))
-    lines.sort(key=lambda g: g.commence_time)
-    return lines
-
-def _pick_bookmaker(bookmakers):
-    bk_by_key = {bk["key"]: bk for bk in bookmakers}
-    for key in BOOKMAKER_PREF:
-        if key in bk_by_key: return bk_by_key[key]
-    return bookmakers[0] if bookmakers else None
-
-def _extract_markets(bk, home_team, away_team):
-    spread = ml_home = ml_away = ou = None
-    for market in bk.get("markets",[]):
-        key = market.get("key")
-        outcomes = {o["name"]: o for o in market.get("outcomes",[])}
-        if key == "spreads":
-            if home_team in outcomes: spread = outcomes[home_team].get("point")
-        elif key == "h2h":
-            if home_team in outcomes: ml_home = int(outcomes[home_team].get("price",0))
-            if away_team in outcomes: ml_away = int(outcomes[away_team].get("price",0))
-        elif key == "totals":
-            if "Over" in outcomes: ou = outcomes["Over"].get("point")
-    return spread, ml_home, ml_away, ou
