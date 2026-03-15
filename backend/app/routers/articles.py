@@ -266,6 +266,13 @@ async def debug_twitter():
     }
 
 
+@router.patch("/{slug}")
+async def update_article(slug: str, data: dict):
+    from app.db import get_supabase
+    db = get_supabase()
+    db.table("articles").update(data).eq("slug", slug).execute()
+    return {"updated": slug}
+
 @router.delete("/{slug}")
 async def delete_article(slug: str):
     from app.db import get_supabase
