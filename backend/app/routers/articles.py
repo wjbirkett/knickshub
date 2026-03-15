@@ -148,18 +148,20 @@ async def generate_player_prop_article(background_tasks: BackgroundTasks, player
     spread, moneyline, over_under = get_odds_for_game(odds, next_game)
 
     from app.services.article_service import generate_player_prop
-    article = await generate_player_prop(
-        player=player,
-        home_team=next_game["home_team"],
-        away_team=next_game["away_team"],
-        game_date=game_date_str,
-        player_stats=player_stats,
-        injuries=injuries,
-        top_stats=top_stats,
-        over_under=over_under,
-    )
-    saved = await save_article(article)
-    return {"message": "Article generated", "slug": saved["slug"], "article": saved}
+    async def _gen():
+        article = await generate_player_prop(
+            player=player,
+            home_team=next_game["home_team"],
+            away_team=next_game["away_team"],
+            game_date=game_date_str,
+            player_stats=player_stats,
+            injuries=injuries,
+            top_stats=top_stats,
+            over_under=over_under,
+        )
+        await save_article(article)
+    background_tasks.add_task(_gen)
+    return {"message": "Article generation started", "slug": slug}
 
 
 @router.post("/generate/best-bet")
