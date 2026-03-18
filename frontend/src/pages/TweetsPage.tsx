@@ -24,7 +24,7 @@ export default function TweetsPage() {
   let streakCount = 0
   for (const g of reversed) { if (knicksWon(g) === streakType) streakCount++; else break }
   const streak = streakType !== null ? `${streakType ? "W" : "L"}${streakCount}` : "\u2014"
-  const uniquePreds = predictions.filter((p: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.slug === p.slug) === i)
+  const uniquePreds = predictions.filter((p: any, i: number, arr: any[]) => p.slug.includes("-prediction-") && arr.findIndex((x: any) => x.slug === p.slug) === i)
   const spreadHits = uniquePreds.filter((p: any) => p.spread_result === "HIT").length
   const spreadTotal = uniquePreds.filter((p: any) => p.spread_result).length
   const totalHits = uniquePreds.filter((p: any) => p.total_result === "HIT").length

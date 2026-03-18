@@ -196,7 +196,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
 
             picks = article["key_picks"]
             player = article["player"]
-            prop_type = article.get("prop_type", "points")
+            prop_type = article.get("prop_type") or (article.get("key_picks") or {}).get("best_prop_type") or "points"
 
             # Fetch player box score
             player_stats = await fetch_player_stats_from_boxscore(game_id, player)
@@ -225,8 +225,8 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 continue
 
             # Get the line from key_picks
-            pick_str = picks.get("pick") or picks.get(f"{prop_type}_pick", "")
-            lean = picks.get("lean") or picks.get(f"{prop_type}_lean", "")
+            pick_str = picks.get("pick") or picks.get(f"{prop_type}_pick") or picks.get("points_pick") or picks.get("rebounds_pick") or picks.get("threes_pick") or ""
+            lean = picks.get("lean") or picks.get(f"{prop_type}_lean") or picks.get("points_lean") or picks.get("rebounds_lean") or picks.get("threes_lean") or ""
             try:
                 line = float(str(pick_str).replace("Over", "").replace("Under", "").strip())
             except:
