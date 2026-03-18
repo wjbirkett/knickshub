@@ -125,6 +125,15 @@ async def debug_trigger():
     except Exception as e:
         return {"error": str(e), "trace": traceback.format_exc()}
 
+@router.post("/resolve-results")
+async def resolve_results(game_date: str = None):
+    from app.services.results_service import resolve_game_predictions
+    from datetime import date, timedelta
+    if not game_date:
+        game_date = str(date.today() - timedelta(days=1))
+    result = await resolve_game_predictions(game_date)
+    return {"game_date": game_date, "result": result}
+
 @router.get("/debug-injuries")
 async def debug_injuries(opponent: str = "Golden State Warriors"):
     from app.services.article_service import _fetch_opponent_injuries

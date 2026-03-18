@@ -236,6 +236,14 @@ def generate_history_article():
     _run_async(_generate())
 
 
+def resolve_results():
+    from app.services.results_service import resolve_yesterday
+    try:
+        result = resolve_yesterday()
+        logger.info(f"Results resolved: {result}")
+    except Exception as e:
+        logger.error(f"Results resolution failed: {e}")
+
 def start_scheduler():
     _scheduler.add_job(refresh_news,             CronTrigger(minute="*/15"))
     _scheduler.add_job(refresh_injuries,         CronTrigger(hour="*/3"))
@@ -244,6 +252,7 @@ def start_scheduler():
     _scheduler.add_job(generate_article,         CronTrigger(minute=0))
     # History articles: off days only, 10am ET (15:00 UTC)
     _scheduler.add_job(generate_history_article, CronTrigger(hour=15, minute=0, timezone="UTC"))
+    _scheduler.add_job(resolve_results, CronTrigger(hour=4, minute=0, timezone="UTC"))  # 11pm ET - resolve last night
     _scheduler.start()
     logger.info("Scheduler started")
 
