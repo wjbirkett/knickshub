@@ -499,7 +499,8 @@ At the VERY END of your response, you MUST output exactly this format with nothi
 ###KEY PICKS START###
 {json object with your picks}
 ###KEY PICKS END###
-"""port anthropic
+"""
+import anthropic
 import logging
 import re
 import json
