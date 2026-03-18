@@ -134,6 +134,12 @@ async def resolve_results(game_date: str = None):
     result = await resolve_game_predictions(game_date)
     return {"game_date": game_date, "result": result}
 
+@router.get("/debug-boxscore")
+async def debug_boxscore(game_id: str, player: str):
+    from app.services.results_service import fetch_player_stats_from_boxscore
+    result = await fetch_player_stats_from_boxscore(game_id, player)
+    return {"player": player, "stats": result}
+
 @router.get("/debug-injuries")
 async def debug_injuries(opponent: str = "Golden State Warriors"):
     from app.services.article_service import _fetch_opponent_injuries
