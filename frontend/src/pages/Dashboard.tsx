@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getNews, getInjuries, getBirthdays, getSchedule, getStandings, getArticles } from "../utils/api"
+import { getNews, getInjuries, getBirthdays, getSchedule, getStandings, getArticles, getResults } from "../utils/api"
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 
@@ -36,6 +36,19 @@ export default function Dashboard() {
     streak = `${first ? "W" : "L"}${count}`
   }
 
+  const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults })
+  const predictions = resultsData?.predictions ?? []
+  const propResults = resultsData?.props ?? []
+  const spreadHits = predictions.filter((p: any) => p.spread_result === "HIT").length
+  const spreadTotal = predictions.filter((p: any) => p.spread_result).length
+  const totalHits = predictions.filter((p: any) => p.total_result === "HIT").length
+  const totalTotal = predictions.filter((p: any) => p.total_result).length
+  const propHits = propResults.filter((p: any) => p.result === "HIT").length
+  const propTotal = propResults.length
+  const todayArticles = (articles ?? []).filter((a: any) => a.game_date === today)
+  const todayBestBet = todayArticles.find((a: any) => a.article_type === "best_bet")
+  const todayPrediction = todayArticles.find((a: any) => a.article_type === "prediction")
+  const todayHub = todayPrediction ? (() => { const opp = todayPrediction.home_team?.includes("Knicks") ? todayPrediction.away_team : todayPrediction.home_team; const s = opp?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") ?? "unknown"; return "knicks-vs-" + s + "-" + today })() : null
   const recentArticles = (articles ?? []).slice(0, 3)
   const sectionTitle = recentArticles.length > 0 && recentArticles[0]?.article_type === "history"
     ? "THIS DAY IN KNICKS HISTORY"
@@ -57,6 +70,45 @@ export default function Dashboard() {
         }
       `}</style>
 
+      {(todayBestBet || spreadTotal > 0) && (
+        <div style={{ background: "linear-gradient(135deg, #0d1117 0%, #1a0a00 100%)", border: "1px solid #F58426", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "0.9rem", letterSpacing: "0.15em", color: "#F58426", margin: "0 0 0.4rem" }}>FIRE AI BEST BET TONIGHT</p>
+              {todayBestBet ? (
+                <>
+                  <p style={{ color: "#f9fafb", fontWeight: 700, fontSize: "1rem", margin: "0 0 0.5rem", lineHeight: 1.4 }}>{todayBestBet.title}</p>
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                    {todayHub && <a href={"/game/" + todayHub} style={{ fontSize: "0.75rem", fontWeight: 700, color: "#F58426", border: "1px solid #F58426", borderRadius: "999px", padding: "0.2rem 0.6rem", textDecoration: "none" }}>View Game Hub</a>}
+                    <a href={"/predictions/" + todayBestBet.slug} style={{ fontSize: "0.75rem", fontWeight: 700, color: "#9ca3af", border: "1px solid #374151", borderRadius: "999px", padding: "0.2rem 0.6rem", textDecoration: "none" }}>Full Analysis</a>
+                  </div>
+                </>
+              ) : (
+                <p style={{ color: "#6b7280", fontSize: "0.875rem", margin: 0 }}>AI picks drop 45 min before tip-off</p>
+              )}
+            </div>
+            {spreadTotal > 0 && (
+              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                {[
+                  { label: "ATS", hits: spreadHits, total: spreadTotal },
+                  { label: "O/U", hits: totalHits, total: totalTotal },
+                  { label: "Props", hits: propHits, total: propTotal },
+                ].map(r => {
+                  const pct = r.total > 0 ? Math.round((r.hits / r.total) * 100) : 0
+                  const color = pct >= 60 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171"
+                  return (
+                    <div key={r.label} style={{ textAlign: "center", minWidth: "52px" }}>
+                      <p style={{ color: "#6b7280", fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.2rem" }}>{r.label}</p>
+                      <p style={{ color, fontSize: "1rem", fontWeight: 700, margin: 0 }}>{r.hits}-{r.total - r.hits}</p>
+                      <p style={{ color, fontSize: "0.65rem", margin: 0 }}>{pct}%</p>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="db-header">
         <h1 className="db-title" style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>
           DASHBOARD
