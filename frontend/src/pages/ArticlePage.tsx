@@ -41,7 +41,7 @@ function KeyPicksBox({ picks, articleType }: { picks: any; articleType: string }
       <div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
         <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>🎯 KEY PICK</p>
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-          <PickCard label={`${picks.player}${picks.prop_type ? " " + picks.prop_type : " Prop"}`} value={picks.pick} leanBg={leanBgLeg} leanColor={leanColor} lean={picks.lean} />
+          <PickCard label={`${picks.player} ${picks.prop_type ? picks.prop_type.charAt(0).toUpperCase() + picks.prop_type.slice(1) : "Points"}`} value={picks.pick} leanBg={leanBgLeg} leanColor={leanColor} lean={picks.lean} />
           <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
             <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
             <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>

@@ -73,7 +73,7 @@ async def trigger_all_articles():
                 if isinstance(d, dt): return d
                 return dt.fromisoformat(str(d)[:10])
             tomorrow = today + __import__("datetime").timedelta(days=1)
-            next_game = next((g for g in games if get_date(g) in (today, tomorrow) and g["status"] != "Final"), None)
+            next_game = next((g for g in sorted(games, key=lambda g: str(g["game_date"])) if get_date(g) in (today, tomorrow) and g["status"] != "Final"), None)
             if not next_game: return
             injuries_raw = await fetch_injury_report()
             injuries = [i.model_dump() if hasattr(i, "model_dump") else i for i in injuries_raw]
