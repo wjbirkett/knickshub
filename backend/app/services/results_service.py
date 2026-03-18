@@ -35,8 +35,8 @@ async def fetch_game_result(game_date: str, opponent: str) -> Optional[dict]:
             if event_date != game_date and event_date != tomorrow:
                 continue
             competitors = comp.get("competitors", [])
-            has_opp = any(opp_keyword in c.get("team", {}).get("displayName", "").lower() for c in competitors)
-            if not has_opp:
+            team_names = " ".join([c.get("team", {}).get("displayName", "").lower() for c in competitors])
+            if opp_keyword not in team_names:
                 continue
             knicks = next((c for c in competitors if c.get("team", {}).get("id") == KNICKS_ESPN_ID), None)
             opp = next((c for c in competitors if c.get("team", {}).get("id") != KNICKS_ESPN_ID), None)
