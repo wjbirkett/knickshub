@@ -30,7 +30,9 @@ async def fetch_game_result(game_date: str, opponent: str) -> Optional[dict]:
             if not comp.get("status", {}).get("type", {}).get("completed", False):
                 continue
             event_date = event.get("date", "")[:10]
-            if event_date != game_date:
+            from datetime import timedelta
+            tomorrow = str(__import__("datetime").date.fromisoformat(game_date) + timedelta(days=1))
+            if event_date != game_date and event_date != tomorrow:
                 continue
             competitors = comp.get("competitors", [])
             has_opp = any(opp_keyword in c.get("team", {}).get("displayName", "").lower() for c in competitors)
