@@ -92,7 +92,7 @@ def generate_article(force: bool = False):
             logger.info(f"Cron: game today at {game_time_utc.isoformat()}, {minutes_until_tip:.0f} min until tip-off")
 
             # Generate articles between 2h15min and 1h45min before tip (30-min window each hour)
-            if not force and not (105 <= minutes_until_tip <= 135):
+            if not force and not (40 <= minutes_until_tip <= 70):
                 logger.info(f"Cron: not in generation window ({minutes_until_tip:.0f} min to tip) — skipping")
                 return
 
