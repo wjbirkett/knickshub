@@ -16,43 +16,31 @@ def _run_sync(coro):
     finally:
         loop.close()
 
-async def fetch_game_result(game_date: str, opponent: str) -> Optional[dict]:
-    """Fetch final score from ESPN for a specific game."""
+async def fetch_game_result(game_date, opponent):
     try:
+        from datetime import datetime as dt, timedelta
+        opp = opponent.split()[-1].lower()
+        gd = dt.strptime(game_date, "%Y-%m-%d")
+        dates = [gd.strftime("%Y%m%d"), (gd+timedelta(days=1)).strftime("%Y%m%d"), (gd-timedelta(days=1)).strftime("%Y%m%d")]
         async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.get(f"{ESPN_BASE}/teams/{KNICKS_ESPN_ID}/schedule")
-            resp.raise_for_status()
-            data = resp.json()
-
-        opp_keyword = opponent.split()[-1].lower()
-        for event in data.get("events", []):
-            comp = event["competitions"][0]
-            if not comp.get("status", {}).get("type", {}).get("completed", False):
-                continue
-            event_date = event.get("date", "")[:10]
-            from datetime import timedelta
-            tomorrow = str(__import__("datetime").date.fromisoformat(game_date) + timedelta(days=1))
-            if event_date != game_date and event_date != tomorrow:
-                continue
-            competitors = comp.get("competitors", [])
-            team_names = " ".join([c.get("team", {}).get("displayName", "").lower() for c in competitors])
-            if opp_keyword not in team_names:
-                continue
-            knicks = next((c for c in competitors if c.get("team", {}).get("id") == KNICKS_ESPN_ID), None)
-            opp = next((c for c in competitors if c.get("team", {}).get("id") != KNICKS_ESPN_ID), None)
-            if not knicks or not opp:
-                continue
-            return {
-                "knicks_score": int(knicks.get("score", 0)),
-                "opp_score": int(opp.get("score", 0)),
-                "knicks_won": knicks.get("winner", False),
-                "game_id": event.get("id"),
-            }
+            for d in dates:
+                r = await client.get(f"{ESPN_BASE}/scoreboard?dates={d}")
+                data = r.json()
+                for ev in data.get("events",[]):
+                    comp = ev["competitions"][0]
+                    if not comp.get("status",{}).get("type",{}).get("completed",False): continue
+                    comps = comp.get("competitors",[])
+                    ids = [x.get("team",{}).get("id") for x in comps]
+                    names = " ".join([x.get("team",{}).get("displayName","").lower() for x in comps])
+                    if KNICKS_ESPN_ID not in ids or opp not in names: continue
+                    k = next((x for x in comps if x.get("team",{}).get("id")==KNICKS_ESPN_ID),None)
+                    o = next((x for x in comps if x.get("team",{}).get("id")!=KNICKS_ESPN_ID),None)
+                    if not k or not o: continue
+                    return {"knicks_score":int(k.get("score",0)),"opp_score":int(o.get("score",0)),"knicks_won":k.get("winner",False),"game_id":ev.get("id")}
         return None
-    except Exception as e:
-        logger.error(f"Failed to fetch game result: {e}")
+    except Exception as ex:
+        logger.error(f"fetch_game_result failed: {ex}")
         return None
-
 
 async def fetch_player_stats_from_boxscore(game_id: str, player_name: str) -> Optional[dict]:
     """Fetch individual player stats from ESPN box score."""
