@@ -1,171 +1,474 @@
-import anthropic, logging, re, asyncio, json
+import anthropic
+import logging
+import re
+import json
+import asyncio
+import httpx
 from datetime import datetime, timezone
+from typing import Optional, Dict, Any, List, Tuple, Union
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+from aiocache import cached
+from aiocache.serializers import JsonSerializer
+
 from app.config import settings
-from app.services.nba_stats_service import get_knicks_last5, get_h2h_this_season, get_knicks_team_stats
+from app.services.nba_stats_service import (
+    get_knicks_last5,
+    get_h2h_this_season,
+    get_knicks_team_stats,
+)
+from app.db import get_supabase
 
 logger = logging.getLogger(__name__)
 
-def _get_client():
-    return anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+# ----------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------
+ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
+ANTHROPIC_MAX_TOKENS = 2000
+ANTHROPIC_TEMPERATURE = 0.55
+ANTHROPIC_TIMEOUT = 45  # seconds
 
-def slugify(text: str) -> str:
-    text = text.lower().strip()
-    text = re.sub(r'[^\w\s-]', '', text)
-    text = re.sub(r'[\s_-]+', '-', text)
-    return text
+# Prop bet configuration
+PROP_TYPES = {
+    "points": {"key": "points_per_game", "suffix": "PTS", "description": "points", "stat_type": "scoring"},
+    "rebounds": {"key": "rebounds_per_game", "suffix": "REB", "description": "rebounds", "stat_type": "rebounding"},
+    "assists": {"key": "assists_per_game", "suffix": "AST", "description": "assists", "stat_type": "playmaking"},
+    "threes": {"key": "threes_per_game", "suffix": "3PM", "description": "three-pointers made", "stat_type": "shooting"},
+    "steals": {"key": "steals_per_game", "suffix": "STL", "description": "steals", "stat_type": "defense"},
+    "blocks": {"key": "blocks_per_game", "suffix": "BLK", "description": "blocks", "stat_type": "defense"},
+    "turnovers": {"key": "turnovers_per_game", "suffix": "TO", "description": "turnovers", "stat_type": "misc"},
+    "pts_reb_ast": {"key": "combined", "suffix": "PRA", "description": "points+rebounds+assists combined", "stat_type": "combined"},
+}
 
-def _ordinal(n: int) -> str:
-    return str(n) + ("th" if 11 <= n <= 13 else {1:"st",2:"nd",3:"rd"}.get(n%10,"th"))
+# TODO: Replace with actual odds API integration
+# Typical prop lines by player (hardcoded for now)
+PROP_LINES = {
+    "Jalen Brunson": {"points": 26.5, "assists": 7.5, "rebounds": 4.5, "threes": 2.5, "pts_reb_ast": 38.5},
+    "Karl-Anthony Towns": {"points": 24.5, "rebounds": 10.5, "assists": 3.5, "threes": 2.5, "pts_reb_ast": 38.5},
+    "Mikal Bridges": {"points": 18.5, "steals": 1.5, "threes": 2.5, "rebounds": 4.5, "pts_reb_ast": 26.5},
+    "OG Anunoby": {"points": 16.5, "steals": 1.5, "blocks": 1.5, "rebounds": 5.5, "threes": 2.5},
+    "Josh Hart": {"points": 10.5, "rebounds": 7.5, "assists": 4.5, "pts_reb_ast": 22.5},
+    "Miles McBride": {"points": 9.5, "assists": 3.5, "threes": 1.5},
+    "Mitchell Robinson": {"rebounds": 8.5, "blocks": 1.5, "points": 8.5},
+    "Jordan Clarkson": {"points": 12.5, "assists": 3.5, "threes": 1.5},
+    "Jose Alvarado": {"steals": 1.5, "assists": 4.5, "points": 8.5},
+    "Jeremy Sochan": {"points": 11.5, "rebounds": 6.5, "assists": 2.5},
+    "Landry Shamet": {"points": 8.5, "threes": 1.5},
+    "Tyler Kolek": {"assists": 3.5, "points": 6.5},
+}
 
-def _format_injuries(injuries):
-    return "\n".join([f"- {i['player_name']}: {i['status']} ({i['reason']})" for i in injuries]) or "None reported"
-
-def _format_stats(top_stats):
-    return "\n".join([f"- {s.get('player_name','?')}: {s.get('points_per_game',0)}pts {s.get('rebounds_per_game',0)}reb {s.get('assists_per_game',0)}ast" for s in top_stats[:5]]) or "Stats unavailable"
-
-async def _fetch_nba_context(opponent):
-    try:
-        loop = asyncio.get_event_loop()
-        recent_text = await loop.run_in_executor(None, get_knicks_last5)
-        h2h_text = await loop.run_in_executor(None, get_h2h_this_season, opponent)
-        team_stats_text = await loop.run_in_executor(None, get_knicks_team_stats)
-        return recent_text, h2h_text, team_stats_text
-    except Exception as e:
-        logger.warning(f"nba_api enrichment failed: {e}")
-        return "Recent game data unavailable", "H2H data unavailable", "Team stats unavailable"
-
-
-async def _fetch_opponent_injuries(opponent: str) -> str:
-    try:
-        import httpx
-        TEAM_IDS = {"atlanta hawks": "1", "boston celtics": "2", "brooklyn nets": "17", "charlotte hornets": "30", "chicago bulls": "4", "cleveland cavaliers": "5", "dallas mavericks": "6", "denver nuggets": "7", "detroit pistons": "8", "golden state warriors": "9", "houston rockets": "10", "indiana pacers": "11", "la clippers": "12", "los angeles clippers": "12", "los angeles lakers": "13", "memphis grizzlies": "29", "miami heat": "14", "milwaukee bucks": "15", "minnesota timberwolves": "16", "new orleans pelicans": "3", "new york knicks": "18", "oklahoma city thunder": "25", "orlando magic": "19", "philadelphia 76ers": "20", "phoenix suns": "21", "portland trail blazers": "22", "sacramento kings": "23", "san antonio spurs": "24", "toronto raptors": "28", "utah jazz": "26", "washington wizards": "27"}
-        team_key = opponent.lower().strip()
-        team_id = TEAM_IDS.get(team_key)
-        if not team_id:
-            for key, val in TEAM_IDS.items():
-                if any(word in team_key for word in key.split() if len(word) > 3):
-                    team_id = val
-                    break
-        if not team_id:
-            return f"Opponent injury data unavailable for {opponent}"
-        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries"
-        async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get(url)
-            resp.raise_for_status()
-            data = resp.json()
-        all_teams = data.get("injuries", [])
-        team_data = next((t for t in all_teams if t.get("id") == team_id), None)
-        if not team_data:
-            return f"No injuries reported for {opponent}"
-        injuries = team_data.get("injuries", [])
-        if not injuries:
-            return f"No injuries reported for {opponent}"
-        lines = []
-        for inj in injuries:
-            athlete = inj.get("athlete", {})
-            name = athlete.get("displayName") or f"{athlete.get('firstName','')} {athlete.get('lastName','')}".strip() or "Unknown"
-            status = inj.get("status", "Unknown")
-            comment = inj.get("shortComment") or inj.get("longComment", "Undisclosed")
-            lines.append(f"- {name}: {status} — {comment}")
-        return "\n".join(lines) if lines else f"No injuries reported for {opponent}"
-    except Exception as e:
-        logger.warning(f"Opponent injury fetch failed for {opponent}: {e}")
-        return f"Opponent injury data unavailable for {opponent}"
-
-def _call_claude(prompt: str) -> str:
-    client = _get_client()
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=1800,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return message.content[0].text
-
-def _parse_key_picks(content: str) -> dict | None:
-    try:
-        match = re.search(r'```json\s*(\{.*?\})\s*```', content, re.DOTALL)
-        if match:
-            return json.loads(match.group(1))
-    except Exception as e:
-        logger.warning(f"Failed to parse key_picks: {e}")
-    return None
-
-def _strip_key_picks_block(content: str) -> str:
-    return re.sub(r'```json\s*\{.*?\}\s*```', '', content, flags=re.DOTALL).strip()
+# Which props to generate for each player by default
+DEFAULT_PLAYER_PROPS = {
+    "Jalen Brunson": ["points", "assists", "pts_reb_ast"],
+    "Karl-Anthony Towns": ["points", "rebounds", "pts_reb_ast"],
+    "Mikal Bridges": ["points", "steals", "threes"],
+    "OG Anunoby": ["points", "steals", "blocks"],
+    "Josh Hart": ["pts_reb_ast", "rebounds", "assists"],
+    "Miles McBride": ["points", "assists"],
+    "Mitchell Robinson": ["rebounds", "blocks"],
+    "Jordan Clarkson": ["points", "assists"],
+    "Jose Alvarado": ["steals", "assists"],
+    "Jeremy Sochan": ["points", "rebounds"],
+    "Landry Shamet": ["points", "threes"],
+    "Tyler Kolek": ["assists", "points"],
+}
 
 SEASON_FACTS = """
-=== VERIFIED 2025-26 SEASON FACTS ===
+=== VERIFIED 2025-26 SEASON FACTS - USE ONLY THESE, DO NOT INVENT OR HALLUCINATE ===
 
-KNICKS HEAD COACH: Mike Brown (hired July 7, 2025, replaced Tom Thibodeau)
-KNICKS STARTING FIVE: Jalen Brunson (PG), Mikal Bridges (SG), OG Anunoby (SF), Karl-Anthony Towns (PF/C), Mitchell Robinson (C)
-KNICKS KEY BENCH: Josh Hart, Miles McBride, Jordan Clarkson, Guerschon Yabusele, Jeremy Sochan (acquired from San Antonio Spurs mid-season — HE IS ON THE KNICKS, NOT THE SPURS)
-PLAYERS NO LONGER ON THE KNICKS: Precious Achiuwa, Donte DiVincenzo, Quentin Grimes, Isaiah Hartenstein
+KNICKS HEAD COACH: Mike Brown (hired July 2025 after Tom Thibodeau was fired)
+KNICKS CURRENT CORE/STARTERS (as of March 2026): 
+- Jalen Brunson (PG)
+- Mikal Bridges (SG/SF)
+- OG Anunoby (SF)
+- Karl-Anthony Towns (PF/C)
+- Mitchell Robinson (C) when healthy
 
-=== CRITICAL RULES FOR OPPONENT ROSTER/INJURIES ===
-- The live opponent injury data provided above is your ONLY source for opponent player information
-- ONLY mention opponent players that explicitly appear in the live injury data provided
-- DO NOT use your training knowledge for opponent rosters - it is outdated and WILL be wrong
-- DO NOT invent statistics (e.g. rankings, percentages) you cannot verify from the data provided
-- If a player is listed OUT in the injury report, they are definitively NOT playing tonight
-- Chris Paul is RETIRED and NOT on any NBA roster - never mention him
+KNICKS KEY ROTATION/BENCH: Josh Hart, Miles McBride, Jordan Clarkson, 
+Jose Alvarado, Landry Shamet, Tyler Kolek, Pacôme Dadiet, Ariel Hukporti, Jeremy Sochan
+
+PLAYERS NO LONGER ON THE KNICKS (never mention as current roster players):
+Precious Achiuwa, Donte DiVincenzo, Quentin Grimes, Isaiah Hartenstein
+
+INDIANA PACERS CONTEXT (as of mid-March 2026):
+Tyrese Haliburton is OUT FOR THE ENTIRE 2025-26 SEASON 
+(torn Achilles in 2025 NBA Finals Game 7 + subsequent shingles issues).
+Without him, the Pacers have one of the worst records in the NBA (~15-53) 
+and were eliminated from playoff contention early.
+Andrew Nembhard starts at PG. Pascal Siakam leads the team in scoring. 
+Jarace Walker has stepped up significantly. Ivica Zubac was acquired from the Clippers.
+
+The Knicks are a strong Eastern Conference playoff team under Mike Brown.
 
 === END VERIFIED FACTS ===
 """
 
-KEY_PICKS_INSTRUCTION = """
-At the very end of your article, after all other content, append a JSON block in exactly this format (no extra fields, no trailing commas):
-
-```json
-{
-  "spread_pick": "Knicks -8.5",
-  "spread_lean": "COVER",
-  "moneyline_pick": "Knicks ML -350",
-  "moneyline_lean": "WIN",
-  "total_pick": "Under 227.5",
-  "total_lean": "UNDER",
-  "confidence": "High"
-}
-```
-
-Replace the example values with your actual picks. confidence must be one of: "Low", "Medium", "High".
-total_lean must be "OVER" or "UNDER". spread_lean must be "COVER" or "NO COVER". moneyline_lean must be "WIN" or "LOSS".
-"""
-
-PROP_KEY_PICKS_INSTRUCTION = """
-At the very end of your article, after all other content, append a JSON block in exactly this format:
-
-```json
-{
-  "player": "Jalen Brunson",
-  "points_pick": "Over 26.5",
-  "points_lean": "OVER",
-  "rebounds_pick": "Over 3.5",
-  "rebounds_lean": "OVER",
-  "assists_pick": "Under 7.5",
-  "assists_lean": "UNDER",
-  "threes_pick": "Over 2.5",
-  "threes_lean": "OVER",
-  "confidence": "High"
-}
-```
-
-Replace the example values with your actual picks. Each lean must be "OVER" or "UNDER". confidence must be one of: "Low", "Medium", "High".
-"""
+# ----------------------------------------------------------------------
+# Helper Functions
+# ----------------------------------------------------------------------
+def slugify(text: str) -> str:
+    """Convert text to URL-friendly slug."""
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"[\s_-]+", "-", text)
+    return text.strip("-")
 
 
-async def generate_game_preview(
-    home_team: str, away_team: str, game_date: str,
-    spread: str = "N/A", moneyline: str = "N/A", over_under: str = "N/A",
-    injuries: list = [], recent_games: list = [], top_stats: list = [],
-) -> dict:
+def _ordinal(n: int) -> str:
+    if 11 <= n <= 13:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+
+def _format_injuries(injuries: Optional[List[Dict]]) -> str:
+    if not injuries:
+        return "None reported"
+    return "\n".join([
+        f"- {i.get('player_name', '?')}: {i.get('status', 'Unknown')} ({i.get('reason', 'Undisclosed')})"
+        for i in injuries
+    ])
+
+
+def _format_stats(stats: Optional[List[Dict]]) -> str:
+    if not stats:
+        return "Stats unavailable"
+    return "\n".join([
+        f"- {s.get('player_name', '?')}: {s.get('points_per_game', 0)}pts "
+        f"{s.get('rebounds_per_game', 0)}reb {s.get('assists_per_game', 0)}ast"
+        for s in stats[:5]
+    ])
+
+
+def _normalize_and_validate_picks(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Normalize enum values and validate required fields."""
+    if not isinstance(data, dict):
+        return None
+
+    # Normalize string values
+    for field in ["spread_lean", "moneyline_lean", "total_lean", "lean"]:
+        if field in data and isinstance(data[field], str):
+            data[field] = data[field].strip().upper()
+
+    if "confidence" in data and isinstance(data["confidence"], str):
+        v = data["confidence"].strip().lower()
+        data["confidence"] = v[0].upper() + v[1:] if v else ""
+
+    # Validate enums
+    if data.get("spread_lean") not in (None, "COVER", "NO COVER"):
+        logger.warning(f"Invalid spread_lean: {data.get('spread_lean')}")
+        return None
+    if data.get("moneyline_lean") not in (None, "WIN", "LOSS"):
+        logger.warning(f"Invalid moneyline_lean: {data.get('moneyline_lean')}")
+        return None
+    if data.get("total_lean") not in (None, "OVER", "UNDER"):
+        logger.warning(f"Invalid total_lean: {data.get('total_lean')}")
+        return None
+    if data.get("lean") not in (None, "OVER", "UNDER"):
+        logger.warning(f"Invalid lean: {data.get('lean')}")
+        return None
+    if data.get("confidence") not in (None, "Low", "Medium", "High"):
+        logger.warning(f"Invalid confidence: {data.get('confidence')}")
+        return None
+
+    return data
+
+
+def _safe_json_parse(raw: str) -> Optional[Dict]:
+    """Robust JSON extraction using clear delimiters."""
+    try:
+        # First, strip everything before the article content end marker
+        if "=== ARTICLE CONTENT END ===" in raw:
+            json_part = raw.split("=== ARTICLE CONTENT END ===")[-1]
+        else:
+            json_part = raw
+
+        # Look for key picks markers
+        start = json_part.find("###KEY PICKS START###")
+        end = json_part.find("###KEY PICKS END###")
+
+        if start != -1 and end != -1:
+            json_str = json_part[start + len("###KEY PICKS START###"):end].strip()
+        else:
+            # Fallback: find first { and last }
+            start = json_part.find("{")
+            end = json_part.rfind("}") + 1
+            if start == -1 or end <= start:
+                logger.warning("No JSON object found in response")
+                return None
+            json_str = json_part[start:end]
+
+        # Clean common issues
+        json_str = re.sub(r",\s*}", "}", json_str)  # Remove trailing commas
+        json_str = re.sub(r",\s*]", "]", json_str)
+        
+        data = json.loads(json_str)
+        return _normalize_and_validate_picks(data)
+
+    except json.JSONDecodeError as e:
+        logger.warning(f"JSON decode failed: {e}")
+        return None
+    except Exception as e:
+        logger.warning(f"JSON parsing failed: {e}")
+        return None
+
+
+def _strip_key_picks_block(content: str) -> str:
+    """Remove everything after the article delimiter."""
+    if "=== ARTICLE CONTENT END ===" in content:
+        return content.split("=== ARTICLE CONTENT END ===")[0].strip()
+    return content.strip()
+
+
+def validate_config() -> None:
+    """Validate required configuration."""
+    if not settings.ANTHROPIC_API_KEY:
+        raise ValueError("ANTHROPIC_API_KEY not set in settings")
+    if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
+        logger.warning("Supabase credentials not fully configured")
+
+
+# ----------------------------------------------------------------------
+# Data Fetching (with caching and retries)
+# ----------------------------------------------------------------------
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+    reraise=True
+)
+@cached(ttl=300, serializer=JsonSerializer(), key_builder=lambda f, opp: f"injuries_{opp.lower().strip()}")
+async def _fetch_opponent_injuries(opponent: str) -> str:
+    """Fetch opponent injury report from ESPN API with retries."""
+    TEAM_IDS = {
+        "atlanta hawks": "1", "boston celtics": "2", "brooklyn nets": "17",
+        "charlotte hornets": "30", "chicago bulls": "4", "cleveland cavaliers": "5",
+        "dallas mavericks": "6", "denver nuggets": "7", "detroit pistons": "8",
+        "golden state warriors": "9", "houston rockets": "10", "indiana pacers": "11",
+        "la clippers": "12", "los angeles clippers": "12", "los angeles lakers": "13",
+        "memphis grizzlies": "29", "miami heat": "14", "milwaukee bucks": "15",
+        "minnesota timberwolves": "16", "new orleans pelicans": "3",
+        "new york knicks": "18", "oklahoma city thunder": "25",
+        "orlando magic": "19", "philadelphia 76ers": "20", "phoenix suns": "21",
+        "portland trail blazers": "22", "sacramento kings": "23",
+        "san antonio spurs": "24", "toronto raptors": "28", "utah jazz": "26",
+        "washington wizards": "27",
+    }
+
+    team_key = opponent.lower().strip()
+    team_id = TEAM_IDS.get(team_key)
+    
+    if not team_id:
+        # Fuzzy matching for common variations
+        for name, tid in TEAM_IDS.items():
+            if any(word in team_key for word in name.split() if len(word) > 3):
+                team_id = tid
+                logger.info(f"Fuzzy matched {opponent} to {name}")
+                break
+    
+    if not team_id:
+        return f"Opponent injury data unavailable for {opponent}"
+
+    url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries"
+    
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+        data = resp.json()
+
+    all_teams = data.get("injuries", [])
+    team_data = next((t for t in all_teams if t.get("id") == team_id), None)
+    if not team_data:
+        return f"No injuries reported for {opponent}"
+    injuries = team_data.get("injuries", [])
+    if not injuries:
+        return f"No injuries reported for {opponent}"
+
+    lines = []
+    for inj in injuries:
+        athlete = inj.get("athlete", {})
+        name = athlete.get("displayName", "Unknown")
+        status = inj.get("status", "Unknown")
+        details = inj.get("details", {})
+        reason = details.get("type", inj.get("longComment", "Undisclosed"))
+        lines.append(f"- {name}: {status} ({reason})")
+    
+    return "\n".join(lines) if lines else f"No injuries reported for {opponent}"
+
+
+async def _fetch_nba_context(opponent: str) -> Tuple[str, str, str]:
+    """Fetch recent games, H2H, and team stats concurrently."""
+    loop = asyncio.get_event_loop()
+    recent, h2h, stats = await asyncio.gather(
+        loop.run_in_executor(None, get_knicks_last5),
+        loop.run_in_executor(None, get_h2h_this_season, opponent),
+        loop.run_in_executor(None, get_knicks_team_stats),
+        return_exceptions=True,
+    )
+
+    if isinstance(recent, Exception):
+        recent = "Recent game data unavailable"
+        logger.warning(f"Recent data fetch failed: {recent}")
+    if isinstance(h2h, Exception):
+        h2h = f"H2H data unavailable vs {opponent}"
+        logger.warning(f"H2H fetch failed: {h2h}")
+    if isinstance(stats, Exception):
+        stats = "Team stats unavailable"
+        logger.warning(f"Team stats fetch failed: {stats}")
+
+    return recent, h2h, stats
+
+
+async def build_game_context(
+    home_team: str,
+    away_team: str,
+    injuries: Optional[List[Dict]] = None,
+    top_stats: Optional[List[Dict]] = None,
+    over_under: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Centralized context builder for all game-related articles."""
     opponent = away_team if away_team != "New York Knicks" else home_team
-    injury_text = _format_injuries(injuries)
-    stats_text = _format_stats(top_stats)
     recent_text, h2h_text, team_stats_text = await _fetch_nba_context(opponent)
+    opponent_injury_text = await _fetch_opponent_injuries(opponent)
 
-    prompt = f"""You are a sports analyst writing a prediction article for a New York Knicks fan site called KnicksHub.
+    return {
+        "opponent": opponent,
+        "injury_text": _format_injuries(injuries),
+        "stats_text": _format_stats(top_stats),
+        "recent_text": recent_text,
+        "h2h_text": h2h_text,
+        "team_stats_text": team_stats_text,
+        "opponent_injury_text": opponent_injury_text,
+        "over_under": over_under or "N/A",
+    }
 
-Write a compelling, SEO-optimized prediction article for this game:
+
+async def warm_cache(opponents: List[str]) -> None:
+    """Pre-warm injury cache for common opponents."""
+    logger.info(f"Warming cache for {len(opponents)} opponents")
+    tasks = [_fetch_opponent_injuries(opp) for opp in opponents]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Log any failures
+    for opp, result in zip(opponents, results):
+        if isinstance(result, Exception):
+            logger.warning(f"Failed to warm cache for {opp}: {result}")
+
+
+# ----------------------------------------------------------------------
+# Anthropic Client
+# ----------------------------------------------------------------------
+_async_client: Optional[anthropic.AsyncAnthropic] = None
+
+
+def get_async_client() -> anthropic.AsyncAnthropic:
+    """Get or create async Anthropic client."""
+    global _async_client
+    if _async_client is None:
+        validate_config()
+        _async_client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+    return _async_client
+
+
+async def _call_claude(system_prompt: str, user_prompt: str) -> str:
+    """Core Claude calling function."""
+    client = get_async_client()
+    
+    try:
+        response = await client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=ANTHROPIC_MAX_TOKENS,
+            temperature=ANTHROPIC_TEMPERATURE,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        
+        content = response.content[0].text
+        
+        # Log token usage for monitoring
+        if hasattr(response, 'usage'):
+            logger.info(f"Claude token usage - Input: {response.usage.input_tokens}, "
+                       f"Output: {response.usage.output_tokens}")
+        
+        return content
+        
+    except anthropic.APIError as e:
+        logger.error(f"Anthropic API error: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in Claude call: {e}")
+        raise
+
+
+async def _call_claude_with_timeout(
+    system_prompt: str, 
+    user_prompt: str, 
+    timeout: int = ANTHROPIC_TIMEOUT
+) -> Tuple[str, Optional[Dict]]:
+    """Wrapper for Claude calls with timeout and JSON extraction."""
+    try:
+        raw_content = await asyncio.wait_for(
+            _call_claude(system_prompt, user_prompt),
+            timeout=timeout
+        )
+        
+        key_picks = _safe_json_parse(raw_content)
+        clean_content = _strip_key_picks_block(raw_content)
+        
+        return clean_content, key_picks
+        
+    except asyncio.TimeoutError:
+        logger.error(f"Claude API call timed out after {timeout}s")
+        raise
+    except Exception as e:
+        logger.error(f"Claude API call failed: {e}")
+        raise
+
+
+# ----------------------------------------------------------------------
+# Base System Prompt
+# ----------------------------------------------------------------------
+BASE_SYSTEM = """You are an expert New York Knicks beat writer and sharp sports bettor with 15+ years experience. 
+Write in an engaging, opinionated, and data-driven style. Never invent statistics, trades, roster moves, or events.
+
+Strict rules:
+- ONLY use players, stats, and facts from the provided SEASON_FACTS and live data sections.
+- If data is missing, say "data unavailable" instead of guessing.
+- Always include the phrase "bet responsibly" naturally in the text.
+- Be specific with stats and analysis. Back up every claim with concrete numbers.
+- Write with the voice of someone who watches every game and knows the team inside out.
+
+At the VERY END of your response, you MUST output exactly this format with nothing after it:
+
+=== ARTICLE CONTENT END ===
+
+###KEY PICKS START###
+{json object with your picks}
+###KEY PICKS END###
+"""
+
+# ----------------------------------------------------------------------
+# Article Generators
+# ----------------------------------------------------------------------
+async def generate_game_preview(
+    home_team: str,
+    away_team: str,
+    game_date: str,
+    spread: str = "N/A",
+    moneyline: str = "N/A",
+    over_under: str = "N/A",
+    injuries: Optional[List[Dict]] = None,
+    top_stats: Optional[List[Dict]] = None,
+    recent_games: Optional[List[Dict]] = None,
+) -> Dict:
+    """Generate a comprehensive game preview with predictions."""
+    ctx = await build_game_context(home_team, away_team, injuries, top_stats, over_under)
+
+    system = BASE_SYSTEM + "\nYou specialize in game previews and betting predictions."
+
+    user_prompt = f"""Write a compelling, SEO-optimized prediction article for this game:
 
 {away_team} @ {home_team}
 Date: {game_date}
@@ -176,74 +479,116 @@ Over/Under: {over_under}
 {SEASON_FACTS}
 
 Knicks Injury Report (live data):
-{injury_text}
+{ctx['injury_text']}
 
-{opponent} Injury Report (live data — THESE PLAYERS ARE OUT AND MUST BE MENTIONED BY NAME):
-{opponent_injury_text}
+{ctx['opponent']} Injury Report (live data):
+{ctx['opponent_injury_text']}
 
 Recent Knicks Results:
-{recent_text}
+{ctx['recent_text']}
 
 Knicks Season Stats:
-{team_stats_text}
+{ctx['team_stats_text']}
 
-Knicks vs {opponent} This Season (H2H):
-{h2h_text}
+Knicks vs {ctx['opponent']} This Season (H2H):
+{ctx['h2h_text']}
 
-Top Knicks Players This Season (stats):
-{stats_text}
+Top Knicks Players This Season:
+{ctx['stats_text']}
 
 Write the article in this exact structure:
-1. A compelling intro paragraph (2-3 sentences)
-2. ## Game Overview (odds, spread, total)
-3. ## Knicks Recent Form (analyze last 5 games)
-4. ## Injury Report (impact of injuries on the Knicks)
-5. ## Key Matchup to Watch
-6. ## Prediction and Best Bet
+1. A compelling intro paragraph (2-3 sentences) — lead with the strongest angle (injuries, streak, rivalry, etc.)
+2. ## Game Overview (odds, spread, total analysis)
+3. ## Knicks Recent Form (analyze last 5 games with specific stats)
+4. ## Injury Report (cover BOTH teams and their impact on rotations and betting lines)
+5. ## Key Matchup to Watch (player vs player or unit vs unit)
+6. ## Prediction and Best Bet (clear pick with reasoning)
 7. ## Final Score Prediction
 
 Guidelines:
-- Write 600-900 words total
-- Use markdown formatting
-- Be specific with stats and analysis
-- End with a clear pick (spread or moneyline)
-- Sound like a real beat writer, not a robot
-- Include the phrase "bet responsibly" naturally
-- Only mention players who are actually on the current rosters
-- Target keywords: Knicks prediction, Knicks odds, {away_team} vs {home_team} prediction
-- CRITICAL: Your final score prediction MUST be consistent with your total pick. If you pick UNDER {over_under}, the combined score must be under {over_under}. If you pick OVER, the combined score must exceed {over_under}
+- Write 650-900 words total
+- Use markdown formatting with proper headers
+- Be specific with stats — mention exact numbers from the data provided
+- Always highlight how opponent injuries affect the spread and total
+- Target keywords naturally: Knicks prediction, Knicks odds, {away_team} vs {home_team} prediction
 
-{KEY_PICKS_INSTRUCTION}
-"""
+Remember: At the very end, include your picks in the JSON format specified in the system prompt."""
 
-    loop = asyncio.get_event_loop()
-    raw = await loop.run_in_executor(None, _call_claude, prompt)
-    key_picks = _parse_key_picks(raw)
-    content = _strip_key_picks_block(raw)
+    content, key_picks = await _call_claude_with_timeout(system, user_prompt)
+
     title = f"{away_team} vs {home_team} Prediction, Odds & Best Bet - {game_date}"
     slug = slugify(f"{away_team}-vs-{home_team}-prediction-{game_date}")
+
     return {
-        "slug": slug, "title": title, "content": content, "key_picks": key_picks,
-        "game_date": game_date, "home_team": home_team, "away_team": away_team,
-        "article_type": "prediction", "created_at": datetime.now(timezone.utc).isoformat(),
+        "slug": slug,
+        "title": title,
+        "content": content,
+        "key_picks": key_picks,
+        "game_date": game_date,
+        "home_team": home_team,
+        "away_team": away_team,
+        "article_type": "prediction",
+        "word_count": len(content.split()),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
 async def generate_player_prop(
-    player: str, home_team: str, away_team: str, game_date: str,
-    player_stats: dict = None, injuries: list = [], top_stats: list = [], over_under: str = "N/A",
-) -> dict:
-    opponent = away_team if away_team != "New York Knicks" else home_team
-    injury_text = _format_injuries(injuries)
-    stats_text = _format_stats(top_stats)
-    recent_text, h2h_text, team_stats_text = await _fetch_nba_context(opponent)
-    player_line = f"{player} season averages: {player_stats.get('points_per_game','N/A')} PPG, {player_stats.get('rebounds_per_game','N/A')} RPG, {player_stats.get('assists_per_game','N/A')} APG" if player_stats else f"{player} stats unavailable"
+    player: str,
+    home_team: str,
+    away_team: str,
+    game_date: str,
+    prop_type: str = "points",
+    player_stats: Optional[Dict] = None,
+    injuries: Optional[List[Dict]] = None,
+    top_stats: Optional[List[Dict]] = None,
+    over_under: str = "N/A",
+) -> Dict:
+    """Generate a player prop article for any stat type."""
+    
+    # Validate and normalize prop type
+    if prop_type not in PROP_TYPES:
+        logger.warning(f"Invalid prop type '{prop_type}' for {player}, falling back to points")
+        prop_type = "points"
+    
+    prop_config = PROP_TYPES[prop_type]
+    
+    # Get the specific line if available
+    line = PROP_LINES.get(player, {}).get(prop_type, "N/A")
+    if line == "N/A" and prop_type == "pts_reb_ast" and player in PROP_LINES:
+        # Calculate default PRA from components
+        pts = PROP_LINES[player].get("points", 0)
+        reb = PROP_LINES[player].get("rebounds", 0)
+        ast = PROP_LINES[player].get("assists", 0)
+        if pts and reb and ast:
+            line = round(pts + reb + ast, 1)
+    
+    ctx = await build_game_context(home_team, away_team, injuries, top_stats, over_under)
 
-    prompt = f"""You are a sports analyst writing a player prop prediction article for a New York Knicks fan site called KnicksHub.
+    # Format player stat specifically for this prop type
+    if prop_type == "pts_reb_ast" and player_stats:
+        total = (player_stats.get('points_per_game', 0) + 
+                player_stats.get('rebounds_per_game', 0) + 
+                player_stats.get('assists_per_game', 0))
+        player_line = f"{player} season average combined PRA: {total:.1f}"
+    elif prop_type != "points" and player_stats:
+        stat_value = player_stats.get(prop_config['key'], 'N/A')
+        player_line = f"{player} season average {prop_config['description']}: {stat_value} {prop_config['suffix']}"
+    else:
+        player_line = (
+            f"{player} season averages: {player_stats.get('points_per_game', 'N/A')} PPG, "
+            f"{player_stats.get('rebounds_per_game', 'N/A')} RPG, "
+            f"{player_stats.get('assists_per_game', 'N/A')} APG"
+            if player_stats else f"{player} stats unavailable"
+        )
 
-Write a compelling, SEO-optimized player prop prediction article for:
+    system = BASE_SYSTEM + "\nYou specialize in player prop analysis and betting."
+
+    user_prompt = f"""Write a compelling, SEO-optimized player prop prediction article for:
 
 Player: {player}
+Prop Type: {prop_config['description'].upper()}
+Line: {line} {prop_config['suffix']}
 Game: {away_team} @ {home_team}
 Date: {game_date}
 Game Total (O/U): {over_under}
@@ -253,72 +598,156 @@ Game Total (O/U): {over_under}
 {player} Stats:
 {player_line}
 
-All Knicks Players Stats:
-{stats_text}
+All Knicks Players Stats (for context):
+{ctx['stats_text']}
 
-Knicks Injury Report:
-{injury_text}
+Knicks Injury Report (affects usage):
+{ctx['injury_text']}
 
-{opponent} Injury Report (live data — THESE PLAYERS ARE OUT AND MUST BE MENTIONED BY NAME):
-{opponent_injury_text}
+{ctx['opponent']} Injury Report (affects matchup):
+{ctx['opponent_injury_text']}
 
 Recent Knicks Results:
-{recent_text}
+{ctx['recent_text']}
 
 Knicks Season Stats:
-{team_stats_text}
+{ctx['team_stats_text']}
 
-Knicks vs {opponent} H2H This Season:
-{h2h_text}
+Knicks vs {ctx['opponent']} H2H This Season:
+{ctx['h2h_text']}
 
 Write the article in this exact structure:
-1. Compelling intro (2-3 sentences about {player}'s role tonight — immediately mention any key {opponent} injuries and how they specifically benefit {player})
-2. ## {player} Season Averages (points, rebounds, assists, threes per game)
-3. ## Tonight's Matchup (YOU MUST list every player from the {opponent} Injury Report by name and status, then explain exactly how each absence creates a specific advantage for {player} tonight)
-4. ## Injury Report (Knicks injuries affecting {player}'s usage, plus detailed {opponent} injury analysis with direct impact on {player})
-5. ## Prop Analysis (discuss all four props with likely lines — points, rebounds, assists, made threes — rank them by value and identify ONE as the single strongest play)
-6. ## Best Bet (ONE prop pick only — state the line, direction, and exactly why this is stronger than the other three)
+1. Compelling intro (2-3 sentences about {player}'s {prop_config['description']} potential tonight — lead with injuries or matchup advantages)
+2. ## {player} Season Averages ({prop_config['description'].upper()})
+3. ## Tonight's Matchup (how the opponent defends this stat, who guards {player})
+4. ## Recent Form (last 5 games {prop_config['description']} performance)
+5. ## Injury Impact (how injuries affect {player}'s usage and opportunity)
+6. ## {prop_config['description'].upper()} Prop Prediction (over/under analysis with line {line})
+7. ## Final Prediction
 
 Guidelines:
-- Write 600-800 words
+- Write 500-750 words
 - Use markdown formatting
-- Give ONE final prop pick as the best bet — not all four
-- Mention all four props in Prop Analysis but only commit to one
-- Always connect opponent injuries directly to {player}'s specific advantages tonight
-- Sound like a real analyst, not a robot
+- Give a specific recommendation: "Over {line}" or "Under {line}"
+- Analyze defensive matchups, pace, and usage rate
 - Include "bet responsibly" naturally
-- Target keywords: {player} prop, {player} points tonight, {player} prediction, {player} rebounds prop, {player} assists prop
+- Target keywords: {player} {prop_config['description']} prop, {player} {prop_config['description']} tonight, {player} prediction
 
-{PROP_KEY_PICKS_INSTRUCTION}
-"""
+Remember: At the very end, include your picks in the JSON format specified in the system prompt."""
 
-    loop = asyncio.get_event_loop()
-    raw = await loop.run_in_executor(None, _call_claude, prompt)
-    key_picks = _parse_key_picks(raw)
-    content = _strip_key_picks_block(raw)
+    content, key_picks = await _call_claude_with_timeout(system, user_prompt)
+
+    # If Claude didn't provide picks, create minimal ones from defaults
+    if not key_picks:
+        key_picks = {
+            "player": player,
+            "prop_type": prop_type,
+            "pick": f"Over {line}",
+            "lean": "OVER",
+            "confidence": "Medium"
+        }
+
     player_slug = player.lower().replace(" ", "-")
-    title = f"{player} Prop Prediction vs {opponent} - {game_date}"
-    slug = slugify(f"{player_slug}-prop-prediction-{game_date}")
+    title = f"{player} {prop_config['description'].upper()} Prop vs {ctx['opponent']} - {game_date}"
+    slug = slugify(f"{player_slug}-{prop_type}-prop-{game_date}")
+
     return {
-        "slug": slug, "title": title, "content": content, "key_picks": key_picks,
-        "game_date": game_date, "home_team": home_team, "away_team": away_team,
-        "article_type": "prop", "created_at": datetime.now(timezone.utc).isoformat(),
+        "slug": slug,
+        "title": title,
+        "content": content,
+        "key_picks": key_picks,
+        "game_date": game_date,
+        "home_team": home_team,
+        "away_team": away_team,
+        "article_type": "prop",
+        "prop_type": prop_type,
+        "player": player,
+        "word_count": len(content.split()),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
+async def generate_daily_props(
+    home_team: str,
+    away_team: str,
+    game_date: str,
+    players: Optional[List[str]] = None,
+    over_under: str = "N/A",
+    injuries: Optional[List[Dict]] = None,
+    top_stats: Optional[List[Dict]] = None,
+    max_props_per_player: int = 2,
+) -> List[Dict]:
+    """Generate prop articles for multiple players in parallel."""
+    
+    # If no players specified, generate for all key Knicks
+    if players is None:
+        players = list(DEFAULT_PLAYER_PROPS.keys())
+    
+    logger.info(f"Generating props for {len(players)} players")
+    
+    # Create a stats lookup dict
+    stats_lookup = {}
+    if top_stats:
+        for stat in top_stats:
+            if stat.get('player_name'):
+                stats_lookup[stat['player_name']] = stat
+    
+    tasks = []
+    for player in players:
+        prop_types = DEFAULT_PLAYER_PROPS.get(player, ["points"])
+        # Limit props per player to avoid over-generating
+        for prop_type in prop_types[:max_props_per_player]:
+            tasks.append(
+                generate_player_prop(
+                    player=player,
+                    home_team=home_team,
+                    away_team=away_team,
+                    game_date=game_date,
+                    prop_type=prop_type,
+                    player_stats=stats_lookup.get(player),
+                    injuries=injuries,
+                    top_stats=top_stats,
+                    over_under=over_under,
+                )
+            )
+    
+    # Run all prop generations concurrently with rate limiting
+    articles = []
+    # Process in batches of 5 to avoid rate limits
+    for i in range(0, len(tasks), 5):
+        batch = tasks[i:i+5]
+        results = await asyncio.gather(*batch, return_exceptions=True)
+        
+        for r in results:
+            if isinstance(r, Exception):
+                logger.error(f"Prop generation failed: {r}")
+            else:
+                articles.append(r)
+        
+        # Small delay between batches
+        if i + 5 < len(tasks):
+            await asyncio.sleep(1)
+    
+    logger.info(f"Successfully generated {len(articles)} prop articles")
+    return articles
+
+
 async def generate_best_bet(
-    home_team: str, away_team: str, game_date: str,
-    spread: str = "N/A", moneyline: str = "N/A", over_under: str = "N/A",
-    injuries: list = [], top_stats: list = [],
-) -> dict:
-    opponent = away_team if away_team != "New York Knicks" else home_team
-    injury_text = _format_injuries(injuries)
-    stats_text = _format_stats(top_stats)
-    recent_text, h2h_text, team_stats_text = await _fetch_nba_context(opponent)
+    home_team: str,
+    away_team: str,
+    game_date: str,
+    spread: str = "N/A",
+    moneyline: str = "N/A",
+    over_under: str = "N/A",
+    injuries: Optional[List[Dict]] = None,
+    top_stats: Optional[List[Dict]] = None,
+) -> Dict:
+    """Generate a sharp best bet article."""
+    ctx = await build_game_context(home_team, away_team, injuries, top_stats, over_under)
 
-    prompt = f"""You are a sharp sports bettor writing a best bet article for a New York Knicks fan site called KnicksHub.
+    system = BASE_SYSTEM + "\nYou specialize in sharp betting analysis. Be direct and confident."
 
-Write a sharp, analytical best bet article for tonight's game:
+    user_prompt = f"""Write a sharp analytical best bet article for:
 
 {away_team} @ {home_team}
 Date: {game_date}
@@ -329,132 +758,305 @@ Over/Under: {over_under}
 {SEASON_FACTS}
 
 Knicks Injury Report:
-{injury_text}
+{ctx['injury_text']}
 
-{opponent} Injury Report (live data — THESE PLAYERS ARE OUT AND MUST BE MENTIONED BY NAME IN THE MATCHUP SECTION):
-{opponent_injury_text}
+{ctx['opponent']} Injury Report (CRITICAL for betting analysis):
+{ctx['opponent_injury_text']}
 
-Recent Knicks Results:
-{recent_text}
+Recent Knicks Results (ATS if available):
+{ctx['recent_text']}
 
 Knicks Season Stats:
-{team_stats_text}
+{ctx['team_stats_text']}
 
-Knicks vs {opponent} H2H This Season:
-{h2h_text}
+Knicks vs {ctx['opponent']} H2H This Season:
+{ctx['h2h_text']}
 
-Top Knicks Players (stats):
-{stats_text}
+Top Knicks Players:
+{ctx['stats_text']}
 
 Write the article in this exact structure:
-1. Sharp intro (1-2 sentences — what's the best bet tonight and why)
-2. ## The Line (break down spread, moneyline, total)
-3. ## Why This Bet Wins (3 bullet-point reasons with stats)
-4. ## Injury Impact (how injuries affect the line)
-5. ## The Lean (which side of the spread/total has value)
-6. ## Best Bet (one clear, specific pick with unit size: 1u, 2u, or 3u)
+1. Sharp intro (1-2 sentences — what's the best bet and why — lead with the strongest angle)
+2. ## The Line (break down spread, moneyline, total — where's the value?)
+3. ## Why This Bet Wins (3 bullet-point reasons with specific stats)
+4. ## Injury Impact (how injuries affect the line — be specific)
+5. ## The Lean (which side of the spread/total has edge)
+6. ## Best Bet (one clear pick with unit size: 1u, 2u or 3u)
 
 Guidelines:
-- Write 400-600 words
+- Write 450-650 words
 - Use markdown formatting
-- Be direct and confident — sharp bettors don't hedge
-- Give ONE best bet, not multiple
+- Give ONE best bet only — be decisive
+- Explain WHY the number is off, not just that you like the team
 - Include "bet responsibly" naturally
 - Target keywords: Knicks best bet tonight, Knicks spread pick, {away_team} vs {home_team} pick
-- CRITICAL: Your best bet total pick MUST match the game preview article total direction. Pick one side and commit to it consistently
 
-{KEY_PICKS_INSTRUCTION}
-"""
+Remember: At the very end, include your picks in the JSON format specified in the system prompt."""
 
-    loop = asyncio.get_event_loop()
-    raw = await loop.run_in_executor(None, _call_claude, prompt)
-    key_picks = _parse_key_picks(raw)
-    content = _strip_key_picks_block(raw)
-    title = f"Best Knicks Bet Tonight vs {opponent} - {game_date}"
+    content, key_picks = await _call_claude_with_timeout(system, user_prompt)
+
+    # Ensure unit_size is present
+    if key_picks and "unit_size" not in key_picks:
+        key_picks["unit_size"] = "2u"
+
+    title = f"Best Knicks Bet Tonight vs {ctx['opponent']} - {game_date}"
     slug = slugify(f"best-knicks-bet-{game_date}")
+
     return {
-        "slug": slug, "title": title, "content": content, "key_picks": key_picks,
-        "game_date": game_date, "home_team": home_team, "away_team": away_team,
-        "article_type": "best_bet", "created_at": datetime.now(timezone.utc).isoformat(),
+        "slug": slug,
+        "title": title,
+        "content": content,
+        "key_picks": key_picks,
+        "game_date": game_date,
+        "home_team": home_team,
+        "away_team": away_team,
+        "article_type": "best_bet",
+        "word_count": len(content.split()),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
-async def generate_history_article(game_date: str) -> dict:
-    """Generate a 'This Day in Knicks History' article for a given date."""
+async def generate_parlay(
+    home_team: str,
+    away_team: str,
+    game_date: str,
+    spread: str = "N/A",
+    over_under: str = "N/A",
+    injuries: Optional[List[Dict]] = None,
+    top_stats: Optional[List[Dict]] = None,
+) -> Dict:
+    """Generate a same-game parlay article."""
+    
+    ctx = await build_game_context(home_team, away_team, injuries, top_stats, over_under)
+    
+    system = BASE_SYSTEM + "\nYou specialize in same-game parlays and multi-leg bets."
+    
+    user_prompt = f"""Write an engaging same-game parlay article for:
+
+{away_team} @ {home_team}
+Date: {game_date}
+Spread: {spread}
+Over/Under: {over_under}
+
+{SEASON_FACTS}
+
+Knicks Injury Report:
+{ctx['injury_text']}
+
+{ctx['opponent']} Injury Report:
+{ctx['opponent_injury_text']}
+
+Recent Knicks Results:
+{ctx['recent_text']}
+
+Knicks Season Stats:
+{ctx['team_stats_text']}
+
+Knicks vs {ctx['opponent']} H2H This Season:
+{ctx['h2h_text']}
+
+Top Knicks Players:
+{ctx['stats_text']}
+
+Write the article in this structure:
+1. Intro explaining why tonight's matchup is perfect for a same-game parlay
+2. ## Leg 1: [Pick with specific reasoning and stats]
+3. ## Leg 2: [Pick with specific reasoning and stats]
+4. ## Leg 3: [Pick with specific reasoning and stats]
+5. ## Parlay Odds and Payout (estimated odds: +350 to +450 range)
+6. ## Final Verdict
+
+Guidelines:
+- Write 400-600 words
+- Include 3 legs (can be spread/total + 2 player props)
+- Explain why these picks correlate (e.g., if Brunson scores more because Haliburton is out)
+- Show approximate odds (e.g., +375, +400)
+- Be realistic — explain the risk
+- Target keywords: Knicks parlay, same-game parlay, {away_team} vs {home_team} parlay
+
+Remember: At the very end, include a simple JSON with your parlay details:
+{{
+  "parlay_legs": 3,
+  "estimated_odds": "+375",
+  "confidence": "Medium"
+}}"""
+
+    content, key_picks = await _call_claude_with_timeout(system, user_prompt)
+    
+    # Create default picks if none provided
+    if not key_picks:
+        key_picks = {
+            "parlay_legs": 3,
+            "estimated_odds": "+375",
+            "confidence": "Medium"
+        }
+    
+    return {
+        "slug": slugify(f"knicks-same-game-parlay-{game_date}"),
+        "title": f"Knicks Same-Game Parlay vs {ctx['opponent']} - {game_date}",
+        "content": content,
+        "key_picks": key_picks,
+        "game_date": game_date,
+        "home_team": home_team,
+        "away_team": away_team,
+        "article_type": "parlay",
+        "word_count": len(content.split()),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+async def generate_history_article(game_date: str) -> Dict:
+    """Generate 'This Day in Knicks History' article."""
     dt = datetime.strptime(game_date, "%Y-%m-%d")
     month = dt.strftime("%B")
     day = dt.day
     day_str = _ordinal(day)
 
-    prompt = f"""You are a New York Knicks historian writing a "This Day in Knicks History" article for KnicksHub.
+    system = "You are a passionate New York Knicks historian. Write accurately and never invent events or stats."
 
-Today's date: {month} {day_str}
+    user_prompt = f"""Write a deep-dive article about ONE significant, well-documented event in New York Knicks history on {month} {day_str}.
 
-Write a deep-dive article about ONE significant, well-documented event in New York Knicks history that occurred on {month} {day_str} in any year.
+Choose the most historically significant or memorable event you are highly confident about. Options could include:
+- Playoff games
+- Regular season milestones
+- Trades or draft picks
+- Franchise records
+- Championship moments
 
-Choose the most historically significant or memorable event you are CERTAIN happened on this date. Only write about events you are highly confident about — major games, trades, draft picks, milestones, championships, or franchise moments that are well-documented in NBA history.
-
-Write the article in this exact structure:
-1. # This Day in Knicks History: {month} {day_str} (use this exact heading)
-2. A compelling intro paragraph (2-3 sentences setting the scene and the year)
-3. ## The Story (full narrative of what happened, who was involved, the context, the drama)
-4. ## Why It Still Matters (the lasting significance for the franchise and its fans)
-5. ## By The Numbers (4-6 key stats or facts from the event, formatted as a clean list)
+Structure:
+# This Day in Knicks History: {month} {day_str}
+A compelling intro paragraph (2-3 sentences setting the scene)
+## The Story (full narrative with details — who, what, when, where, why)
+## Why It Still Matters (lasting significance for the franchise)
+## By The Numbers (4-6 key stats or facts as a clean bulleted list)
 
 Guidelines:
-- Write 400-600 words total
+- Write 450-650 words
 - Use markdown formatting
-- Be specific with years, players, scores, opponents, and context
-- Write with the passion and knowledge of a lifelong Knicks fan
-- If you cannot recall a specific well-documented event for this exact date with HIGH confidence, write about the most significant event from within a few days of this date in any year and note the actual date in your intro
-- DO NOT invent or fabricate statistics, scores, or events — accuracy is critical
-- End with one sentence connecting the historical moment to the current Knicks era
+- Be specific with years, players, scores, and context
+- If no exact event with high confidence exists for this date, use the closest significant date and note it in the intro
+- DO NOT invent statistics — if exact numbers aren't certain, describe qualitatively
+- End with one sentence connecting it to the current Knicks era
 - Target keywords: Knicks history, New York Knicks {month} {day_str}, this day in Knicks history
-"""
 
-    loop = asyncio.get_event_loop()
-    content = await loop.run_in_executor(None, _call_claude, prompt)
+No JSON picks needed for history articles."""
+
+    client = get_async_client()
+    try:
+        response = await client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=ANTHROPIC_MAX_TOKENS,
+            temperature=0.6,
+            system=system,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        content = response.content[0].text
+    except Exception as e:
+        logger.error(f"History article generation failed: {e}")
+        raise
+
     title = f"This Day in Knicks History: {month} {day_str}"
-    slug = slugify(f"this-day-in-knicks-history-{month}-{day}")
+    slug = slugify(f"this-day-in-knicks-history-{month.lower()}-{day}")
+
     return {
-        "slug": slug, "title": title, "content": content, "key_picks": None,
-        "game_date": game_date, "home_team": "New York Knicks", "away_team": "New York Knicks",
-        "article_type": "history", "created_at": datetime.now(timezone.utc).isoformat(),
+        "slug": slug,
+        "title": title,
+        "content": content,
+        "key_picks": None,
+        "game_date": game_date,
+        "home_team": "New York Knicks",
+        "away_team": "New York Knicks",
+        "article_type": "history",
+        "word_count": len(content.split()),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
-async def save_article(article: dict) -> dict:
-    from app.db import get_supabase
+# ----------------------------------------------------------------------
+# Database Functions
+# ----------------------------------------------------------------------
+async def save_article(article: Dict) -> Dict:
+    """Save article to Supabase."""
     db = get_supabase()
     if not db:
         logger.warning("Supabase not available - article not saved")
         return article
+    
     try:
-        db.table("articles").upsert(article, on_conflict="slug").execute()
+        # Ensure slug is unique
+        result = db.table("articles").upsert(article, on_conflict="slug").execute()
         logger.info(f"Article saved: {article['slug']}")
+        return result.data[0] if result.data else article
     except Exception as e:
         logger.error(f"Failed to save article: {e}")
-    return article
+        return article
 
-async def get_articles(limit: int = 20) -> list:
-    from app.db import get_supabase
+
+async def save_articles(articles: List[Dict]) -> List[Dict]:
+    """Save multiple articles efficiently."""
+    db = get_supabase()
+    if not db:
+        logger.warning("Supabase not available - articles not saved")
+        return articles
+    
+    saved = []
+    for article in articles:
+        try:
+            result = db.table("articles").upsert(article, on_conflict="slug").execute()
+            if result.data:
+                saved.append(result.data[0])
+                logger.info(f"Saved: {article['slug']}")
+        except Exception as e:
+            logger.error(f"Failed to save {article.get('slug', 'unknown')}: {e}")
+    
+    return saved
+
+
+async def get_articles(limit: int = 20, article_type: Optional[str] = None) -> List[Dict]:
+    """Fetch articles with optional type filter."""
     db = get_supabase()
     if not db:
         return []
+    
     try:
-        result = db.table("articles").select("*").order("game_date", desc=True).limit(limit).execute()
+        query = db.table("articles").select("*").order("created_at", desc=True)
+        if article_type:
+            query = query.eq("article_type", article_type)
+        result = query.limit(limit).execute()
         return result.data
     except Exception as e:
         logger.error(f"Failed to fetch articles: {e}")
         return []
 
-async def get_article_by_slug(slug: str) -> dict | None:
-    from app.db import get_supabase
+
+async def get_article_by_slug(slug: str) -> Optional[Dict]:
+    """Fetch single article by slug."""
     db = get_supabase()
     if not db:
         return None
+    
     try:
         result = db.table("articles").select("*").eq("slug", slug).single().execute()
         return result.data
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to fetch article by slug {slug}: {e}")
         return None
+
+
+async def get_articles_by_player(player: str, limit: int = 10) -> List[Dict]:
+    """Fetch prop articles for a specific player."""
+    db = get_supabase()
+    if not db:
+        return []
+    
+    try:
+        result = db.table("articles").select("*")\
+            .eq("article_type", "prop")\
+            .eq("player", player)\
+            .order("game_date", desc=True)\
+            .limit(limit)\
+            .execute()
+        return result.data
+    except Exception as e:
+        logger.error(f"Failed to fetch articles for player {player}: {e}")
+        return []
