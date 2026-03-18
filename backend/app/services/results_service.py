@@ -182,7 +182,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 "opp_score": opp_score,
                 "resolved_at": datetime.now(timezone.utc).isoformat(),
             }
-            db.table("prediction_results").upsert(row, on_conflict="slug")
+            db.table("prediction_results").insert(row)
             resolved["prediction_results"] += 1
 
         # Process prop articles
@@ -243,7 +243,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 "result": result_str,
                 "resolved_at": datetime.now(timezone.utc).isoformat(),
             }
-            db.table("prop_results").upsert(row, on_conflict="slug")
+            db.table("prop_results").insert(row)
             resolved["prop_results"] += 1
             logger.info(f"{player} {prop_type}: {lean} {line} — actual {actual_value} — {result_str}")
 
