@@ -83,19 +83,33 @@ export default function TweetsPage() {
               <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
                 <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>RECENT PICKS RESULTS</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  {uniquePreds.slice(0, 10).map((p: any) => (
-                    <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #1f2937" }}>
-                      <div>
-                        <span style={{ color: "#f9fafb", fontSize: "0.875rem", fontWeight: 600 }}>vs {p.opponent}</span>
-                        <span style={{ color: "#6b7280", fontSize: "0.75rem", marginLeft: "0.5rem" }}>{p.game_date}</span>
+                  {uniquePreds.slice(0, 10).map((p: any) => {
+                    const gameProps = uniqueProps.filter((pr: any) => pr.game_date === p.game_date)
+                    return (
+                      <div key={p.id} style={{ padding: "0.6rem 0", borderBottom: "1px solid #1f2937" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
+                          <div>
+                            <span style={{ color: "#f9fafb", fontSize: "0.875rem", fontWeight: 600 }}>vs {p.opponent}</span>
+                            <span style={{ color: "#6b7280", fontSize: "0.75rem", marginLeft: "0.5rem" }}>{p.game_date}</span>
+                          </div>
+                          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                            <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.5rem", borderRadius: "999px", background: p.spread_result === "HIT" ? "#14532d" : "#7f1d1d", color: p.spread_result === "HIT" ? "#4ade80" : "#f87171" }}>ATS {p.spread_result}</span>
+                            <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.5rem", borderRadius: "999px", background: p.total_result === "HIT" ? "#14532d" : "#7f1d1d", color: p.total_result === "HIT" ? "#4ade80" : "#f87171" }}>O/U {p.total_result}</span>
+                            <span style={{ color: "#6b7280", fontSize: "0.75rem" }}>{p.knicks_score}-{p.opp_score}</span>
+                          </div>
+                        </div>
+                        {gameProps.length > 0 && (
+                          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                            {gameProps.map((pr: any) => (
+                              <span key={pr.slug} style={{ fontSize: "0.65rem", fontWeight: 600, padding: "0.15rem 0.4rem", borderRadius: "999px", background: pr.result === "HIT" ? "#14532d" : "#7f1d1d", color: pr.result === "HIT" ? "#4ade80" : "#f87171" }}>
+                                {pr.player.split(" ").pop()} {pr.prop_type} {pr.lean} {pr.line} ({pr.actual_value}) {pr.result}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                        <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.5rem", borderRadius: "999px", background: p.spread_result === "HIT" ? "#14532d" : "#7f1d1d", color: p.spread_result === "HIT" ? "#4ade80" : "#f87171" }}>ATS {p.spread_result}</span>
-                        <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.5rem", borderRadius: "999px", background: p.total_result === "HIT" ? "#14532d" : "#7f1d1d", color: p.total_result === "HIT" ? "#4ade80" : "#f87171" }}>O/U {p.total_result}</span>
-                        <span style={{ color: "#6b7280", fontSize: "0.75rem" }}>{p.knicks_score}-{p.opp_score}</span>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             </>

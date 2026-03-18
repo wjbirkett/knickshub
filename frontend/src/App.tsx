@@ -7,7 +7,7 @@ import InjuriesPage from "./pages/InjuriesPage"
 import BettingPage from "./pages/BettingPage"
 import SchedulePage from "./pages/SchedulePage"
 import StatsPage from "./pages/StatsPage"
-import BettingTrendsPage from "./pages/TweetsPage"
+import BettingTrendsPage from "./pages/BettingRecordPage"
 import PredictionsPage from "./pages/PredictionsPage"
 import ArticlePage from "./pages/ArticlePage"
 import MatchupArchivePage from "./pages/MatchupArchivePage"
@@ -50,7 +50,7 @@ export default function App() {
                 <Route path="/betting"                 element={<BettingPage />} />
                 <Route path="/schedule"                element={<SchedulePage />} />
                 <Route path="/stats"                   element={<StatsPage />} />
-                <Route path="/tweets"                  element={<BettingTrendsPage />} />
+                <Route path="/knicks-betting-record"                  element={<BettingTrendsPage />} />
                 <Route path="/predictions"             element={<PredictionsPage />} />
                 <Route path="/predictions/:slug"       element={<ArticlePage />} />
                 <Route path="/matchup/:opponent"       element={<MatchupArchivePage />} />

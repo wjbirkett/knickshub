@@ -10,7 +10,7 @@ const NAV = [
   { to: "/injuries",    label: "Injuries",       icon: Activity },
   { to: "/schedule",    label: "Schedule",       icon: Calendar },
   { to: "/stats",       label: "Stats",          icon: BarChart2 },
-  { to: "/tweets",      label: "Betting Trends", icon: LineChart },
+  { to: "/knicks-betting-record",      label: "Betting Record", icon: LineChart },
 ]
 
 export default function Sidebar() {
