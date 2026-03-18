@@ -13,6 +13,13 @@ function opponentSlug(name: string): string {
   return name?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") ?? ""
 }
 
+function gameHubSlug(a: any): string {
+  const opp = opponentFromArticle(a)
+  const oppSlug = opp?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") ?? "unknown"
+  const date = typeof a.game_date === "string" ? a.game_date.substring(0, 10) : String(a.game_date).substring(0, 10)
+  return "knicks-vs-" + oppSlug + "-" + date
+}
+
 export default function PredictionsPage() {
   const { data: articles, isLoading } = useQuery({
     queryKey: ["articles", 100],
@@ -92,7 +99,7 @@ export default function PredictionsPage() {
         {filtered.map((a: any) => {
           const badge = TYPE_CONFIG[a.article_type] ?? { label: "PREVIEW", bg: "#1f2937", color: "#9ca3af" }
           return (
-            <Link key={a.slug} to={`/predictions/${a.slug}`} style={{ textDecoration: "none" }}>
+            <div key={a.slug} style={{ textDecoration: "none" }}>
               <div
                 style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1rem", display: "flex", alignItems: "flex-start", gap: "0.75rem", transition: "border-color 0.15s" }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")}
@@ -101,14 +108,26 @@ export default function PredictionsPage() {
                 <span style={{ background: badge.bg, color: badge.color, fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", padding: "0.2rem 0.6rem", borderRadius: "999px", flexShrink: 0, marginTop: "0.1rem" }}>
                   {badge.label}
                 </span>
-                <div>
+                <div style={{ flex: 1 }}>
                   <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.25rem", lineHeight: 1.4 }}>{a.title}</p>
-                  <p style={{ color: "#4b5563", fontSize: "0.72rem", margin: 0 }}>
-                    {new Date(a.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                    <p style={{ color: "#4b5563", fontSize: "0.72rem", margin: 0 }}>
+                      {new Date(a.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </p>
+                    {a.article_type === "prediction" && (
+                      <a href={"/game/" + gameHubSlug(a)} onClick={e => e.stopPropagation()}
+                        style={{ fontSize: "0.65rem", fontWeight: 700, color: "#F58426", background: "#1a0a00", border: "1px solid #F58426", borderRadius: "999px", padding: "0.15rem 0.5rem", textDecoration: "none" }}>
+                        Game Hub
+                      </a>
+                    )}
+                  </div>
                 </div>
+                <a href={"/predictions/" + a.slug} onClick={e => e.stopPropagation()}
+                  style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none", flexShrink: 0, alignSelf: "center" }}>
+                  Read
+                </a>
               </div>
-            </Link>
+            </div>
           )
         })}
       </div>
