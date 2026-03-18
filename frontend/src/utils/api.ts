@@ -49,6 +49,7 @@ export const getBirthdays = () =>
 export const getArticles = (limit = 20) =>
   api.get<Article[]>("/api/articles/", { params: { limit } }).then(r => r.data)
 
+export const getResults = () => fetch(`${BASE_URL}/api/articles/results`).then(r => r.json())
 export const getArticle = (slug: string) =>
   api.get<Article>(`/api/articles/${slug}`).then(r => r.data)
 

@@ -1,8 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
-import { getSchedule } from "../utils/api"
+import { getSchedule, getResults } from "../utils/api"
 
 export default function TweetsPage() {
   const { data: games, isLoading } = useQuery({ queryKey: ["schedule"], queryFn: getSchedule })
+  const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults })
+
+  const predictions = resultsData?.predictions ?? []
+  const props = resultsData?.props ?? []
 
   const finished = (games ?? []).filter((g: any) => g.status === "Final")
 
@@ -22,34 +26,18 @@ export default function TweetsPage() {
   const losses = finished.length - wins
 
   const homeGames = finished.filter(isHome)
-  const awayGames = finished.filter((g: any) => !isHome(g))
   const homeWins = homeGames.filter(knicksWon).length
   const awayWins = awayGames.filter(knicksWon).length
 
-  const totals = finished
-  .map((g: any) => (g.home_score ?? 0) + (g.away_score ?? 0))
-  .filter((t: number) => t > 0)
-
-const avgTotal = totals.length
-  ? (totals.reduce((a: number, b: number) => a + b, 0) / totals.length).toFixed(1)
-  : "N/A"
-
-const over220 = totals.filter((t: number) => t >= 220).length
-const under220 = totals.filter((t: number) => t < 220).length
+  const totals = finished.map((g: any) => (g.home_score ?? 0) + (g.away_score ?? 0)).filter((t: number) => t > 0)
+  const avgTotal = totals.length ? (totals.reduce((a: number, b: number) => a + b, 0) / totals.length).toFixed(1) : "N/A"
+  const over220 = totals.filter((t: number) => t >= 220).length
+  const under220 = totals.filter((t: number) => t < 220).length
 
   const margins = finished.map((g: any) => knicksScore(g) - oppScore(g))
-
-  const avgMargin = margins.length
-    ? (margins.reduce((a: number, b: number) => a + b, 0) / margins.length).toFixed(1)
-    : "N/A"
-
-  const avgKnicksScore = finished.length
-    ? (finished.reduce((a: number, g: any) => a + knicksScore(g), 0) / finished.length).toFixed(1)
-    : "N/A"
-
-  const avgOppScore = finished.length
-    ? (finished.reduce((a: number, g: any) => a + oppScore(g), 0) / finished.length).toFixed(1)
-    : "N/A"
+  const avgMargin = margins.length ? (margins.reduce((a: number, b: number) => a + b, 0) / margins.length).toFixed(1) : "N/A"
+  const avgKnicksScore = finished.length ? (finished.reduce((a: number, g: any) => a + knicksScore(g), 0) / finished.length).toFixed(1) : "N/A"
+  const avgOppScore = finished.length ? (finished.reduce((a: number, g: any) => a + oppScore(g), 0) / finished.length).toFixed(1) : "N/A"
 
   const last10 = finished.slice(-10).reverse()
   const last10Wins = last10.filter(knicksWon).length
@@ -57,49 +45,62 @@ const under220 = totals.filter((t: number) => t < 220).length
   const reversed = [...finished].reverse()
   let streakType = reversed.length > 0 ? knicksWon(reversed[0]) : null
   let streakCount = 0
-
   for (const g of reversed) {
     if (knicksWon(g) === streakType) streakCount++
     else break
   }
-
   const streak = streakType !== null ? `${streakType ? "W" : "L"}${streakCount}` : "—"
 
+  // Picks record calculations
+  const uniquePreds = predictions.filter((p: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.slug === p.slug) === i)
+  const spreadHits = uniquePreds.filter((p: any) => p.spread_result === "HIT").length
+  const spreadTotal = uniquePreds.filter((p: any) => p.spread_result).length
+  const totalHits = uniquePreds.filter((p: any) => p.total_result === "HIT").length
+  const totalTotal = uniquePreds.filter((p: any) => p.total_result).length
+  const mlHits = uniquePreds.filter((p: any) => p.moneyline_result === "HIT").length
+  const mlTotal = uniquePreds.filter((p: any) => p.moneyline_result).length
+
+  // Prop record calculations
+  const uniqueProps = props.filter((p: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.slug === p.slug) === i)
+  const propHits = uniqueProps.filter((p: any) => p.result === "HIT").length
+  const propTotal = uniqueProps.length
+
+  // Group props by player
+  const playerMap: Record<string, { hits: number, total: number }> = {}
+  uniqueProps.forEach((p: any) => {
+    playerMap[p.player].total++
+    if (p.result === "HIT") playerMap[p.player].hits++
+  })
+
   const statCard = (label: string, value: string | number, sub?: string, highlight?: boolean) => (
-    <div
-      key={label}
-      style={{
-        background: "#111827",
-        border: `1px solid ${highlight ? "#F58426" : "#1f2937"}`,
-        borderRadius: "0.75rem",
-        padding: "1.25rem",
-        textAlign: "center"
-      }}
-    >
-      <p style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.4rem" }}>
-        {label}
-      </p>
-      <p style={{ color: highlight ? "#F58426" : "#f9fafb", fontSize: "1.6rem", fontWeight: 700, margin: 0, fontVariantNumeric: "tabular-nums" }}>
-        {value}
-      </p>
+    <div key={label} style={{ background: "#111827", border: `1px solid ${highlight ? "#F58426" : "#1f2937"}`, borderRadius: "0.75rem", padding: "1.25rem", textAlign: "center" }}>
+      <p style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.4rem" }}>{label}</p>
+      <p style={{ color: highlight ? "#F58426" : "#f9fafb", fontSize: "1.6rem", fontWeight: 700, margin: 0, fontVariantNumeric: "tabular-nums" }}>{value}</p>
       {sub && <p style={{ color: "#4b5563", fontSize: "0.7rem", margin: "0.25rem 0 0" }}>{sub}</p>}
     </div>
   )
 
+  const pickCard = (label: string, hits: number, total: number) => {
+    const pct = total > 0 ? Math.round((hits / total) * 100) : 0
+    const color = pct >= 60 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171"
+    return (
+      <div key={label} style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", textAlign: "center" }}>
+        <p style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.4rem" }}>{label}</p>
+        <p style={{ color, fontSize: "1.6rem", fontWeight: 700, margin: 0 }}>{hits}-{total - hits}</p>
+        <p style={{ color, fontSize: "0.75rem", margin: "0.25rem 0 0", fontWeight: 600 }}>{pct}%</p>
+      </div>
+    )
+  }
+
   return (
     <div style={{ maxWidth: "900px" }}>
       <div style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>
-          KNICKS BETTING TRENDS
-        </h1>
-        <p style={{ color: "#6b7280", margin: "0.25rem 0 0", fontSize: "0.875rem" }}>
-          Season stats and trends to inform your bets. Based on {finished.length} games played.
-        </p>
+        <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>KNICKS BETTING TRENDS</h1>
+        <p style={{ color: "#6b7280", margin: "0.25rem 0 0", fontSize: "0.875rem" }}>Season stats and trends to inform your bets. Based on {finished.length} games played.</p>
       </div>
 
       {isLoading && <p style={{ color: "#6b7280" }}>Loading trends...</p>}
 
-      {!isLoading && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem", marginBottom: "1.5rem" }}>
             {statCard("Season Record", `${wins}-${losses}`, "W-L", true)}
@@ -108,6 +109,40 @@ const under220 = totals.filter((t: number) => t < 220).length
             {statCard("Avg Total", avgTotal, "combined pts/game")}
             {statCard("Avg Margin", Number(avgMargin) > 0 ? `+${avgMargin}` : String(avgMargin), "pts per game")}
           </div>
+
+          {uniquePreds.length > 0 && (
+            <>
+              <div style={{ marginBottom: "1rem" }}>
+                <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.5rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.25rem" }}>KNICKSHUB PICKS RECORD</h2>
+                <p style={{ color: "#6b7280", fontSize: "0.8rem", margin: 0 }}>Tracked since March 2026. {uniquePreds.length} games graded.</p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem", marginBottom: "1.5rem" }}>
+                {pickCard("Against The Spread", spreadHits, spreadTotal)}
+                {pickCard("Over/Under", totalHits, totalTotal)}
+                {pickCard("Moneyline", mlHits, mlTotal)}
+                {propTotal > 0 && pickCard("Player Props", propHits, propTotal)}
+              </div>
+
+              <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
+                <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>RECENT PICKS RESULTS</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {uniquePreds.slice(0, 10).map((p: any) => (
+                    <div key={p.slug} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #1f2937" }}>
+                      <div>
+                        <span style={{ color: "#f9fafb", fontSize: "0.875rem", fontWeight: 600 }}>vs {p.opponent}</span>
+                        <span style={{ color: "#6b7280", fontSize: "0.75rem", marginLeft: "0.5rem" }}>{p.game_date}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.5rem", borderRadius: "999px", background: p.spread_result === "HIT" ? "#14532d" : "#7f1d1d", color: p.spread_result === "HIT" ? "#4ade80" : "#f87171" }}>ATS {p.spread_result}</span>
+                        <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.5rem", borderRadius: "999px", background: p.total_result === "HIT" ? "#14532d" : "#7f1d1d", color: p.total_result === "HIT" ? "#4ade80" : "#f87171" }}>O/U {p.total_result}</span>
+                        <span style={{ color: "#6b7280", fontSize: "0.75rem" }}>{p.knicks_score}-{p.opp_score}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
