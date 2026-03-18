@@ -134,15 +134,6 @@ async def resolve_results(game_date: str = None):
     result = await resolve_game_predictions(game_date)
     return {"game_date": game_date, "result": result}
 
-@router.get("/results")
-async def get_results():
-    from app.db import get_supabase
-    db = get_supabase()
-    if not db: return []
-    pred = db.table("prediction_results").select("*").order("game_date", desc=True).execute()
-    props = db.table("prop_results").select("*").order("game_date", desc=True).execute()
-    return {"predictions": pred.data, "props": props.data}
-
 @router.get("/debug-injuries")
 async def debug_injuries(opponent: str = "Golden State Warriors"):
     from app.services.article_service import _fetch_opponent_injuries
@@ -152,6 +143,15 @@ async def debug_injuries(opponent: str = "Golden State Warriors"):
 @router.get("/")
 async def list_articles(limit: int = 20):
     return await get_articles(limit)
+
+@router.get("/results")
+async def get_results():
+    from app.db import get_supabase
+    db = get_supabase()
+    if not db: return []
+    pred = db.table("prediction_results").select("*").order("game_date", desc=True).execute()
+    props = db.table("prop_results").select("*").order("game_date", desc=True).execute()
+    return {"predictions": pred.data, "props": props.data}
 
 @router.get("/{slug}")
 async def get_article(slug: str):
