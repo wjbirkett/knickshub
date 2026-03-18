@@ -119,7 +119,9 @@ async def debug_trigger():
         odds = [o.model_dump() if hasattr(o, "model_dump") else o for o in odds_raw]
         inj_raw = await fetch_injury_report()
         injuries = [i.model_dump() if hasattr(i, "model_dump") else i for i in inj_raw]
-        return {"games_count": len(games), "next_game": games[0] if games else None, "odds_count": len(odds), "odds": odds[0] if odds else None, "injuries_count": len(injuries)}
+        from datetime import date, timedelta; today = date.today(); tom = today + timedelta(days=1)
+        next_g = next((g for g in sorted(games, key=lambda g: str(g["game_date"])) if str(g["game_date"])[:10] in (str(today), str(tom)) and g["status"] != "Final"), None)
+        return {"games_count": len(games), "next_game": next_g, "odds_count": len(odds), "odds": odds[0] if odds else None, "injuries_count": len(injuries)}
     except Exception as e:
         return {"error": str(e), "trace": traceback.format_exc()}
 
