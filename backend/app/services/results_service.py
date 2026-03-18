@@ -65,12 +65,12 @@ async def fetch_player_stats_from_boxscore(game_id: str, player_name: str) -> Op
                         # ESPN box score stat order: MIN,FG,3PT,FT,OREB,DREB,REB,AST,STL,BLK,TO,PF,PTS,+/-
                         if len(stats) >= 13:
                             return {
-                                "points": _safe_int(stats[12]),
-                                "rebounds": _safe_int(stats[6]),
-                                "assists": _safe_int(stats[7]),
+                                "points": _safe_int(stats[1]),
+                                "rebounds": _safe_int(stats[5]),
+                                "assists": _safe_int(stats[6]),
                                 "steals": _safe_int(stats[8]),
                                 "blocks": _safe_int(stats[9]),
-                                "threes": _safe_int(stats[2].split("-")[0]) if "-" in str(stats[2]) else 0,
+                                "threes": _safe_int(str(stats[3]).split("-")[0]) if "-" in str(stats[3]) else 0,
                             }
         return None
     except Exception as e:
