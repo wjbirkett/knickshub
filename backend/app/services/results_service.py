@@ -116,7 +116,8 @@ async def resolve_game_predictions(game_date: str) -> dict:
 
     try:
         # Get all articles for this game date
-        articles = db.table("articles").select("*").eq("game_date", game_date).neq("article_type", "history").execute().data
+        all_articles = db.table("articles").select("*").eq("game_date", game_date).execute().data
+        articles = [a for a in all_articles if a.get("article_type") != "history"]
         if not articles:
             return {"error": f"No articles found for {game_date}"}
 
