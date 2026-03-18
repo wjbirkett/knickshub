@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async"
 import { useQuery } from "@tanstack/react-query"
 import { useParams, Link } from "react-router-dom"
 import { useState } from "react"
-import { getArticle, getArticles } from "../utils/api"
+import { getArticle, getArticles, getResults } from "../utils/api"
 
 export const TYPE_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
   prediction: { label: "PREDICTION", bg: "#0c1a4b", color: "#93c5fd" },
@@ -128,6 +128,29 @@ export default function ArticlePage() {
   if (isLoading) return <p style={{ color: "#6b7280" }}>Loading...</p>
   if (!article) return <p style={{ color: "#f87171" }}>Article not found.</p>
 
+  const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults })
+  const propResults = resultsData?.props ?? []
+  const preds = resultsData?.predictions ?? []
+  const confidenceBadge = (() => {
+    if (article.article_type === "prop" && article.player) {
+      const pp = (propResults as any[]).filter(r => r.player === article.player)
+      if (!pp.length) return null
+      const hits = pp.filter(r => r.result === "HIT").length
+      const pct = Math.round(hits / pp.length * 100)
+      const color = pct >= 70 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171"
+      return { label: (pct >= 70 ? "HIGH CONF" : pct >= 50 ? "MODERATE" : "LOW CONF") + " " + pct + "%", color, bg: pct >= 70 ? "#14532d" : pct >= 50 ? "#451a03" : "#450a0a" }
+    }
+    if (["prediction","best_bet"].includes(article.article_type)) {
+      const total = (preds as any[]).filter(r => r.spread_result).length
+      if (!total) return null
+      const hits = (preds as any[]).filter(r => r.spread_result === "HIT").length
+      const pct = Math.round(hits / total * 100)
+      const color = pct >= 60 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171"
+      return { label: "ATS " + hits + "-" + (total-hits), color, bg: pct >= 60 ? "#14532d" : "#1f2937" }
+    }
+    return null
+  })()
+
   const isHistory = article.article_type === "history"
   const opponent = article.home_team === "New York Knicks" ? article.away_team : article.home_team
   const formattedDate = new Date(article.game_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
@@ -166,6 +189,7 @@ export default function ArticlePage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.75rem", flexWrap: "wrap", gap: "0.75rem" }}>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <span style={{ background: badge.bg, color: badge.color, padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700 }}>{badge.label}</span>
+            {confidenceBadge && <span style={{ background: confidenceBadge.bg, color: confidenceBadge.color, padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700, marginLeft: "0.25rem" }}>{confidenceBadge.label}</span>}
             <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>{new Date(article.game_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</span>
           </div>
           <ShareButtons title={article.title} slug={slug!} />
