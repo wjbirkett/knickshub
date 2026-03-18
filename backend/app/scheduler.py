@@ -31,7 +31,7 @@ def generate_article(force: bool = False):
     """
     from datetime import date, datetime, timezone, timedelta
     from app.services.article_service import (
-        generate_game_preview, generate_best_bet, generate_player_prop,
+        generate_game_preview, generate_best_bet, generate_player_prop, generate_daily_props,
         save_article, get_article_by_slug, slugify
     )
     from app.services.nba_service import fetch_schedule, fetch_injury_report, fetch_player_stats
@@ -159,13 +159,11 @@ def generate_article(force: bool = False):
             await save_article(best_bet)
             logger.info("Cron: best bet article generated")
 
-            # Prop articles for 3 players
-            prop_players = ["Jalen Brunson", "Karl-Anthony Towns", "OG Anunoby"]
+            # Prop articles - generate for key players
+            prop_players = ["Jalen Brunson", "Karl-Anthony Towns", "OG Anunoby", "Mikal Bridges", "Josh Hart"]
+            # Filter out injured players
+            active_players = []
             for player_name in prop_players:
-                player_stats = next(
-                    (s for s in top_stats if player_name.split()[0].lower() in s.get("player_name", "").lower()),
-                    None
-                )
                 is_out = any(
                     player_name.split()[0].lower() in inj.get("player_name", "").lower()
                     and "out" in inj.get("status", "").lower()
@@ -173,15 +171,17 @@ def generate_article(force: bool = False):
                 )
                 if is_out:
                     logger.info(f"Cron: {player_name} listed as Out — skipping prop article")
-                    continue
-                prop = await generate_player_prop(
-                    player=player_name,
-                    home_team=next_game["home_team"], away_team=next_game["away_team"],
-                    game_date=game_date_str, player_stats=player_stats,
-                    injuries=injuries, top_stats=top_stats, over_under=over_under,
-                )
+                else:
+                    active_players.append(player_name)
+            prop_articles = await generate_daily_props(
+                home_team=next_game["home_team"], away_team=next_game["away_team"],
+                game_date=game_date_str, players=active_players,
+                over_under=over_under, injuries=injuries, top_stats=top_stats,
+                max_props_per_player=1,
+            )
+            for prop in prop_articles:
                 await save_article(prop)
-                logger.info(f"Cron: prop article generated for {player_name}")
+                logger.info(f"Cron: prop article generated for {prop.get('player', 'unknown')}")
 
         except Exception as e:
             logger.error(f"Cron: article generation failed: {e}")

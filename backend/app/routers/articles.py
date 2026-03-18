@@ -96,9 +96,11 @@ async def trigger_all_articles():
             await save_article(art)
             bb = await generate_best_bet(home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,spread=spread,moneyline=moneyline,over_under=over_under,injuries=injuries,top_stats=top_stats)
             await save_article(bb)
-            for player in ["Jalen Brunson","Karl-Anthony Towns","OG Anunoby"]:
-                ps = next((s for s in top_stats if player.split()[0].lower() in s.get("player_name","").lower()),None)
-                prop = await generate_player_prop(player=player,home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,player_stats=ps,injuries=injuries,top_stats=top_stats,over_under=over_under)
+            from app.services.article_service import generate_daily_props
+            prop_players = ["Jalen Brunson","Karl-Anthony Towns","OG Anunoby","Mikal Bridges","Josh Hart"]
+            active = [pl for pl in prop_players if not any(pl.split()[0].lower() in inj.get("player_name","").lower() and "out" in inj.get("status","").lower() for inj in injuries)]
+            prop_articles = await generate_daily_props(home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,players=active,over_under=over_under,injuries=injuries,top_stats=top_stats,max_props_per_player=1)
+            for prop in prop_articles:
                 await save_article(prop)
         except Exception as e:
             import logging; logging.getLogger(__name__).error(f"trigger-all failed: {e}", exc_info=True)
