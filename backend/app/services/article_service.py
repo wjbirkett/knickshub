@@ -1024,7 +1024,7 @@ Remember: At the very end, include your picks in the JSON format specified in th
 
     content, key_picks = await _call_claude_with_timeout(system, user_prompt)
 
-    title = f"{away_team} vs {home_team} Prediction, Odds & Best Bet - {game_date}"
+    title = f"{away_team} vs {home_team} Prediction, Best Bets & Player Props ({game_date})"
     slug = slugify(f"{away_team}-vs-{home_team}-prediction-{game_date}")
 
     return {
@@ -1156,7 +1156,7 @@ Remember: At the very end, include your picks in the JSON format specified in th
         }
 
     player_slug = player.lower().replace(" ", "-")
-    title = f"{player} {prop_config['description'].upper()} Prop vs {ctx['opponent']} - {game_date}"
+    title = f"{player} Props vs {ctx['opponent']}: AI Pick, Line & Analysis ({game_date})"
     slug = slugify(f"{player_slug}-{prop_type}-prop-{game_date}")
 
     return {
@@ -1307,7 +1307,7 @@ Remember: At the very end, include your picks in the JSON format specified in th
     if key_picks and "unit_size" not in key_picks:
         key_picks["unit_size"] = "2u"
 
-    title = f"Best Knicks Bet Tonight vs {ctx['opponent']} - {game_date}"
+    title = f"Knicks vs {ctx['opponent']} Best Bet & Spread Pick - AI Prediction ({game_date})"
     slug = slugify(f"best-knicks-bet-{game_date}")
 
     return {
@@ -1401,7 +1401,7 @@ Remember: At the very end, include a simple JSON with your parlay details:
     
     return {
         "slug": slugify(f"knicks-same-game-parlay-{game_date}"),
-        "title": f"Knicks Same-Game Parlay vs {ctx['opponent']} - {game_date}",
+        "title": f"Knicks vs {ctx['opponent']} Same-Game Parlay Picks ({game_date})",
         "content": content,
         "key_picks": key_picks,
         "game_date": game_date,
