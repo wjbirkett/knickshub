@@ -321,6 +321,29 @@ async def _fetch_nba_context(opponent: str) -> Tuple[str, str, str]:
     return recent, h2h, stats
 
 
+async def get_accuracy_summary() -> str:
+    try:
+        db = get_supabase()
+        if not db: return ""
+        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result").execute()
+        rows = result.data or []
+        if not rows: return ""
+        sh = sum(1 for r in rows if r.get("spread_result") == "HIT")
+        st = sum(1 for r in rows if r.get("spread_result"))
+        th = sum(1 for r in rows if r.get("total_result") == "HIT")
+        tt = sum(1 for r in rows if r.get("total_result"))
+        mh = sum(1 for r in rows if r.get("moneyline_result") == "HIT")
+        mt = sum(1 for r in rows if r.get("moneyline_result"))
+        lines = ["=== KNICKSHUB RECENT RECORD - USE TO CALIBRATE PICKS ==="]
+        if st: lines.append(f"ATS: {sh}-{st-sh} ({round(sh/st*100)}%) - if below 50% reconsider spread picks")
+        if tt: lines.append(f"O/U: {th}-{tt-th} ({round(th/tt*100)}%) - if below 50% reconsider total picks")
+        if mt: lines.append(f"ML: {mh}-{mt-mh} ({round(mh/mt*100)}%)")
+        lines.append("===")
+        return "\n".join(lines)
+    except Exception as e:
+        logger.warning(f"Could not fetch accuracy: {e}")
+        return ""
+
 async def build_game_context(
     home_team: str,
     away_team: str,
@@ -333,6 +356,7 @@ async def build_game_context(
     recent_text, h2h_text, team_stats_text = await _fetch_nba_context(opponent)
     opponent_injury_text = await _fetch_opponent_injuries(opponent)
 
+    accuracy_summary = await get_accuracy_summary()
     return {
         "opponent": opponent,
         "injury_text": _format_injuries(injuries),
