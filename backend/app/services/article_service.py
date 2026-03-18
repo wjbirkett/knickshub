@@ -454,15 +454,43 @@ async def _call_claude_with_timeout(
 # ----------------------------------------------------------------------
 # Base System Prompt
 # ----------------------------------------------------------------------
-BASE_SYSTEM = """You are an expert New York Knicks beat writer and sharp sports bettor with 15+ years experience. 
-Write in an engaging, opinionated, and data-driven style. Never invent statistics, trades, roster moves, or events.
+BASE_SYSTEM = """You are "KnicksHub AI" — a high-level NBA betting analyst and New York Knicks beat writer with 15+ years of sharp betting experience.
+Write in an engaging, opinionated, data-driven style. Never invent statistics, trades, roster moves, or events.
 
 Strict rules:
 - ONLY use players, stats, and facts from the provided SEASON_FACTS and live data sections.
 - If data is missing, say "data unavailable" instead of guessing.
 - Always include the phrase "bet responsibly" naturally in the text.
 - Be specific with stats and analysis. Back up every claim with concrete numbers.
-- Write with the voice of someone who watches every game and knows the team inside out.
+- Write with the voice of someone who watches every Knicks game and knows the team inside out.
+
+=== SHARP ANALYSIS FRAMEWORK ===
+
+1. THE INJURY RIPPLE EFFECT:
+- Never just list who is OUT. Analyze the usage redistribution.
+- If a key opponent player is out, calculate which teammates see the biggest jump in usage and minutes.
+- Example: "With Haliburton out, expect McConnell to run the offense. His pace-up style means more possessions for both teams - lean Over."
+- For Knicks injuries: identify which player absorbs the missing production and whether their prop lines have adjusted.
+
+2. THE SELF-CORRECTION PROTOCOL:
+- You will be given your recent betting record in the prompt. Study it carefully.
+- If you have been consistently missing on a specific bet type (e.g., Unders, spread covers), adjust your confidence and lean accordingly.
+- If your ATS record is below 50%, be more conservative on spread picks.
+- If your Over/Under record shows a pattern (e.g., 3 straight Over misses), recalibrate your scoring projections.
+- Acknowledge the pattern subtly: "The total has trended lower in recent Knicks home games..."
+
+3. REFEREE CONTEXT (when provided):
+- If tonight's referee crew is identified, factor their tendencies into your pick.
+- High foul-rate crews = lean Over on points and free throw props for Brunson.
+- Let them play crews = lean Under on points and individual scoring props.
+- Mention the referee angle briefly if it supports your pick.
+
+4. THE SHARP ANGLE:
+- Always identify one non-obvious reason your pick has value.
+- This could be a pace mismatch, defensive scheme exploit, rest advantage, or a line that has not adjusted for an injury.
+- Lead with this angle. It is what separates sharp analysis from surface-level takes.
+
+TONE: Professional, data-driven, and slightly New York Gritty. Avoid fluff. Give the sharp angle for every pick.
 
 At the VERY END of your response, you MUST output exactly this format with nothing after it:
 
@@ -471,7 +499,463 @@ At the VERY END of your response, you MUST output exactly this format with nothi
 ###KEY PICKS START###
 {json object with your picks}
 ###KEY PICKS END###
+"""port anthropic
+import logging
+import re
+import json
+import asyncio
+import httpx
+from datetime import datetime, timezone
+from typing import Optional, Dict, Any, List, Tuple, Union
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+from aiocache import cached
+from aiocache.serializers import JsonSerializer
+
+from app.config import settings
+from app.services.nba_stats_service import (
+    get_knicks_last5,
+    get_h2h_this_season,
+    get_knicks_team_stats,
+)
+from app.db import get_supabase
+
+logger = logging.getLogger(__name__)
+
+# ----------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------
+ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
+ANTHROPIC_MAX_TOKENS = 2000
+ANTHROPIC_TEMPERATURE = 0.55
+ANTHROPIC_TIMEOUT = 45  # seconds
+
+# Prop bet configuration
+PROP_TYPES = {
+    "points": {"key": "points_per_game", "suffix": "PTS", "description": "points", "stat_type": "scoring"},
+    "rebounds": {"key": "rebounds_per_game", "suffix": "REB", "description": "rebounds", "stat_type": "rebounding"},
+    "assists": {"key": "assists_per_game", "suffix": "AST", "description": "assists", "stat_type": "playmaking"},
+    "threes": {"key": "threes_per_game", "suffix": "3PM", "description": "three-pointers made", "stat_type": "shooting"},
+    "steals": {"key": "steals_per_game", "suffix": "STL", "description": "steals", "stat_type": "defense"},
+    "blocks": {"key": "blocks_per_game", "suffix": "BLK", "description": "blocks", "stat_type": "defense"},
+    "turnovers": {"key": "turnovers_per_game", "suffix": "TO", "description": "turnovers", "stat_type": "misc"},
+    "pts_reb_ast": {"key": "combined", "suffix": "PRA", "description": "points+rebounds+assists combined", "stat_type": "combined"},
+}
+
+# TODO: Replace with actual odds API integration
+# Typical prop lines by player (hardcoded for now)
+PROP_LINES = {
+    "Jalen Brunson": {"points": 26.5, "assists": 7.5, "rebounds": 4.5, "threes": 2.5, "pts_reb_ast": 38.5},
+    "Karl-Anthony Towns": {"points": 24.5, "rebounds": 10.5, "assists": 3.5, "threes": 2.5, "pts_reb_ast": 38.5},
+    "Mikal Bridges": {"points": 18.5, "steals": 1.5, "threes": 2.5, "rebounds": 4.5, "pts_reb_ast": 26.5},
+    "OG Anunoby": {"points": 16.5, "steals": 1.5, "blocks": 1.5, "rebounds": 5.5, "threes": 2.5},
+    "Josh Hart": {"points": 10.5, "rebounds": 7.5, "assists": 4.5, "pts_reb_ast": 22.5},
+    "Miles McBride": {"points": 9.5, "assists": 3.5, "threes": 1.5},
+    "Mitchell Robinson": {"rebounds": 8.5, "blocks": 1.5, "points": 8.5},
+    "Jordan Clarkson": {"points": 12.5, "assists": 3.5, "threes": 1.5},
+    "Jose Alvarado": {"steals": 1.5, "assists": 4.5, "points": 8.5},
+    "Jeremy Sochan": {"points": 11.5, "rebounds": 6.5, "assists": 2.5},
+    "Landry Shamet": {"points": 8.5, "threes": 1.5},
+    "Tyler Kolek": {"assists": 3.5, "points": 6.5},
+}
+
+# Which props to generate for each player by default
+DEFAULT_PLAYER_PROPS = {
+    "Jalen Brunson": ["points", "assists", "pts_reb_ast"],
+    "Karl-Anthony Towns": ["points", "rebounds", "pts_reb_ast"],
+    "Mikal Bridges": ["points", "steals", "threes"],
+    "OG Anunoby": ["points", "steals", "blocks"],
+    "Josh Hart": ["pts_reb_ast", "rebounds", "assists"],
+    "Miles McBride": ["points", "assists"],
+    "Mitchell Robinson": ["rebounds", "blocks"],
+    "Jordan Clarkson": ["points", "assists"],
+    "Jose Alvarado": ["steals", "assists"],
+    "Jeremy Sochan": ["points", "rebounds"],
+    "Landry Shamet": ["points", "threes"],
+    "Tyler Kolek": ["assists", "points"],
+}
+
+SEASON_FACTS = """
+=== VERIFIED 2025-26 SEASON FACTS - USE ONLY THESE, DO NOT INVENT OR HALLUCINATE ===
+
+KNICKS HEAD COACH: Mike Brown (hired July 2025 after Tom Thibodeau was fired)
+KNICKS CURRENT CORE/STARTERS (as of March 2026): 
+- Jalen Brunson (PG)
+- Mikal Bridges (SG/SF)
+- OG Anunoby (SF)
+- Karl-Anthony Towns (PF/C)
+- Mitchell Robinson (C) when healthy
+
+KNICKS KEY ROTATION/BENCH: Josh Hart, Miles McBride, Jordan Clarkson, 
+Jose Alvarado, Landry Shamet, Tyler Kolek, Pacôme Dadiet, Ariel Hukporti, Jeremy Sochan
+
+PLAYERS NO LONGER ON THE KNICKS (never mention as current roster players):
+Precious Achiuwa, Donte DiVincenzo, Quentin Grimes, Isaiah Hartenstein
+
+INDIANA PACERS CONTEXT (as of mid-March 2026):
+Tyrese Haliburton is OUT FOR THE ENTIRE 2025-26 SEASON 
+(torn Achilles in 2025 NBA Finals Game 7 + subsequent shingles issues).
+Without him, the Pacers have one of the worst records in the NBA (~15-53) 
+and were eliminated from playoff contention early.
+Andrew Nembhard starts at PG. Pascal Siakam leads the team in scoring. 
+Jarace Walker has stepped up significantly. Ivica Zubac was acquired from the Clippers.
+
+The Knicks are a strong Eastern Conference playoff team under Mike Brown.
+
+=== END VERIFIED FACTS ===
 """
+
+# ----------------------------------------------------------------------
+# Helper Functions
+# ----------------------------------------------------------------------
+def slugify(text: str) -> str:
+    """Convert text to URL-friendly slug."""
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"[\s_-]+", "-", text)
+    return text.strip("-")
+
+
+def _ordinal(n: int) -> str:
+    if 11 <= n <= 13:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+
+def _format_injuries(injuries: Optional[List[Dict]]) -> str:
+    if not injuries:
+        return "None reported"
+    return "\n".join([
+        f"- {i.get('player_name', '?')}: {i.get('status', 'Unknown')} ({i.get('reason', 'Undisclosed')})"
+        for i in injuries
+    ])
+
+
+def _format_stats(stats: Optional[List[Dict]]) -> str:
+    if not stats:
+        return "Stats unavailable"
+    return "\n".join([
+        f"- {s.get('player_name', '?')}: {s.get('points_per_game', 0)}pts "
+        f"{s.get('rebounds_per_game', 0)}reb {s.get('assists_per_game', 0)}ast"
+        for s in stats[:5]
+    ])
+
+
+def _normalize_and_validate_picks(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Normalize enum values and validate required fields."""
+    if not isinstance(data, dict):
+        return None
+
+    # Normalize string values
+    for field in ["spread_lean", "moneyline_lean", "total_lean", "lean"]:
+        if field in data and isinstance(data[field], str):
+            data[field] = data[field].strip().upper()
+
+    if "confidence" in data and isinstance(data["confidence"], str):
+        v = data["confidence"].strip().lower()
+        data["confidence"] = v[0].upper() + v[1:] if v else ""
+
+    # Validate enums
+    if data.get("spread_lean") not in (None, "COVER", "NO COVER"):
+        logger.warning(f"Invalid spread_lean: {data.get('spread_lean')}")
+        return None
+    if data.get("moneyline_lean") not in (None, "WIN", "LOSS"):
+        logger.warning(f"Invalid moneyline_lean: {data.get('moneyline_lean')}")
+        return None
+    if data.get("total_lean") not in (None, "OVER", "UNDER"):
+        logger.warning(f"Invalid total_lean: {data.get('total_lean')}")
+        return None
+    if data.get("lean") not in (None, "OVER", "UNDER"):
+        logger.warning(f"Invalid lean: {data.get('lean')}")
+        return None
+    if data.get("confidence") not in (None, "Low", "Medium", "High"):
+        logger.warning(f"Invalid confidence: {data.get('confidence')}")
+        return None
+
+    return data
+
+
+def _safe_json_parse(raw: str) -> Optional[Dict]:
+    """Robust JSON extraction using clear delimiters."""
+    try:
+        # First, strip everything before the article content end marker
+        if "=== ARTICLE CONTENT END ===" in raw:
+            json_part = raw.split("=== ARTICLE CONTENT END ===")[-1]
+        else:
+            json_part = raw
+
+        # Look for key picks markers
+        start = json_part.find("###KEY PICKS START###")
+        end = json_part.find("###KEY PICKS END###")
+
+        if start != -1 and end != -1:
+            json_str = json_part[start + len("###KEY PICKS START###"):end].strip()
+        else:
+            # Fallback: find first { and last }
+            start = json_part.find("{")
+            end = json_part.rfind("}") + 1
+            if start == -1 or end <= start:
+                logger.warning("No JSON object found in response")
+                return None
+            json_str = json_part[start:end]
+
+        # Clean common issues
+        json_str = re.sub(r",\s*}", "}", json_str)  # Remove trailing commas
+        json_str = re.sub(r",\s*]", "]", json_str)
+        
+        data = json.loads(json_str)
+        return _normalize_and_validate_picks(data)
+
+    except json.JSONDecodeError as e:
+        logger.warning(f"JSON decode failed: {e}")
+        return None
+    except Exception as e:
+        logger.warning(f"JSON parsing failed: {e}")
+        return None
+
+
+def _strip_key_picks_block(content: str) -> str:
+    """Remove everything after the article delimiter."""
+    if "=== ARTICLE CONTENT END ===" in content:
+        return content.split("=== ARTICLE CONTENT END ===")[0].strip()
+    return content.strip()
+
+
+def validate_config() -> None:
+    """Validate required configuration."""
+    if not settings.ANTHROPIC_API_KEY:
+        raise ValueError("ANTHROPIC_API_KEY not set in settings")
+    if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
+        logger.warning("Supabase credentials not fully configured")
+
+
+# ----------------------------------------------------------------------
+# Data Fetching (with caching and retries)
+# ----------------------------------------------------------------------
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
+    reraise=True
+)
+@cached(ttl=300, serializer=JsonSerializer(), key_builder=lambda f, opp: f"injuries_{opp.lower().strip()}")
+async def _fetch_opponent_injuries(opponent: str) -> str:
+    """Fetch opponent injury report from ESPN API with retries."""
+    TEAM_IDS = {
+        "atlanta hawks": "1", "boston celtics": "2", "brooklyn nets": "17",
+        "charlotte hornets": "30", "chicago bulls": "4", "cleveland cavaliers": "5",
+        "dallas mavericks": "6", "denver nuggets": "7", "detroit pistons": "8",
+        "golden state warriors": "9", "houston rockets": "10", "indiana pacers": "11",
+        "la clippers": "12", "los angeles clippers": "12", "los angeles lakers": "13",
+        "memphis grizzlies": "29", "miami heat": "14", "milwaukee bucks": "15",
+        "minnesota timberwolves": "16", "new orleans pelicans": "3",
+        "new york knicks": "18", "oklahoma city thunder": "25",
+        "orlando magic": "19", "philadelphia 76ers": "20", "phoenix suns": "21",
+        "portland trail blazers": "22", "sacramento kings": "23",
+        "san antonio spurs": "24", "toronto raptors": "28", "utah jazz": "26",
+        "washington wizards": "27",
+    }
+
+    team_key = opponent.lower().strip()
+    team_id = TEAM_IDS.get(team_key)
+    
+    if not team_id:
+        # Fuzzy matching for common variations
+        for name, tid in TEAM_IDS.items():
+            if any(word in team_key for word in name.split() if len(word) > 3):
+                team_id = tid
+                logger.info(f"Fuzzy matched {opponent} to {name}")
+                break
+    
+    if not team_id:
+        return f"Opponent injury data unavailable for {opponent}"
+
+    url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries"
+    
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+        data = resp.json()
+
+    all_teams = data.get("injuries", [])
+    team_data = next((t for t in all_teams if t.get("id") == team_id), None)
+    if not team_data:
+        return f"No injuries reported for {opponent}"
+    injuries = team_data.get("injuries", [])
+    if not injuries:
+        return f"No injuries reported for {opponent}"
+
+    lines = []
+    for inj in injuries:
+        athlete = inj.get("athlete", {})
+        name = athlete.get("displayName", "Unknown")
+        status = inj.get("status", "Unknown")
+        details = inj.get("details", {})
+        reason = details.get("type", inj.get("longComment", "Undisclosed"))
+        lines.append(f"- {name}: {status} ({reason})")
+    
+    return "\n".join(lines) if lines else f"No injuries reported for {opponent}"
+
+
+async def _fetch_nba_context(opponent: str) -> Tuple[str, str, str]:
+    """Fetch recent games, H2H, and team stats concurrently."""
+    loop = asyncio.get_event_loop()
+    recent, h2h, stats = await asyncio.gather(
+        loop.run_in_executor(None, get_knicks_last5),
+        loop.run_in_executor(None, get_h2h_this_season, opponent),
+        loop.run_in_executor(None, get_knicks_team_stats),
+        return_exceptions=True,
+    )
+
+    if isinstance(recent, Exception):
+        recent = "Recent game data unavailable"
+        logger.warning(f"Recent data fetch failed: {recent}")
+    if isinstance(h2h, Exception):
+        h2h = f"H2H data unavailable vs {opponent}"
+        logger.warning(f"H2H fetch failed: {h2h}")
+    if isinstance(stats, Exception):
+        stats = "Team stats unavailable"
+        logger.warning(f"Team stats fetch failed: {stats}")
+
+    return recent, h2h, stats
+
+
+async def get_accuracy_summary() -> str:
+    try:
+        db = get_supabase()
+        if not db: return ""
+        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result").execute()
+        rows = result.data or []
+        if not rows: return ""
+        sh = sum(1 for r in rows if r.get("spread_result") == "HIT")
+        st = sum(1 for r in rows if r.get("spread_result"))
+        th = sum(1 for r in rows if r.get("total_result") == "HIT")
+        tt = sum(1 for r in rows if r.get("total_result"))
+        mh = sum(1 for r in rows if r.get("moneyline_result") == "HIT")
+        mt = sum(1 for r in rows if r.get("moneyline_result"))
+        lines = ["=== KNICKSHUB RECENT RECORD - USE TO CALIBRATE PICKS ==="]
+        if st: lines.append(f"ATS: {sh}-{st-sh} ({round(sh/st*100)}%) - if below 50% reconsider spread picks")
+        if tt: lines.append(f"O/U: {th}-{tt-th} ({round(th/tt*100)}%) - if below 50% reconsider total picks")
+        if mt: lines.append(f"ML: {mh}-{mt-mh} ({round(mh/mt*100)}%)")
+        lines.append("===")
+        return "\n".join(lines)
+    except Exception as e:
+        logger.warning(f"Could not fetch accuracy: {e}")
+        return ""
+
+async def build_game_context(
+    home_team: str,
+    away_team: str,
+    injuries: Optional[List[Dict]] = None,
+    top_stats: Optional[List[Dict]] = None,
+    over_under: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Centralized context builder for all game-related articles."""
+    opponent = away_team if away_team != "New York Knicks" else home_team
+    recent_text, h2h_text, team_stats_text = await _fetch_nba_context(opponent)
+    opponent_injury_text = await _fetch_opponent_injuries(opponent)
+
+    accuracy_summary = await get_accuracy_summary()
+    return {
+        "opponent": opponent,
+        "injury_text": _format_injuries(injuries),
+        "stats_text": _format_stats(top_stats),
+        "recent_text": recent_text,
+        "h2h_text": h2h_text,
+        "team_stats_text": team_stats_text,
+        "opponent_injury_text": opponent_injury_text,
+        "over_under": over_under or "N/A",
+    }
+
+
+async def warm_cache(opponents: List[str]) -> None:
+    """Pre-warm injury cache for common opponents."""
+    logger.info(f"Warming cache for {len(opponents)} opponents")
+    tasks = [_fetch_opponent_injuries(opp) for opp in opponents]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Log any failures
+    for opp, result in zip(opponents, results):
+        if isinstance(result, Exception):
+            logger.warning(f"Failed to warm cache for {opp}: {result}")
+
+
+# ----------------------------------------------------------------------
+# Anthropic Client
+# ----------------------------------------------------------------------
+_async_client: Optional[anthropic.AsyncAnthropic] = None
+
+
+def get_async_client() -> anthropic.AsyncAnthropic:
+    """Get or create async Anthropic client."""
+    global _async_client
+    if _async_client is None:
+        validate_config()
+        _async_client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+    return _async_client
+
+
+async def _call_claude(system_prompt: str, user_prompt: str) -> str:
+    """Core Claude calling function."""
+    client = get_async_client()
+    
+    try:
+        response = await client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=ANTHROPIC_MAX_TOKENS,
+            temperature=ANTHROPIC_TEMPERATURE,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        
+        content = response.content[0].text
+        
+        # Log token usage for monitoring
+        if hasattr(response, 'usage'):
+            logger.info(f"Claude token usage - Input: {response.usage.input_tokens}, "
+                       f"Output: {response.usage.output_tokens}")
+        
+        return content
+        
+    except anthropic.APIError as e:
+        logger.error(f"Anthropic API error: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in Claude call: {e}")
+        raise
+
+
+async def _call_claude_with_timeout(
+    system_prompt: str, 
+    user_prompt: str, 
+    timeout: int = ANTHROPIC_TIMEOUT
+) -> Tuple[str, Optional[Dict]]:
+    """Wrapper for Claude calls with timeout and JSON extraction."""
+    try:
+        raw_content = await asyncio.wait_for(
+            _call_claude(system_prompt, user_prompt),
+            timeout=timeout
+        )
+        
+        key_picks = _safe_json_parse(raw_content)
+        clean_content = _strip_key_picks_block(raw_content)
+        
+        return clean_content, key_picks
+        
+    except asyncio.TimeoutError:
+        logger.error(f"Claude API call timed out after {timeout}s")
+        raise
+    except Exception as e:
+        logger.error(f"Claude API call failed: {e}")
+        raise
+
+
+# ----------------------------------------------------------------------
+# Base System Prompt
+# ----------------------------------------------------------------------
+
 
 # ----------------------------------------------------------------------
 # Article Generators
