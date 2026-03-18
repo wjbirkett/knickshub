@@ -1002,6 +1002,8 @@ Knicks Season Stats:
 Knicks vs {ctx['opponent']} This Season (H2H):
 {ctx['h2h_text']}
 
+Referee Context (if available):
+{ctx.get("referee_text", "Referee assignment not yet available.")}
 Top Knicks Players This Season:
 {ctx['stats_text']}
 
