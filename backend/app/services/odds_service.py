@@ -15,9 +15,11 @@ async def fetch_knicks_lines() -> List[BettingLine]:
             from datetime import date as _date, timedelta
             today = _date.today().strftime("%Y%m%d")
             tomorrow = (_date.today() + timedelta(days=1)).strftime("%Y%m%d")
-            resp = await client.get(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={today},{tomorrow}")
-            resp.raise_for_status()
-            data = resp.json()
+            data = {"events": []}
+            for ds in [today, tomorrow]:
+                r2 = await client.get(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={ds}")
+                if r2.status_code == 200:
+                    data["events"].extend(r2.json().get("events", []))
         
         game_id = None
         home_team = away_team = None
