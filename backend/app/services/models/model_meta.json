@@ -1,0 +1,46 @@
+{
+  "knicks_score": {
+    "model_type": "GradientBoosting",
+    "target": "knicks_pts",
+    "cv_mae_points": 11.82,
+    "features": [
+      "is_home",
+      "knicks_rest_days",
+      "back_to_back",
+      "roll5_knicks_pts",
+      "roll5_opp_pts",
+      "roll5_point_diff",
+      "roll5_total",
+      "roll5_fg_pct",
+      "roll5_tov",
+      "roll5_ast",
+      "roll10_knicks_pts",
+      "roll10_opp_pts",
+      "roll10_point_diff",
+      "roll10_total",
+      "knicks_season_win_pct"
+    ],
+    "n_samples": 234,
+    "avg_target": 115.1
+  },
+  "opp_score": {
+    "model_type": "GradientBoosting",
+    "target": "opp_pts",
+    "cv_mae_points": 12.06,
+    "features": [
+      "is_home",
+      "knicks_rest_days",
+      "back_to_back",
+      "roll5_knicks_pts",
+      "roll5_opp_pts",
+      "roll5_total",
+      "roll5_tov",
+      "roll10_opp_pts",
+      "roll10_total",
+      "knicks_season_win_pct"
+    ],
+    "n_samples": 234,
+    "avg_target": 110.1
+  },
+  "trained_at": "2026-03-20T18:23:12.013352"
+}

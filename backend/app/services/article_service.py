@@ -18,6 +18,7 @@ from app.services.nba_stats_service import (
     get_knicks_team_stats,
 )
 from app.services.scoring_service import compute_game_score
+from app.services.ml_scoring_service import predict_game_score
 from app.db import get_supabase
 
 logger = logging.getLogger(__name__)
@@ -351,6 +352,7 @@ async def build_game_context(
     injuries: Optional[List[Dict]] = None,
     top_stats: Optional[List[Dict]] = None,
     over_under: Optional[str] = None,
+    recent_games: Optional[List[Dict]] = None,
 ) -> Dict[str, Any]:
     """Centralized context builder for all game-related articles."""
     opponent = away_team if away_team != "New York Knicks" else home_team
@@ -381,6 +383,19 @@ async def build_game_context(
     scoring_block = scoring_result.get("scoring_block", "")
     # ─────────────────────────────────────────────────────────────────────────
 
+    # ── ML score prediction ───────────────────────────────────────────────────
+    ml_result = await predict_game_score(
+        home_team=home_team,
+        away_team=away_team,
+        recent_games=recent_games if recent_games else [],
+        knicks_last_game_date=knicks_last_game,
+        game_date=str(__import__("datetime").date.today()),
+        spread=None,
+        over_under=over_under,
+    )
+    ml_block = ml_result.get("ml_block", "")
+    # ─────────────────────────────────────────────────────────────────────────
+
     return {
         "opponent": opponent,
         "injury_text": _format_injuries(injuries),
@@ -391,6 +406,7 @@ async def build_game_context(
         "opponent_injury_text": opponent_injury_text,
         "over_under": over_under or "N/A",
         "scoring_block": scoring_block,
+        "ml_block": ml_block,
     }
 
 
@@ -1000,7 +1016,7 @@ async def generate_game_preview(
     recent_games: Optional[List[Dict]] = None,
 ) -> Dict:
     """Generate a comprehensive game preview with predictions."""
-    ctx = await build_game_context(home_team, away_team, injuries, top_stats, over_under)
+    ctx = await build_game_context(home_team, away_team, injuries, top_stats, over_under, recent_games)
 
     system = BASE_SYSTEM + "\nYou specialize in game previews and betting predictions."
 
@@ -1033,6 +1049,8 @@ Referee Context (if available):
 {ctx.get("referee_text", "Referee assignment not yet available.")}
 
 {ctx.get("scoring_block", "")}
+
+{ctx.get("ml_block", "")}
 
 Top Knicks Players This Season:
 {ctx['stats_text']}
@@ -1158,6 +1176,8 @@ Knicks vs {ctx['opponent']} H2H This Season:
 {ctx['h2h_text']}
 
 {ctx.get("scoring_block", "")}
+
+{ctx.get("ml_block", "")}
 
 Write the article in this exact structure:
 1. Compelling intro (2-3 sentences about {player}'s {prop_config['description']} potential tonight — lead with injuries or matchup advantages)
@@ -1316,6 +1336,8 @@ Knicks vs {ctx['opponent']} H2H This Season:
 {ctx['h2h_text']}
 
 {ctx.get("scoring_block", "")}
+
+{ctx.get("ml_block", "")}
 
 Top Knicks Players:
 {ctx['stats_text']}
