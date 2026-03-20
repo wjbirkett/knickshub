@@ -12,7 +12,10 @@ async def fetch_knicks_lines() -> List[BettingLine]:
     try:
         # Step 1: get today's scoreboard to find Knicks game ID
         async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.get("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard")
+            from datetime import date as _date, timedelta
+            today = _date.today().strftime("%Y%m%d")
+            tomorrow = (_date.today() + timedelta(days=1)).strftime("%Y%m%d")
+            resp = await client.get(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={today},{tomorrow}")
             resp.raise_for_status()
             data = resp.json()
         
