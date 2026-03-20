@@ -19,6 +19,8 @@ export interface Article {
   home_team: string
   away_team: string
   key_picks?: any
+  player?: string
+  prop_type?: string
 }
 
 // ===== API functions =====

@@ -39,10 +39,11 @@ export default function Dashboard() {
   const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults })
   const predictions = resultsData?.predictions ?? []
   const propResults = resultsData?.props ?? []
-  const spreadHits = predictions.filter((p: any) => p.spread_result === "HIT").length
-  const spreadTotal = predictions.filter((p: any) => p.spread_result).length
-  const totalHits = predictions.filter((p: any) => p.total_result === "HIT").length
-  const totalTotal = predictions.filter((p: any) => p.total_result).length
+  const uniquePreds = predictions.filter((p, i, arr) => arr.findIndex((x) => x.game_date === p.game_date) === i)
+  const spreadHits = uniquePreds.filter((p: any) => p.spread_result === "HIT").length
+  const spreadTotal = uniquePreds.filter((p: any) => p.spread_result).length
+  const totalHits = uniquePreds.filter((p: any) => p.total_result === "HIT").length
+  const totalTotal = uniquePreds.filter((p: any) => p.total_result).length
   const propHits = propResults.filter((p: any) => p.result === "HIT").length
   const propTotal = propResults.length
   const todayArticles = (articles ?? []).filter((a: any) => a.game_date === today)
