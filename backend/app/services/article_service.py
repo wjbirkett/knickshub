@@ -497,8 +497,10 @@ At the VERY END of your response, you MUST output exactly this format with nothi
 === ARTICLE CONTENT END ===
 
 ###KEY PICKS START###
-{json object with your picks}
+{"spread_pick": "Knicks -7.5", "spread_lean": "COVER", "moneyline_pick": "Knicks -280", "moneyline_lean": "WIN", "total_pick": "Over 224.5", "total_lean": "OVER", "confidence": "High"}
 ###KEY PICKS END###
+
+The JSON must use EXACTLY these keys: spread_pick, spread_lean (COVER or NO COVER), moneyline_pick, moneyline_lean (WIN or LOSS), total_pick, total_lean (OVER or UNDER), confidence (Low, Medium, or High). No other keys allowed.
 """
 import anthropic
 import logging
