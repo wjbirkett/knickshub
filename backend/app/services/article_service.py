@@ -1546,7 +1546,7 @@ No JSON picks needed for history articles."""
 # Columns that exist in the Supabase articles table
 ARTICLE_COLUMNS = {
     "slug", "title", "content", "key_picks", "game_date",
-    "home_team", "away_team", "article_type", "word_count",
+    "home_team", "away_team", "article_type",
     "created_at", "prop_type", "player",
 }
 
