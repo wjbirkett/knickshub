@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # ----------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------
-ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
+ANTHROPIC_MODEL = "claude-sonnet-4-5"
 ANTHROPIC_MAX_TOKENS = 2000
 ANTHROPIC_TEMPERATURE = 0.55
 ANTHROPIC_TIMEOUT = 45  # seconds
