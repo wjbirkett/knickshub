@@ -895,6 +895,7 @@ async def build_game_context(
     injuries: Optional[List[Dict]] = None,
     top_stats: Optional[List[Dict]] = None,
     over_under: Optional[str] = None,
+    recent_games: Optional[List[Dict]] = None,
 ) -> Dict[str, Any]:
     """Centralized context builder for all game-related articles."""
     opponent = away_team if away_team != "New York Knicks" else home_team
