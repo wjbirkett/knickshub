@@ -1571,8 +1571,11 @@ async def save_article(article: Dict) -> Dict:
     elif not isinstance(kp, (dict, type(None))):
         article["key_picks"] = None
 
+    # Ensure word_count is an int
     try:
+        article["word_count"] = int(article.get("word_count", 0))
     except Exception:
+        article["word_count"] = 0
 
     # Final key_picks coercion right before upsert
     import ast as _ast
