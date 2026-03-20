@@ -17,6 +17,7 @@ from app.services.nba_stats_service import (
     get_h2h_this_season,
     get_knicks_team_stats,
 )
+from app.services.scoring_service import compute_game_score
 from app.db import get_supabase
 
 logger = logging.getLogger(__name__)
@@ -357,6 +358,29 @@ async def build_game_context(
     opponent_injury_text = await _fetch_opponent_injuries(opponent)
 
     accuracy_summary = await get_accuracy_summary()
+
+    # ── Rules-based composite scorer ──────────────────────────────────────────
+    # Pull last game dates from recent_text if available (best-effort parse)
+    knicks_last_game = None
+    opp_last_game = None
+    if isinstance(recent_text, str):
+        import re as _re
+        dates = _re.findall(r"\d{4}-\d{2}-\d{2}", recent_text)
+        if dates:
+            knicks_last_game = dates[0]
+
+    scoring_result = await compute_game_score(
+        home_team=home_team,
+        away_team=away_team,
+        game_date=str(__import__("datetime").date.today()),
+        knicks_injuries=injuries,
+        opponent_injuries_text=opponent_injury_text,
+        knicks_last_game_date=knicks_last_game,
+        opponent_last_game_date=opp_last_game,
+    )
+    scoring_block = scoring_result.get("scoring_block", "")
+    # ─────────────────────────────────────────────────────────────────────────
+
     return {
         "opponent": opponent,
         "injury_text": _format_injuries(injuries),
@@ -366,6 +390,7 @@ async def build_game_context(
         "team_stats_text": team_stats_text,
         "opponent_injury_text": opponent_injury_text,
         "over_under": over_under or "N/A",
+        "scoring_block": scoring_block,
     }
 
 
@@ -1006,6 +1031,9 @@ Knicks vs {ctx['opponent']} This Season (H2H):
 
 Referee Context (if available):
 {ctx.get("referee_text", "Referee assignment not yet available.")}
+
+{ctx.get("scoring_block", "")}
+
 Top Knicks Players This Season:
 {ctx['stats_text']}
 
@@ -1128,6 +1156,8 @@ Knicks Season Stats:
 
 Knicks vs {ctx['opponent']} H2H This Season:
 {ctx['h2h_text']}
+
+{ctx.get("scoring_block", "")}
 
 Write the article in this exact structure:
 1. Compelling intro (2-3 sentences about {player}'s {prop_config['description']} potential tonight — lead with injuries or matchup advantages)
@@ -1284,6 +1314,8 @@ Knicks Season Stats:
 
 Knicks vs {ctx['opponent']} H2H This Season:
 {ctx['h2h_text']}
+
+{ctx.get("scoring_block", "")}
 
 Top Knicks Players:
 {ctx['stats_text']}
