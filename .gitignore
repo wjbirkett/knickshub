@@ -18,3 +18,4 @@ frontend/dist/
 .DS_Store
 Thumbs.db
 frontend/tsconfig.app.tsbuildinfo
+standings.json
