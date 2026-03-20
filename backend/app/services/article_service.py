@@ -1088,7 +1088,7 @@ Remember: At the very end, include your picks in the JSON format specified in th
         "home_team": home_team,
         "away_team": away_team,
         "article_type": "prediction",
-        "word_count": len(content.split()),
+
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -1226,7 +1226,7 @@ Remember: At the very end, include your picks in the JSON format specified in th
         "article_type": "prop",
         "prop_type": prop_type,
         "player": player,
-        "word_count": len(content.split()),
+
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -1379,7 +1379,7 @@ Remember: At the very end, include your picks in the JSON format specified in th
         "home_team": home_team,
         "away_team": away_team,
         "article_type": "best_bet",
-        "word_count": len(content.split()),
+
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -1468,7 +1468,7 @@ Remember: At the very end, include a simple JSON with your parlay details:
         "home_team": home_team,
         "away_team": away_team,
         "article_type": "parlay",
-        "word_count": len(content.split()),
+
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -1535,7 +1535,7 @@ No JSON picks needed for history articles."""
         "home_team": "New York Knicks",
         "away_team": "New York Knicks",
         "article_type": "history",
-        "word_count": len(content.split()),
+
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -1577,17 +1577,17 @@ async def save_article(article: Dict) -> Dict:
     except Exception:
         article["word_count"] = 0
 
-    # Final key_picks coercion right before upsert
-    import ast as _ast
-    kp = article.get("key_picks")
-    if isinstance(kp, str):
-        try:
-            article["key_picks"] = _ast.literal_eval(kp)
-        except Exception:
-            article["key_picks"] = None
-
-    try:
-        # Ensure slug is unique
+    # Final key_picks coercion right before upsert
+    import ast as _ast
+    kp = article.get("key_picks")
+    if isinstance(kp, str):
+        try:
+            article["key_picks"] = _ast.literal_eval(kp)
+        except Exception:
+            article["key_picks"] = None
+
+    try:
+        # Ensure slug is unique
         result = db.table("articles").upsert(article, on_conflict="slug").execute()
         logger.info(f"Article saved: {article['slug']}")
         return result.data[0] if result.data else article
