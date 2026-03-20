@@ -1543,13 +1543,23 @@ No JSON picks needed for history articles."""
 # ----------------------------------------------------------------------
 # Database Functions
 # ----------------------------------------------------------------------
+# Columns that exist in the Supabase articles table
+ARTICLE_COLUMNS = {
+    "slug", "title", "content", "key_picks", "game_date",
+    "home_team", "away_team", "article_type", "word_count",
+    "created_at", "prop_type", "player",
+}
+
 async def save_article(article: Dict) -> Dict:
     """Save article to Supabase."""
     db = get_supabase()
     if not db:
         logger.warning("Supabase not available - article not saved")
         return article
-    
+
+    # Strip any fields not in the Supabase schema to avoid 400 errors
+    article = {k: v for k, v in article.items() if k in ARTICLE_COLUMNS}
+
     try:
         # Ensure slug is unique
         result = db.table("articles").upsert(article, on_conflict="slug").execute()
