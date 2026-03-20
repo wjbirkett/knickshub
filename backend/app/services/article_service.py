@@ -1560,6 +1560,21 @@ async def save_article(article: Dict) -> Dict:
     # Strip any fields not in the Supabase schema to avoid 400 errors
     article = {k: v for k, v in article.items() if k in ARTICLE_COLUMNS}
 
+    # Ensure key_picks is a dict (not a string) for Supabase jsonb column
+    import json as _json
+    if "key_picks" in article and isinstance(article["key_picks"], str):
+        try:
+            article["key_picks"] = _json.loads(article["key_picks"].replace("'", '"'))
+        except Exception:
+            article["key_picks"] = None
+
+    # Ensure word_count is an int
+    if "word_count" in article:
+        try:
+            article["word_count"] = int(article["word_count"])
+        except Exception:
+            article["word_count"] = 0
+
     try:
         # Ensure slug is unique
         result = db.table("articles").upsert(article, on_conflict="slug").execute()
