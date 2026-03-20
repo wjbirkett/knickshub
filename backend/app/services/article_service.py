@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 ANTHROPIC_MODEL = "claude-sonnet-4-5"
 ANTHROPIC_MAX_TOKENS = 2000
 ANTHROPIC_TEMPERATURE = 0.55
-ANTHROPIC_TIMEOUT = 45  # seconds
+ANTHROPIC_TIMEOUT = 120  # seconds
 
 # Prop bet configuration
 PROP_TYPES = {
