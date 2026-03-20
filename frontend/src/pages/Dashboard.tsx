@@ -276,8 +276,8 @@ export default function Dashboard() {
 }
 
 function NewsCard({ article }: { article: any }) {
-  const sourceColors: Record<string, string> = { espn: "#FF6B35", nypost: "#E4002B", knicks: "#006BB6", nba: "#006BB6", bleacher: "#F5A623" }
-  const sourceLabels: Record<string, string> = { espn: "ESPN", nypost: "NY Post", knicks: "Knicks.com", nba: "NBA.com", bleacher: "BR" }
+  const sourceColors: Record<string, string> = { espn: "#FF6B35", nypost: "#E4002B", knicks: "#006BB6", nba: "#006BB6", bleacher: "#F5A623", cbs: "#00A3E0" }
+  const sourceLabels: Record<string, string> = { espn: "ESPN", nypost: "NY Post", knicks: "Knicks.com", nba: "NBA.com", bleacher: "BR", cbs: "CBS" }
   const color = sourceColors[article.source] ?? "#6b7280"
   const timeAgo = (iso: string) => {
     if (!iso) return ""
