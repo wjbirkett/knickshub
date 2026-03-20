@@ -1566,7 +1566,10 @@ async def save_article(article: Dict) -> Dict:
         logger.info(f"Article saved: {article['slug']}")
         return result.data[0] if result.data else article
     except Exception as e:
+        import json as _json
         logger.error(f"Failed to save article: {e}")
+        logger.error(f"Article keys: {list(article.keys())}")
+        logger.error(f"Article payload: {_json.dumps({k: str(v)[:100] for k, v in article.items()}, default=str)}")
         return article
 
 
