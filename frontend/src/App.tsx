@@ -91,6 +91,7 @@ export default function App() {
                       >{label}</Link>
                     ))}
                     <span style={{ color: "#374151", fontSize: "0.75rem" }}>Not affiliated with the NBA or New York Knicks.</span>
+                    <span style={{ color: "#374151", fontSize: "0.75rem" }}>Created by <a href="https://websitesbywillie.com" target="_blank" rel="noopener noreferrer" style={{ color: "#F58426", textDecoration: "none", fontWeight: 600 }}>websitesbywillie.com</a></span>
                   </div>
                 </div>
               </div>

@@ -64,7 +64,7 @@ export default function AboutPage() {
             ))}
           </div>
           <p style={{ ...body, marginTop: "0.75rem" }}>
-            Odds and injury data are refreshed automatically throughout the day. Articles are generated once per game day at 9:00 AM ET.
+            Odds and injury data are refreshed automatically throughout the day. Articles are generated 45 minutes before game time.
           </p>
         </Section>
 
@@ -107,7 +107,7 @@ export default function AboutPage() {
         <Section title="Contact">
           <p style={body}>
             Questions, corrections, or feedback? KnicksHub is a solo project — the best way to reach us is via Twitter/X{" "}
-            <a href="https://twitter.com/nyknicks" target="_blank" rel="noopener noreferrer" style={{ color: "#006BB6" }}>@KnicksHub</a>.
+            <a href="https://twitter.com/knicks_hub" target="_blank" rel="noopener noreferrer" style={{ color: "#006BB6" }}>@knicks_hub</a>.
           </p>
         </Section>
 
