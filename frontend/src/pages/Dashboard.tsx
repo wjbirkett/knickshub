@@ -128,11 +128,11 @@ export default function Dashboard() {
       </div>
 
       {/* Unified Dashboard Grid */}
-      <div style={{ padding: "1.5rem 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "0 1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
+      <div style={{ padding: "1.5rem 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "0 1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start", outline: "3px solid red" }}>
 
         {/* AI Best Bet Hero */}
         {todayBestBet ? (
-          <Link to={`/predictions/${todayBestBet.slug}`} style={{ textDecoration: "none" }}>
+          <Link to={`/predictions/${todayBestBet.slug}`} style={{ textDecoration: "none", outline: "3px solid green" }}>
             <div style={{ position: "relative", overflow: "hidden", backgroundImage: `url(/players/msg-court.jpg)`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.75rem", padding: "1.25rem", borderLeft: `4px solid ${S.orange}`, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", minHeight: "0", display: "flex", flexDirection: "column", justifyContent: "center" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: S.orange, color: "#5c2b00", padding: "0.25rem 0.75rem", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: "0.25rem", marginBottom: "1.25rem", fontFamily: "Space Grotesk, sans-serif", fontStyle: "italic" }}>
                 <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>auto_awesome</span>
@@ -234,7 +234,7 @@ export default function Dashboard() {
       </div>
 
         {/* Left: Latest Predictions + News — col-start:1 row 2 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", gridColumn: "1", gridRow: "2" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", gridColumn: "1", gridRow: "2", outline: "3px solid blue" }}>
 
           {/* Latest Predictions */}
           <section>
