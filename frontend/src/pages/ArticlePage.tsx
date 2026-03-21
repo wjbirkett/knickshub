@@ -141,7 +141,7 @@ export default function ArticlePage() {
       </div>
 
       {/* Hero Header */}
-      <section style={{ position: "relative", height: "clamp(360px, 50vw, 580px)", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
+      <section style={{ position: "relative", height: "clamp(240px, 40vw, 580px)", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0 }}>
           <img src={heroImg} alt={article.title}
             style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.5, filter: "grayscale(60%) contrast(1.1)" }} />
