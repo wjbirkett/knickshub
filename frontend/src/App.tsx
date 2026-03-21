@@ -17,6 +17,7 @@ import PrivacyPage from "./pages/PrivacyPage"
 import GameHubPage from "./pages/GameHubPage"
 import PlayerPropsPage from "./pages/PlayerPropsPage"
 import PlayerArchivePage from "./pages/PlayerArchivePage"
+import OddsPage from "./pages/OddsPage"
 
 export default function App() {
   return (
@@ -60,6 +61,7 @@ export default function App() {
                 <Route path="/matchup/:opponent"       element={<MatchupArchivePage />} />
                 <Route path="/props"                   element={<PlayerPropsPage />} />
                 <Route path="/props/:player"           element={<PlayerArchivePage />} />
+                <Route path="/odds"                    element={<OddsPage />} />
                 <Route path="/about"                   element={<AboutPage />} />
                 <Route path="/terms"                   element={<TermsPage />} />
                 <Route path="/privacy"                 element={<PrivacyPage />} />

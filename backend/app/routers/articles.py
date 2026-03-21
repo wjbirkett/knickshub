@@ -36,6 +36,12 @@ def get_odds_for_game(games, next_game):
             over_under = f"{ou}"
     return spread, moneyline, over_under
 
+@router.get("/odds")
+async def get_odds():
+    from app.services.odds_service import fetch_knicks_lines
+    lines = await fetch_knicks_lines()
+    return [l.model_dump() if hasattr(l, "model_dump") else l for l in lines]
+
 @router.get("/sitemap.xml")
 async def articles_sitemap():
     articles = await get_articles(limit=200)

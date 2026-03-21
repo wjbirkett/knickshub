@@ -59,3 +59,6 @@ export const getArticle = (slug: string) =>
 
 export const generateNextGameArticle = () =>
   api.post("/api/articles/generate/next-game").then(r => r.data)
+
+export const getOdds = () =>
+  api.get("/api/articles/odds").then(r => r.data)
