@@ -127,8 +127,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Hero Bento Grid */}
-      <div style={{ padding: "1.5rem 2rem 0", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
+      {/* Unified Dashboard Grid */}
+      <div style={{ padding: "1.5rem 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem 2rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
 
         {/* AI Best Bet Hero */}
         {todayBestBet ? (
@@ -233,9 +233,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Content: Predictions + Sidebar */}
-      <div style={{ padding: "0 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "2.5rem", maxWidth: "1400px", margin: "-320px auto 0" }}>
-
         {/* Left: Latest Predictions + News */}
         <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
 
@@ -289,8 +286,8 @@ export default function Dashboard() {
           </section>
         </div>
 
-        {/* Right: Injuries + Birthdays + Record */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+        {/* Right: Next+Last Game + Injuries + Birthdays */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", gridRow: "1 / 3" }}>
 
           {/* Injury Report */}
           <section style={{ background: S.surface, padding: "1.5rem", borderRadius: "0.75rem", border: `1px solid ${S.border}` }}>
@@ -348,8 +345,8 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-        </div>
       </div>
+
 
       {/* Footer */}
       <footer style={{ background: "#131313", borderTop: `1px solid ${S.border}`, padding: "2.5rem 2rem", marginTop: "1rem" }}>
