@@ -79,6 +79,7 @@ export default function Dashboard() {
       </Helmet>
 
       {/* Team Record Bar */}
+      <h1 style={{ position: "absolute", width: "1px", height: "1px", padding: 0, margin: "-1px", overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>KnicksHub — New York Knicks Predictions, Best Bets & Player Props</h1>
       <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "0.75rem 2rem", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <div>
