@@ -1075,6 +1075,7 @@ Guidelines:
 - VARIED OPENERS: Do NOT start the intro with injury news. Lead with the sharpest betting angle, a streak, or a matchup edge instead.
 - SPECIFIC NUMBERS: Every analytical claim must include an actual number (e.g. "covering 7 of their last 10" not "covering recently").
 - SHARP ANGLE FIRST: The intro sentence must be the single most compelling reason to bet this game. Make it specific, not generic.
+- SCORE CONSISTENCY: Your ## Final Score Prediction MUST be mathematically consistent with your total_lean in the KEY PICKS JSON. If total_lean is OVER, the combined score must exceed the over/under line. If total_lean is UNDER, the combined score must be below it. Never predict 108-101 and pick OVER 224.5.
 
 IMPORTANT: At the very end, output EXACTLY this format for prop picks (NOT the game picks format):
 
