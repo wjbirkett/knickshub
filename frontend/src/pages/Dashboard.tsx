@@ -128,7 +128,7 @@ export default function Dashboard() {
       </div>
 
       {/* Hero Bento Grid */}
-      <div style={{ padding: "2.5rem 2rem 0", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
+      <div style={{ padding: "0 2rem 0", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
 
         {/* AI Best Bet Hero */}
         {todayBestBet ? (

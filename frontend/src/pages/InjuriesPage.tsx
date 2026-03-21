@@ -54,7 +54,7 @@ export default function InjuriesPage() {
         <meta name="description" content="Latest New York Knicks injury report and NBA injury updates." />
       </Helmet>
 
-      <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "2rem 2.5rem" }}>
+      <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "0 2.5rem 2rem" }}>
         <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 5vw, 3.5rem)", textTransform: "uppercase", letterSpacing: "-0.03em", color: S.text, margin: "0 0 0.5rem", fontStyle: "italic" }}>
           Injury <span style={{ color: S.peach }}>Report</span>
         </h1>

@@ -83,7 +83,7 @@ export default function PlayerPropsPage() {
         <p style={{ color: S.textMuted, fontSize: "0.875rem", margin: 0 }}>AI-powered prop picks — tracked and graded after the final buzzer</p>
       </div>
 
-      <div style={{ padding: "1rem 2.5rem", maxWidth: "1100px" }}>
+      <div style={{ padding: "0 2.5rem 1rem", maxWidth: "1100px" }}>
 
         {/* Player Filter Cards */}
         {playerStats.length > 0 && (

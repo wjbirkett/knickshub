@@ -103,7 +103,7 @@ export default function PredictionsPage() {
       </Helmet>
 
       {/* Hero Header */}
-      <section style={{ position: "relative", height: "200px", display: "flex", alignItems: "flex-end", overflow: "hidden", background: "#0a0a0a" }}>
+      <section style={{ position: "relative", height: "160px", display: "flex", alignItems: "flex-end", overflow: "hidden", background: "#0a0a0a" }}>
         <div style={{ position: "absolute", inset: 0 }}>
           <img
             src="/players/msg-exterior.jpg"
