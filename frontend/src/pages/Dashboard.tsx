@@ -119,7 +119,7 @@ export default function Dashboard() {
       </div>
 
       {/* Hero Bento Grid */}
-      <div style={{ padding: "1.5rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px" }}>
+      <div style={{ padding: "2.5rem 2rem 1.5rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px" }}>
 
         {/* AI Best Bet Hero */}
         {todayBestBet ? (
@@ -246,7 +246,7 @@ export default function Dashboard() {
                       onMouseLeave={e => (e.currentTarget.style.borderColor = S.border)}
                     >
                       <span style={{ background: b.bg, color: b.color, padding: "0.1875rem 0.5rem", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", borderRadius: "999px", width: "fit-content" }}>{b.label}</span>
-                      <h4 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", lineHeight: 1.3, color: S.text, flex: 1 }}>{a.title}</h4>
+                      <h4 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", lineHeight: 1.3, color: S.text, flex: 1 }}>{a.title.replace(/s*([d-]+)s*$/, "").replace(/AI Prediction,?s*/i, "").replace(/Best Bets & Player Props/i, "").trim()}</h4>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.625rem", fontWeight: 900, textTransform: "uppercase", color: S.orange }}>
                         <span>{fmt(a.game_date)}</span>
                         {a.key_picks?.confidence && <span style={{ color: a.key_picks.confidence === "High" ? S.green : S.textMuted }}>{a.key_picks.confidence} Conf</span>}

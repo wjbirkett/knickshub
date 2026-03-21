@@ -128,6 +128,13 @@ export default function ArticlePage() {
         })}</script>
       </Helmet>
 
+      {/* Back Link */}
+      <div style={{ padding: "1rem 3rem", background: S.bg }}>
+        <Link to="/predictions" style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: S.textMuted, textDecoration: "none", opacity: 0.6, display: "inline-flex", alignItems: "center", gap: "0.375rem" }}>
+          ← All Predictions
+        </Link>
+      </div>
+
       {/* Hero Header */}
       <section style={{ position: "relative", height: "clamp(360px, 50vw, 580px)", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0 }}>
