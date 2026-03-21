@@ -327,7 +327,7 @@ async def get_accuracy_summary() -> str:
     try:
         db = get_supabase()
         if not db: return ""
-        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result")
+        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result").execute()
         rows = result.data or []
         if not rows: return ""
         sh = sum(1 for r in rows if r.get("spread_result") == "HIT")
@@ -869,7 +869,7 @@ async def get_accuracy_summary() -> str:
     try:
         db = get_supabase()
         if not db: return ""
-        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result")
+        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result").execute()
         rows = result.data or []
         if not rows: return ""
         sh = sum(1 for r in rows if r.get("spread_result") == "HIT")
@@ -1645,7 +1645,7 @@ async def get_articles(limit: int = 20, article_type: Optional[str] = None) -> L
         query = db.table("articles").select("*").order("created_at", desc=True)
         if article_type:
             query = query.eq("article_type", article_type)
-        result = query.limit(limit)
+        result = query.limit(limit).execute()
         return result.data
     except Exception as e:
         logger.error(f"Failed to fetch articles: {e}")
