@@ -123,11 +123,11 @@ export default function ArticlePage() {
   const { data: allArticles } = useQuery({
     queryKey: ["articles"],
     queryFn: () => getArticles(),
+  const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults })
   })
 
   if (isLoading) return <p style={{ color: "#6b7280" }}>Loading...</p>
   if (!article) return <p style={{ color: "#f87171" }}>Article not found.</p>
-
   const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults })
   const propResults = resultsData?.props ?? []
   const preds = resultsData?.predictions ?? []
