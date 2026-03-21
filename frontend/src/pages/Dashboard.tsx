@@ -196,7 +196,7 @@ export default function Dashboard() {
         )}
 
         {/* Right Column: Next + Last Game */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignSelf: "start" }}>
           {nextGame && (
             <div style={{ flex: 1, background: S.surfaceHigh, borderRadius: "0.75rem", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <span style={{ fontSize: "0.5625rem", fontWeight: 900, letterSpacing: "0.2rem", color: S.orange, textTransform: "uppercase" }}>Next Battle</span>
