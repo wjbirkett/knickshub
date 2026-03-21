@@ -45,7 +45,7 @@ export default function Dashboard() {
   const { data: resultsData } = useQuery({ queryKey: ["results"],   queryFn: getResults })
 
   const knicks = (standings as any[])?.find((t: any) =>
-    (t.team_name || t.team || t.teamName || "").includes("Knicks")
+    (t.team || t.teamName || "").includes("Knicks")
   )
   const todayBestBet      = (articles as any[])?.find((a: any) => a.article_type === "best_bet")
   const latestPredictions = (articles as any[])?.filter((a: any) =>
@@ -87,7 +87,7 @@ export default function Dashboard() {
             <span style={{ fontSize: "0.625rem", color: S.textMuted, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Eastern Conference</span>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "2.5rem", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "2.5rem" }}>
           {knicks && <>
             <div style={{ textAlign: "center" }}>
               <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem" }}>{knicks.wins}-{knicks.losses}</span>
@@ -127,13 +127,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Unified Dashboard Grid */}
-      <div style={{ padding: "1.5rem 2rem 0", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "0 1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
+      {/* Hero Bento Grid */}
+      <div style={{ padding: "2.5rem 2rem 1.5rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px", margin: "0 auto" }}>
 
         {/* AI Best Bet Hero */}
         {todayBestBet ? (
           <Link to={`/predictions/${todayBestBet.slug}`} style={{ textDecoration: "none" }}>
-            <div style={{ position: "relative", overflow: "hidden", backgroundImage: `url(/players/msg-court.jpg)`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.75rem", padding: "1.25rem", borderLeft: `4px solid ${S.orange}`, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", minHeight: "0", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div style={{ position: "relative", overflow: "hidden", backgroundImage: `url(/players/msg-court.jpg)`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.75rem", padding: "2rem", borderLeft: `4px solid ${S.orange}`, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", minHeight: "280px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: S.orange, color: "#5c2b00", padding: "0.25rem 0.75rem", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: "0.25rem", marginBottom: "1.25rem", fontFamily: "Space Grotesk, sans-serif", fontStyle: "italic" }}>
                 <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>auto_awesome</span>
                 AI Recommended Best Bet
@@ -196,9 +196,9 @@ export default function Dashboard() {
         )}
 
         {/* Right Column: Next + Last Game */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignSelf: "start", gridColumn: "2", gridRow: "1" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {nextGame && (
-            <div style={{ background: S.surfaceHigh, borderRadius: "0.75rem", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <div style={{ flex: 1, background: S.surfaceHigh, borderRadius: "0.75rem", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <span style={{ fontSize: "0.5625rem", fontWeight: 900, letterSpacing: "0.2rem", color: S.orange, textTransform: "uppercase" }}>Next Battle</span>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ textAlign: "center" }}>
@@ -215,7 +215,7 @@ export default function Dashboard() {
             </div>
           )}
           {lastGame && (
-            <div style={{ background: S.surfaceHigh, borderRadius: "0.75rem", padding: "1.25rem", borderLeft: `4px solid ${S.green}`, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <div style={{ flex: 1, background: S.surfaceHigh, borderRadius: "0.75rem", padding: "1.25rem", borderLeft: `4px solid ${S.green}`, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
               <span style={{ fontSize: "0.5625rem", fontWeight: 900, letterSpacing: "0.2rem", color: S.green, textTransform: "uppercase" }}>Last Result</span>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
@@ -233,13 +233,16 @@ export default function Dashboard() {
         </div>
       </div>
 
-        {/* Left: Latest Predictions + News — col-start:1 row 2 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", gridColumn: "1", gridRow: "2", paddingTop: "0" }}>
+      {/* Main Content: Predictions + Sidebar */}
+      <div style={{ padding: "1.5rem 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "2.5rem", maxWidth: "1400px", margin: "0 auto" }}>
+
+        {/* Left: Latest Predictions + News */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
 
           {/* Latest Predictions */}
           <section>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
-              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.375rem", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "-0.01em", color: S.text, margin: 0 }}>Latest Predictions</h3>
+              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.375rem", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "-0.01em", color: S.text }}>Latest Predictions</h3>
               <Link to="/predictions" style={{ fontSize: "0.6875rem", fontWeight: 700, color: S.orange, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>See All</Link>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
@@ -286,8 +289,8 @@ export default function Dashboard() {
           </section>
         </div>
 
-        {/* Right: Next+Last Game + Injuries + Birthdays */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", gridColumn: "2", gridRow: "2" }}>
+        {/* Right: Injuries + Birthdays + Record */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
 
           {/* Injury Report */}
           <section style={{ background: S.surface, padding: "1.5rem", borderRadius: "0.75rem", border: `1px solid ${S.border}` }}>
@@ -345,8 +348,8 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+        </div>
       </div>
-
 
       {/* Footer */}
       <footer style={{ background: "#131313", borderTop: `1px solid ${S.border}`, padding: "2.5rem 2rem", marginTop: "1rem" }}>
