@@ -45,7 +45,7 @@ export default function Dashboard() {
   const { data: resultsData } = useQuery({ queryKey: ["results"],   queryFn: getResults })
 
   const knicks = (standings as any[])?.find((t: any) =>
-    (t.team || t.teamName || "").includes("Knicks")
+    (t.team_name || t.team || t.teamName || "").includes("Knicks")
   )
   const todayBestBet      = (articles as any[])?.find((a: any) => a.article_type === "best_bet")
   const latestPredictions = (articles as any[])?.filter((a: any) =>
