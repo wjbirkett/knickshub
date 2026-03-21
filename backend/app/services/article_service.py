@@ -1075,7 +1075,15 @@ Guidelines:
 - SPECIFIC NUMBERS: Every analytical claim must include an actual number (e.g. "covering 7 of their last 10" not "covering recently").
 - SHARP ANGLE FIRST: The intro sentence must be the single most compelling reason to bet this game. Make it specific, not generic.
 
-Remember: At the very end, include your picks in the JSON format specified in the system prompt."""
+IMPORTANT: At the very end, output EXACTLY this format for prop picks (NOT the game picks format):
+
+=== ARTICLE CONTENT END ===
+
+###KEY PICKS START###
+{"player": "{player}", "prop_type": "{prop_type}", "pick": "Over {line}", "lean": "OVER", "confidence": "High"}
+###KEY PICKS END###
+
+Use "OVER" or "UNDER" for lean. "Low", "Medium", or "High" for confidence. No other keys allowed."""
 
     content, key_picks = await _call_claude_with_timeout(system, user_prompt)
 
