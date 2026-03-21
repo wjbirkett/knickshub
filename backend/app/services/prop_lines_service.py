@@ -5,10 +5,11 @@ Replaces hardcoded PROP_LINES in article_service.py
 import httpx
 import logging
 from typing import Optional, Dict
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-BDL_API_KEY = "a62e4663-d6dd-400b-a5b6-0fa84923545c"
+BDL_API_KEY = settings.BALLDONTLIE_API_KEY or "a62e4663-d6dd-400b-a5b6-0fa84923545c"
 BDL_BASE = "https://api.balldontlie.io/nba/v2"
 
 # BallDontLie player IDs for Knicks players

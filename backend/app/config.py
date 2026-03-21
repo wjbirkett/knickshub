@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     TWITTER_ACCESS_TOKEN_SECRET: str = ""  # renamed from TWITTER_ACCESS_SECRET
     TWITTER_BEARER_TOKEN: str = ""
     ANTHROPIC_API_KEY: str = ""
+    BALLDONTLIE_API_KEY: str = ""
     ENVIRONMENT: str = "development"
     ALLOWED_ORIGINS: List[str] = ["http://localhost:5173"]
 
