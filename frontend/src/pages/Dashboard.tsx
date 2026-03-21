@@ -87,7 +87,7 @@ export default function Dashboard() {
             <span style={{ fontSize: "0.625rem", color: S.textMuted, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Eastern Conference</span>
           </div>
         </div>
-        <div style={{ display: "flex", gap: "2.5rem" }}>
+        <div style={{ display: "flex", gap: "2.5rem", alignItems: "center" }}>
           {knicks && <>
             <div style={{ textAlign: "center" }}>
               <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem" }}>{knicks.wins}-{knicks.losses}</span>
@@ -128,7 +128,7 @@ export default function Dashboard() {
       </div>
 
       {/* Hero Bento Grid */}
-      <div style={{ padding: "2.5rem 2rem 1.5rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px", margin: "0 auto" }}>
+      <div style={{ padding: "1.5rem 2rem 0", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px", margin: "0 auto" }}>
 
         {/* AI Best Bet Hero */}
         {todayBestBet ? (
