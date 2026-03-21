@@ -93,8 +93,16 @@ export default function Dashboard() {
               <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>W-L RECORD</span>
             </div>
             <div style={{ textAlign: "center" }}>
-              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: S.peach }}>#{knicks.conferenceRank || knicks.rank || "—"}</span>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: S.peach }}>#{knicks.conference_rank || knicks.conferenceRank || "—"}</span>
               <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>SEED</span>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: S.green }}>{knicks.win_pct ? (knicks.win_pct * 100).toFixed(1) + "%" : "—"}</span>
+              <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>WIN %</span>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: S.textMuted }}>{knicks.games_back === 0 ? "—" : knicks.games_back ?? "—"}</span>
+              <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>GB</span>
             </div>
           </>}
           {atsTotal > 0 && (

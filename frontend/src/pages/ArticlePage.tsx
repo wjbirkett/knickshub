@@ -115,6 +115,11 @@ export default function ArticlePage() {
         <meta name="description" content={description} />
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={description} />
+        <meta property="og:image" content={heroImg.startsWith("http") ? heroImg : `https://knickshub.com${heroImg}`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content={heroImg.startsWith("http") ? heroImg : `https://knickshub.com${heroImg}`} />
         <meta property="og:type" content="article" />
         <link rel="canonical" href={`https://knickshub.vercel.app/predictions/${slug}`} />
         <script type="application/ld+json">{JSON.stringify({
