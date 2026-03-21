@@ -124,7 +124,7 @@ export default function Dashboard() {
         {/* AI Best Bet Hero */}
         {todayBestBet ? (
           <Link to={`/predictions/${todayBestBet.slug}`} style={{ textDecoration: "none" }}>
-            <div style={{ position: "relative", overflow: "hidden", backgroundImage: `url(/players/msg-exterior.jpg)`, backgroundSize: "cover", backgroundPosition: "center", background: "none", borderRadius: "0.75rem", padding: "2rem", borderLeft: `4px solid ${S.orange}`, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", minHeight: "280px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div style={{ position: "relative", overflow: "hidden", backgroundImage: `url(/players/msg-exterior.jpg)`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.75rem", padding: "2rem", borderLeft: `4px solid ${S.orange}`, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", minHeight: "280px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: S.orange, color: "#5c2b00", padding: "0.25rem 0.75rem", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: "0.25rem", marginBottom: "1.25rem", fontFamily: "Space Grotesk, sans-serif", fontStyle: "italic" }}>
                 <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>auto_awesome</span>
                 AI Recommended Best Bet
