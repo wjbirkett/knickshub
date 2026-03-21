@@ -33,7 +33,7 @@ export default function Sidebar() {
         borderRight: "1px solid rgba(255,255,255,0.1)",
         background: "rgba(28,27,27,0.85)", backdropFilter: "blur(20px)",
         zIndex: 50, flexDirection: "column",
-        boxShadow: "24px 0 48px rgba(0,0,0,0.4)"
+        boxShadow: "24px 0 48px rgba(0,0,0,0.4)", overflow: "hidden"
       }} className="lg-sidebar">
         <style>{`
           @media (min-width: 1024px) {
