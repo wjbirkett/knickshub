@@ -5,6 +5,7 @@ import { Home, Target, TrendingUp, Newspaper, Activity, Calendar, BarChart2, Lin
 const NAV = [
   { to: "/",            label: "Dashboard",      icon: Home },
   { to: "/predictions", label: "Predictions",    icon: Target },
+  { to: "/props",       label: "Player Props",   icon: Target },
   { to: "/betting",     label: "Betting",        icon: TrendingUp },
   { to: "/news",        label: "News Feed",      icon: Newspaper },
   { to: "/injuries",    label: "Injuries",       icon: Activity },

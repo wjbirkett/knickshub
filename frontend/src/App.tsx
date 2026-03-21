@@ -15,6 +15,7 @@ import AboutPage from "./pages/AboutPage"
 import TermsPage from "./pages/TermsPage"
 import PrivacyPage from "./pages/PrivacyPage"
 import GameHubPage from "./pages/GameHubPage"
+import PlayerPropsPage from "./pages/PlayerPropsPage"
 
 export default function App() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
                 <Route path="/predictions/:slug"       element={<ArticlePage />} />
                 <Route path="/game/:gameSlug"              element={<GameHubPage />} />
                 <Route path="/matchup/:opponent"       element={<MatchupArchivePage />} />
+                <Route path="/props"                   element={<PlayerPropsPage />} />
                 <Route path="/about"                   element={<AboutPage />} />
                 <Route path="/terms"                   element={<TermsPage />} />
                 <Route path="/privacy"                 element={<PrivacyPage />} />

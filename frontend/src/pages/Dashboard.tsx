@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getNews, getInjuries, getBirthdays, getSchedule, getStandings, getArticles, getResults } from "../utils/api"
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
+import { Helmet } from "react-helmet-async"
 
 const ARTICLE_BADGE: Record<string, { bg: string; color: string; label: string }> = {
   prediction: { bg: "#0c1a4b", color: "#93c5fd", label: "PREDICTION" },
@@ -111,8 +112,26 @@ export default function Dashboard() {
         </div>
       )}
       <div className="db-header">
+        <Helmet>
+          <title>KnicksHub — Knicks Predictions, Best Bets & Player Props</title>
+          <meta name="description" content="AI-powered New York Knicks betting predictions, best bets, spread picks, and player props. Daily analysis, injury reports, and sharp angles for Knicks bettors." />
+          <meta property="og:title" content="KnicksHub — Knicks Predictions, Best Bets & Player Props" />
+          <meta property="og:description" content="AI-powered New York Knicks betting predictions, best bets, and player props updated daily." />
+          <link rel="canonical" href="https://knickshub.vercel.app" />
+          <script type="application/ld+json">{JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "KnicksHub",
+            "url": "https://knickshub.vercel.app",
+            "description": "AI-powered New York Knicks betting predictions and player props",
+            "publisher": {
+              "@type": "Organization",
+              "name": "KnicksHub"
+            }
+          })}</script>
+        </Helmet>
         <h1 className="db-title" style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>
-          DASHBOARD
+          New York Knicks Predictions & Best Bets
         </h1>
         <p style={{ color: "#6b7280", margin: "0.25rem 0 0", fontSize: "0.875rem" }}>Everything Knicks, all in one place.</p>
       </div>

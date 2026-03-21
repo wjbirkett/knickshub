@@ -192,6 +192,16 @@ export default function ArticlePage() {
         <meta property="og:description" content={description} />
         <meta property="og:type" content="article" />
         <link rel="canonical" href={`https://knickshub.vercel.app/predictions/${slug}`} />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Article",
+          "headline": article.title,
+          "description": description,
+          "publisher": { "@type": "Organization", "name": "KnicksHub", "url": "https://knickshub.vercel.app" },
+          "datePublished": article.created_at,
+          "dateModified": article.updated_at || article.created_at,
+          "mainEntityOfPage": { "@type": "WebPage", "@id": `https://knickshub.vercel.app/predictions/${slug}` }
+        })}</script>
       </Helmet>
 
       <Link to="/predictions" style={{ color: "#6b7280", fontSize: "0.8rem", textDecoration: "none", display: "block", marginBottom: "1rem" }}>← Back to Predictions</Link>

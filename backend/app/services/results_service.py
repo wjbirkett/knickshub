@@ -195,6 +195,12 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 continue
 
             picks = article["key_picks"]
+            if not isinstance(picks, dict):
+                continue
+            # Skip articles with game-format key_picks (no prop-specific fields)
+            if "lean" not in picks and "pick" not in picks:
+                logger.warning(f"Skipping {article.get('slug')} — no prop-format key_picks")
+                continue
             player = article["player"]
             prop_type = article.get("prop_type") or (article.get("key_picks") or {}).get("best_prop_type") or "points"
 
@@ -248,7 +254,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
             existing2 = db.table("prop_results").select("slug").eq("slug", row["slug"]).execute()
             if not existing2.data:
                 db.table("prop_results").upsert(row, on_conflict="slug")
-            resolved["prop_results"] += 1
+                resolved["prop_results"] += 1
             logger.info(f"{player} {prop_type}: {lean} {line} — actual {actual_value} — {result_str}")
 
         return resolved
