@@ -245,8 +245,8 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 "result": result_str,
                 "resolved_at": datetime.now(timezone.utc).isoformat(),
             }
-            existing2 = db.table("prop_results").select("slug").eq("slug", row["slug"])
-        if not existing2.execute().data:
+            existing2 = db.table("prop_results").select("slug").eq("slug", row["slug"]).execute()
+            if not existing2.data:
             db.table("prop_results").upsert(row, on_conflict="slug")
             resolved["prop_results"] += 1
             logger.info(f"{player} {prop_type}: {lean} {line} — actual {actual_value} — {result_str}")
