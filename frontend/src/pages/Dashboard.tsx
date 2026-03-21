@@ -128,7 +128,7 @@ export default function Dashboard() {
       </div>
 
       {/* Unified Dashboard Grid */}
-      <div style={{ padding: "1.5rem 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem 2rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
+      <div style={{ padding: "1.5rem 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "0 1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
 
         {/* AI Best Bet Hero */}
         {todayBestBet ? (
