@@ -302,11 +302,10 @@ async def _fetch_opponent_injuries(opponent: str) -> str:
 
 async def _fetch_nba_context(opponent: str) -> Tuple[str, str, str]:
     """Fetch recent games, H2H, and team stats concurrently."""
-    loop = asyncio.get_event_loop()
     recent, h2h, stats = await asyncio.gather(
-        loop.run_in_executor(None, get_knicks_last5),
-        loop.run_in_executor(None, get_h2h_this_season, opponent),
-        loop.run_in_executor(None, get_knicks_team_stats),
+        get_knicks_last5(),
+        get_h2h_this_season(opponent),
+        get_knicks_team_stats(),
         return_exceptions=True,
     )
 
@@ -845,11 +844,10 @@ async def _fetch_opponent_injuries(opponent: str) -> str:
 
 async def _fetch_nba_context(opponent: str) -> Tuple[str, str, str]:
     """Fetch recent games, H2H, and team stats concurrently."""
-    loop = asyncio.get_event_loop()
     recent, h2h, stats = await asyncio.gather(
-        loop.run_in_executor(None, get_knicks_last5),
-        loop.run_in_executor(None, get_h2h_this_season, opponent),
-        loop.run_in_executor(None, get_knicks_team_stats),
+        get_knicks_last5(),
+        get_h2h_this_season(opponent),
+        get_knicks_team_stats(),
         return_exceptions=True,
     )
 
