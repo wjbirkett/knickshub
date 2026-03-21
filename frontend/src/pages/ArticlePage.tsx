@@ -144,9 +144,12 @@ export default function ArticlePage() {
           "@type": "Article",
           "headline": article.title,
           "description": description,
-          "publisher": { "@type": "Organization", "name": "KnicksHub", "url": "https://knickshub.vercel.app" },
+          "image": heroImg.startsWith("http") ? heroImg : `https://knickshub.com${heroImg}`,
+          "author": { "@type": "Person", "name": "Nick Knicks" },
+          "publisher": { "@type": "Organization", "name": "KnicksHub", "url": "https://knickshub.com", "logo": { "@type": "ImageObject", "url": "https://knickshub.com/favicon.jpg" } },
           "datePublished": article.created_at,
-          "mainEntityOfPage": { "@type": "WebPage", "@id": `https://knickshub.vercel.app/predictions/${slug}` }
+          "dateModified": article.updated_at || article.created_at,
+          "mainEntityOfPage": { "@type": "WebPage", "@id": `https://knickshub.com/predictions/${slug}` }
         })}</script>
       </Helmet>
 
