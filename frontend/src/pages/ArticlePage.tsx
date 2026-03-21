@@ -162,13 +162,26 @@ export default function ArticlePage() {
     (a: any) => a.game_date === article.game_date && a.slug !== slug && a.article_type !== "history"
   )
 
-  const renderContent = (content: string) =>
-    content.split("\n").map((line, i) => {
+  const renderContent = (content: string) => {
+    // Fix mojibake encoding issues from UTF-8 stored as latin1
+    content = content
+      .replace(/\u00e2\u0080\u0094/g, "\u2014") // em dash
+      .replace(/\u00e2\u0080\u0099/g, "\u2019") // right single quote
+      .replace(/\u00e2\u0080\u009c/g, "\u201c") // left double quote
+      .replace(/\u00e2\u0080\u009d/g, "\u201d") // right double quote
+      .replace(/â€"/g, "—")
+      .replace(/â€™/g, "'")
+      .replace(/â€œ/g, "\u201c")
+      .replace(/â€/g, "\u201d")
+      .replace(/â€¦/g, "…")
+      .replace(/â€˜/g, "\u2018");
+    return content.split("\n").map((line, i) => {
       if (line.startsWith("## ")) return <h2 key={i} style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.5rem", letterSpacing: "0.1em", color: "#F58426", margin: "1.5rem 0 0.75rem" }}>{line.replace("## ", "")}</h2>
       if (line.startsWith("# ")) return <h1 key={i} style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "2rem", letterSpacing: "0.1em", color: "#F58426", margin: "1.5rem 0 0.75rem" }}>{line.replace("# ", "")}</h1>
       if (line.trim() === "") return <br key={i} />
       return <p key={i} style={{ color: "#d1d5db", lineHeight: 1.75, margin: "0 0 0.75rem", fontSize: "0.95rem" }} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\*(.*?)\*/g, "<em>$1</em>") }} />
     })
+  }
 
   return (
     <div style={{ maxWidth: "780px" }}>
