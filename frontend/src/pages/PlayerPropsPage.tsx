@@ -87,7 +87,7 @@ export default function PlayerPropsPage() {
 
         {/* Player Filter Cards */}
         {playerStats.length > 0 && (
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "2rem" }}>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
             <button onClick={() => setSelectedPlayer("ALL")} style={{
               background: selectedPlayer === "ALL" ? S.orange : S.surface,
               color: selectedPlayer === "ALL" ? "#5c2b00" : S.textMuted,

@@ -239,7 +239,7 @@ export default function Dashboard() {
           {/* Latest Predictions */}
           <section>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
-              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.375rem", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "-0.01em", color: S.text }}>Latest Predictions</h3>
+              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.375rem", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "-0.01em", color: S.text, margin: 0 }}>Latest Predictions</h3>
               <Link to="/predictions" style={{ fontSize: "0.6875rem", fontWeight: 700, color: S.orange, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>See All</Link>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
