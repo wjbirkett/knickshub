@@ -1659,7 +1659,7 @@ async def get_article_by_slug(slug: str) -> Optional[Dict]:
         return None
     
     try:
-        result = db.table("articles").select("*").eq("slug", slug).single()
+        result = db.table("articles").select("*").eq("slug", slug).single().execute()
         return result.data
     except Exception as e:
         logger.error(f"Failed to fetch article by slug {slug}: {e}")
