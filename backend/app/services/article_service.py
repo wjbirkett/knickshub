@@ -19,6 +19,7 @@ from app.services.nba_stats_service import (
 )
 from app.services.scoring_service import compute_game_score
 from app.services.ml_scoring_service import predict_game_score
+from app.services.prop_lines_service import fetch_live_prop_lines
 from app.db import get_supabase
 
 logger = logging.getLogger(__name__)
@@ -1111,13 +1112,17 @@ async def generate_player_prop(
     
     prop_config = PROP_TYPES[prop_type]
     
-    # Get the specific line if available
-    line = PROP_LINES.get(player, {}).get(prop_type, "N/A")
-    if line == "N/A" and prop_type == "pts_reb_ast" and player in PROP_LINES:
-        # Calculate default PRA from components
-        pts = PROP_LINES[player].get("points", 0)
-        reb = PROP_LINES[player].get("rebounds", 0)
-        ast = PROP_LINES[player].get("assists", 0)
+    # Get live prop line from BallDontLie, fall back to hardcoded
+    try:
+        live_lines = await fetch_live_prop_lines(home_team, away_team)
+        line = live_lines.get(player, {}).get(prop_type, "N/A")
+    except Exception:
+        line = PROP_LINES.get(player, {}).get(prop_type, "N/A")
+    if line == "N/A" and prop_type == "pts_reb_ast":
+        player_lines = PROP_LINES.get(player, {})
+        pts = player_lines.get("points", 0)
+        reb = player_lines.get("rebounds", 0)
+        ast = player_lines.get("assists", 0)
         if pts and reb and ast:
             line = round(pts + reb + ast, 1)
     
