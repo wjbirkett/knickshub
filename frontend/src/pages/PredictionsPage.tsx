@@ -65,15 +65,19 @@ const FALLBACK_IMG = "/players/msg-court.jpg"
 
 export default function PredictionsPage() {
   const [filter, setFilter] = useState("all")
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 12
 
   const { data: articles, isLoading } = useQuery({
     queryKey: ["articles", 100],
     queryFn: () => getArticles(100),
   })
 
-  const filtered = (articles as any[])?.filter((a: any) =>
+  const allFiltered = (articles as any[])?.filter((a: any) =>
     filter === "all" ? true : a.article_type === filter
   ) ?? []
+  const totalPages = Math.ceil(allFiltered.length / PAGE_SIZE)
+  const filtered = allFiltered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const opponents = Array.from(new Set(
     (articles as any[])?.filter((a: any) => a.article_type !== "history")

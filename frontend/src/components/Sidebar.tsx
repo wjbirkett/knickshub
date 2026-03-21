@@ -53,7 +53,6 @@ export default function Sidebar() {
           <Link to="/" style={{ textDecoration: "none" }}>
             <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem", color: "#F58426", letterSpacing: "-0.03em", fontStyle: "italic", textTransform: "uppercase", margin: 0 }}>KnicksHub</h1>
           </Link>
-          <p style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.625rem", textTransform: "uppercase", letterSpacing: "0.15em", color: "#DDC1B1", opacity: 0.6, margin: "0.25rem 0 0", fontWeight: 700 }}>The Courtside Editorial</p>
         </div>
 
         <nav style={{ flex: 1, padding: "0 1rem", display: "flex", flexDirection: "column", gap: "0.125rem", overflowY: "auto" }}>
