@@ -29,12 +29,17 @@ const FILTERS = [
 ]
 
 // NBA stock images for cards by type
-const CARD_IMAGES: Record<string, string> = {
-  prediction: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&q=80",
-  best_bet:   "https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=600&q=80",
-  prop:       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
-  history:    "https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=600&q=80",
-}
+// Use a single reliable basketball image per type, rotated by article index
+const CARD_IMAGES: string[] = [
+  "https://cdn.nba.com/manage/2023/10/GettyImages-1745823252-scaled.jpg",
+  "https://cdn.nba.com/manage/2024/01/GettyImages-1930453399-scaled.jpg",
+  "https://cdn.nba.com/manage/2023/11/GettyImages-1759990386-scaled.jpg",
+  "https://cdn.nba.com/manage/2024/02/GettyImages-2029090053-scaled.jpg",
+  "https://cdn.nba.com/manage/2024/01/GettyImages-1999547619-scaled.jpg",
+  "https://cdn.nba.com/manage/2024/03/GettyImages-2126041548-scaled.jpg",
+]
+// Fallback basketball image
+const FALLBACK_IMG = "https://cdn.nba.com/manage/2023/10/GettyImages-1745823252-scaled.jpg"
 
 export default function PredictionsPage() {
   const [filter, setFilter] = useState("all")
@@ -75,7 +80,7 @@ export default function PredictionsPage() {
       <section style={{ position: "relative", height: "420px", display: "flex", alignItems: "flex-end", overflow: "hidden", background: "#0a0a0a" }}>
         <div style={{ position: "absolute", inset: 0 }}>
           <img
-            src="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1600&q=80"
+            src="https://cdn.nba.com/manage/2024/01/GettyImages-1930453399-scaled.jpg"
             alt="Basketball court"
             style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.35, filter: "grayscale(80%) contrast(1.2)" }}
           />
@@ -129,7 +134,8 @@ export default function PredictionsPage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "1.5rem" }}>
             {filtered.map((a: any) => {
               const b = BADGES[a.article_type] ?? BADGES.prediction
-              const img = CARD_IMAGES[a.article_type] ?? CARD_IMAGES.prediction
+              const imgIdx = filtered.indexOf(a) % CARD_IMAGES.length
+              const img = CARD_IMAGES[imgIdx] ?? FALLBACK_IMG
               return (
                 <article key={a.slug} style={{ background: S.surface, overflow: "hidden", borderLeft: `1px solid ${S.border}`, transition: "transform 0.2s" }}
                   onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
