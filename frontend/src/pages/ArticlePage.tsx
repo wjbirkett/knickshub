@@ -20,6 +20,29 @@ export const TYPE_CONFIG: Record<string, { bg: string; color: string; label: str
   history:    { bg: "#4a1d96", color: "#d8b4fe", label: "HISTORY" },
 }
 
+const PLAYER_IMAGES: Record<string, string> = {
+  "Jalen Brunson":       "/players/jalen.png",
+  "Karl-Anthony Towns":  "/players/KAT.png",
+  "Mikal Bridges":       "/players/mikal.png",
+  "OG Anunoby":          "/players/OG.png",
+  "Josh Hart":           "/players/josh.png",
+  "Miles McBride":       "/players/miles.png",
+  "Mitchell Robinson":   "/players/mitchell.png",
+  "Jordan Clarkson":     "/players/jordan.png",
+  "Jose Alvarado":       "/players/jose.png",
+  "Landry Shamet":       "/players/landry.png",
+  "Jeremy Sochan":       "/players/jeremy.png",
+  "Tyler Kolek":         "/players/tyler.png",
+  "Mohamed Diawara":     "/players/mohamed.png",
+  "Pacome Dadiet":       "/players/pacome.png",
+  "Ariel Hukporti":      "/players/ariel.png",
+}
+const getPlayerImage = (name: string): string | null => {
+  if (!name) return null
+  const key = Object.keys(PLAYER_IMAGES).find(k => name.toLowerCase().includes(k.toLowerCase().split(" ")[1]))
+  return key ? PLAYER_IMAGES[key] : null
+}
+
 const HERO_IMAGES = [
   "https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=1600https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1600&q=80q=80",
   "https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=1600https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=1600&q=80q=80",
@@ -69,7 +92,8 @@ export default function ArticlePage() {
 
   const badge = TYPE_CONFIG[article.article_type] ?? TYPE_CONFIG.prediction
   const picks = article.key_picks
-  const heroImg = HERO_IMAGES[Math.abs(slug!.length % HERO_IMAGES.length)]
+  const playerImg = article.player ? getPlayerImage(article.player) : null
+  const heroImg = (article.article_type === "prop" && playerImg) ? playerImg : HERO_IMAGES[Math.abs(slug!.length % HERO_IMAGES.length)]
   const description = article.content?.replace(/[#*]/g, "").slice(0, 160) + "..."
 
   // Related articles (same game date or same type, excluding current)

@@ -13,6 +13,30 @@ const S = {
   text: "#e5e2e1", textMuted: "#ddc1b1",
 }
 
+
+const PLAYER_IMAGES: Record<string, string> = {
+  "Jalen Brunson":       "/players/jalen.png",
+  "Karl-Anthony Towns":  "/players/KAT.png",
+  "Mikal Bridges":       "/players/mikal.png",
+  "OG Anunoby":          "/players/OG.png",
+  "Josh Hart":           "/players/josh.png",
+  "Miles McBride":       "/players/miles.png",
+  "Mitchell Robinson":   "/players/mitchell.png",
+  "Jordan Clarkson":     "/players/jordan.png",
+  "Jose Alvarado":       "/players/jose.png",
+  "Landry Shamet":       "/players/landry.png",
+  "Jeremy Sochan":       "/players/jeremy.png",
+  "Tyler Kolek":         "/players/tyler.png",
+  "Mohamed Diawara":     "/players/mohamed.png",
+  "Pacome Dadiet":       "/players/pacome.png",
+  "Ariel Hukporti":      "/players/ariel.png",
+}
+const getPlayerImage = (name: string): string | null => {
+  if (!name) return null
+  const key = Object.keys(PLAYER_IMAGES).find(k => name.toLowerCase().includes(k.toLowerCase().split(" ")[1]))
+  return key ? PLAYER_IMAGES[key] : null
+}
+
 const BADGES: Record<string, { bg: string; color: string; label: string }> = {
   prediction: { bg: S.blueBg,  color: "#dbe9ff", label: "PREDICTION" },
   best_bet:   { bg: S.greenBg, color: "#00431a", label: "BEST BET" },
@@ -133,7 +157,8 @@ export default function PredictionsPage() {
             {filtered.map((a: any) => {
               const b = BADGES[a.article_type] ?? BADGES.prediction
               const imgIdx = filtered.indexOf(a) % CARD_IMAGES.length
-              const img = CARD_IMAGES[imgIdx] ?? FALLBACK_IMG
+              const playerImg = a.article_type === "prop" && a.player ? getPlayerImage(a.player) : null
+              const img = playerImg ?? CARD_IMAGES[imgIdx] ?? FALLBACK_IMG
               return (
                 <article key={a.slug} style={{ background: S.surface, overflow: "hidden", borderLeft: `1px solid ${S.border}`, transition: "transform 0.2s" }}
                   onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
