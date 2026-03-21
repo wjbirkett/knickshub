@@ -1,154 +1,107 @@
 import { useQuery } from "@tanstack/react-query"
-import { getBetting, getSchedule } from "../utils/api"
-import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
+import { Helmet } from "react-helmet-async"
+import { getArticles, getResults } from "../utils/api"
+
+const S = {
+  bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
+  surfaceHighest: "#353534", border: "rgba(255,255,255,0.08)",
+  orange: "#F58426", peach: "#ffb786", green: "#4ae176",
+  greenBg: "#06bb55", red: "#ffb4ab", redBg: "#93000a",
+  text: "#e5e2e1", textMuted: "#ddc1b1",
+}
 
 export default function BettingPage() {
-  const { data: lines, isLoading: lLoading } = useQuery({ queryKey: ["betting"], queryFn: getBetting })
-  const { data: games } = useQuery({ queryKey: ["schedule"], queryFn: getSchedule })
+  const { data: articles } = useQuery({ queryKey: ["articles", 50], queryFn: () => getArticles(50) })
+  const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults })
 
-  const H1 = { fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426" }
-  const H2 = { fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }
+  const bestBets = (articles as any[])?.filter((a: any) => a.article_type === "best_bet").slice(0, 10) ?? []
+  const preds = (resultsData as any)?.predictions ?? []
+  const props = (resultsData as any)?.props ?? []
 
-  const today = new Date().toISOString().slice(0, 10)
-  const nextGame = (games ?? []).find((g: any) => g.game_date >= today && g.status !== "Final")
+  const atsHits = preds.filter((r: any) => r.spread_result === "HIT").length
+  const atsTotal = preds.filter((r: any) => r.spread_result).length
+  const propHits = props.filter((r: any) => r.result === "HIT").length
+  const ouHits = preds.filter((r: any) => r.total_result === "HIT").length
+  const ouTotal = preds.filter((r: any) => r.total_result).length
 
-  const hasLines = lines && lines.length > 0
-
-  return (
-    <div style={{ maxWidth: "900px" }}>
-      <header style={{ borderBottom: "1px solid #1f2937", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
-        <h1 style={H1}>BETTING LINES</h1>
-        <p style={{ color: "#6b7280", margin: 0, fontSize: "0.875rem" }}>Knicks upcoming games — via The Odds API</p>
-      </header>
-
-      {/* Next game card */}
-      {nextGame && (
-        <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.5rem", marginBottom: "1.5rem" }}>
-          <h2 style={H2}>NEXT GAME</h2>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
-            <div>
-              <p style={{ color: "#f9fafb", fontSize: "1.2rem", fontWeight: 700, margin: "0 0 0.25rem" }}>
-                <span style={{ color: nextGame.away_team.includes("Knicks") ? "#F58426" : "#e5e7eb" }}>{nextGame.away_team}</span>
-                <span style={{ color: "#4b5563", margin: "0 0.5rem" }}>@</span>
-                <span style={{ color: nextGame.home_team.includes("Knicks") ? "#F58426" : "#e5e7eb" }}>{nextGame.home_team}</span>
-              </p>
-              <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: 0 }}>
-                {new Date(nextGame.game_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-              </p>
-            </div>
-            <Countdown gameDate={nextGame.game_date} />
-          </div>
-        </div>
-      )}
-
-      {/* Lines */}
-      {lLoading && (
-        <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "2rem", textAlign: "center" }}>
-          <p style={{ color: "#6b7280" }}>Loading lines...</p>
-        </div>
-      )}
-
-      {!lLoading && hasLines && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {lines.map((game: any) => <GameOddsCard key={game.id} game={game} />)}
-        </div>
-      )}
-
-      {!lLoading && !hasLines && (
-        <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "2.5rem", textAlign: "center" }}>
-          <p style={{ fontSize: "2rem", margin: "0 0 0.5rem" }}>🏀</p>
-          <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "1rem", margin: "0 0 0.25rem" }}>No lines posted yet</p>
-          <p style={{ color: "#4b5563", fontSize: "0.85rem", margin: 0 }}>Sportsbooks typically post lines 24–48 hours before tip-off</p>
-        </div>
-      )}
-
-      {/* Disclaimer */}
-      <p style={{ color: "#374151", fontSize: "0.7rem", marginTop: "1.5rem", textAlign: "center" }}>
-        Odds for informational purposes only. Please gamble responsibly. 21+
-      </p>
-    </div>
-  )
-}
-
-function Countdown({ gameDate }: { gameDate: string }) {
-  const target = new Date(gameDate + "T19:30:00").getTime()
-  const [diff, setDiff] = useState(target - Date.now())
-
-  useEffect(() => {
-    const t = setInterval(() => setDiff(target - Date.now()), 1000)
-    return () => clearInterval(t)
-  }, [target])
-
-  if (diff <= 0) return <span style={{ color: "#4ade80", fontWeight: 700 }}>GAME TIME</span>
-
-  const h = Math.floor(diff / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  const s = Math.floor((diff % 60000) / 1000)
-  const d = Math.floor(h / 24)
+  const fmt = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  const opp = (a: any) => a?.home_team?.includes("Knicks") ? a.away_team : a.home_team
 
   return (
-    <div style={{ display: "flex", gap: "0.75rem" }}>
-      {d > 0 && <TimeBlock value={d} label="DAYS" />}
-      <TimeBlock value={d > 0 ? h % 24 : h} label="HRS" />
-      <TimeBlock value={m} label="MIN" />
-      <TimeBlock value={s} label="SEC" />
-    </div>
-  )
-}
+    <div style={{ background: S.bg, minHeight: "100vh" }}>
+      <Helmet>
+        <title>Knicks Betting Trends & Best Bets | KnicksHub</title>
+        <meta name="description" content="Knicks betting trends, best bets archive, and AI pick performance." />
+      </Helmet>
 
-function TimeBlock({ value, label }: { value: number; label: string }) {
-  return (
-    <div style={{ background: "#0d0d0d", borderRadius: "0.5rem", padding: "0.5rem 0.75rem", textAlign: "center", minWidth: "52px" }}>
-      <p style={{ color: "#F58426", fontSize: "1.4rem", fontWeight: 700, margin: 0, fontVariantNumeric: "tabular-nums" }}>
-        {String(value).padStart(2, "0")}
-      </p>
-      <p style={{ color: "#4b5563", fontSize: "0.6rem", letterSpacing: "0.1em", margin: 0 }}>{label}</p>
-    </div>
-  )
-}
+      <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "2rem 2.5rem" }}>
+        <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 5vw, 3.5rem)", textTransform: "uppercase", letterSpacing: "-0.03em", color: S.text, margin: "0 0 0.5rem", fontStyle: "italic" }}>
+          Betting <span style={{ color: S.peach }}>Trends</span>
+        </h1>
+        <p style={{ color: S.textMuted, fontSize: "0.875rem", margin: 0 }}>AI performance metrics and best bets archive</p>
+      </div>
 
-function GameOddsCard({ game }: { game: any }) {
-  const isKnicksAway = game.away_team.includes("Knicks") || game.away_team.includes("New York")
-
-  const knicksML = isKnicksAway ? game.moneyline_away : game.moneyline_home
-  const oppML = isKnicksAway ? game.moneyline_home : game.moneyline_away
-  const rawSpread = game.spread
-  const knicksSpread = rawSpread != null ? (isKnicksAway ? -rawSpread : rawSpread) : null
-
-  return (
-    <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-      <div style={{ marginBottom: "1rem" }}>
-        <p style={{ color: "#f9fafb", fontWeight: 700, fontSize: "1rem", margin: "0 0 0.2rem" }}>
-          {game.away_team} @ {game.home_team}
-        </p>
-        <p style={{ color: "#6b7280", fontSize: "0.8rem", margin: 0 }}>
-          {new Date(game.commence_time).toLocaleDateString("en-US", {
-            weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
+      <div style={{ padding: "2rem 2.5rem", maxWidth: "1200px" }}>
+        {/* Quick stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
+          {[
+            ["ATS", atsHits, atsTotal],
+            ["O/U", ouHits, ouTotal],
+            ["Props", propHits, props.length],
+          ].map(([label, h, t]) => {
+            const pct = (t as number) > 0 ? Math.round((h as number)/(t as number)*100) : 0
+            const col = pct >= 55 ? S.green : pct >= 45 ? S.peach : S.red
+            return (
+              <div key={label as string} style={{ background: S.surface, padding: "1.25rem", borderTop: `3px solid ${col}` }}>
+                <p style={{ fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, margin: "0 0 0.375rem", fontFamily: "Space Grotesk, sans-serif" }}>{label}</p>
+                <p style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.75rem", color: col, margin: "0 0 0.1rem" }}>{h as number}-{(t as number)-(h as number)}</p>
+                <p style={{ fontSize: "0.6875rem", color: S.textMuted, margin: 0 }}>{pct}%</p>
+              </div>
+            )
           })}
-          {game.bookmaker && <span style={{ color: "#374151" }}> · {game.bookmaker}</span>}
-        </p>
-      </div>
+          <Link to="/knicks-betting-record" style={{ background: S.surface, padding: "1.25rem", borderTop: `3px solid ${S.orange}`, textDecoration: "none", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <p style={{ fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, margin: "0 0 0.375rem", fontFamily: "Space Grotesk, sans-serif" }}>Full Record</p>
+            <p style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.875rem", color: S.orange, margin: 0, textTransform: "uppercase" }}>View All →</p>
+          </Link>
+        </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
-        <OddsBox label="KNICKS ML" value={knicksML != null ? formatOdds(knicksML) : "—"} sub={oppML != null ? `Opp: ${formatOdds(oppML)}` : ""} />
-        <OddsBox label="SPREAD" value={knicksSpread != null ? `${knicksSpread > 0 ? "+" : ""}${knicksSpread}` : "—"} sub="" />
-        <OddsBox label="O/U" value={game.over_under != null ? `O ${game.over_under}` : "—"} sub="" />
+        {/* Best Bets Archive */}
+        <section>
+          <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.25rem", textTransform: "uppercase", letterSpacing: "-0.01em", fontStyle: "italic", color: S.text, marginBottom: "1rem" }}>
+            Best Bets Archive
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {bestBets.map((a: any) => {
+              const result = preds.find((r: any) => r.game_date === a.game_date)
+              return (
+                <Link key={a.slug} to={`/predictions/${a.slug}`} style={{ textDecoration: "none" }}>
+                  <div style={{ background: S.surface, padding: "1rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", transition: "background 0.15s" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = S.surfaceHigh)}
+                    onMouseLeave={e => (e.currentTarget.style.background = S.surface)}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontSize: "0.625rem", color: S.textMuted, fontFamily: "Inter, sans-serif" }}>{fmt(a.game_date)} · vs {opp(a)}</span>
+                      <p style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", textTransform: "uppercase", color: S.text, margin: "0.2rem 0 0" }}>{a.key_picks?.spread_pick || a.title.slice(0, 50)}</p>
+                    </div>
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexShrink: 0 }}>
+                      {a.key_picks?.confidence && (
+                        <span style={{ fontSize: "0.5625rem", fontWeight: 900, color: a.key_picks.confidence === "High" ? S.green : S.textMuted, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>{a.key_picks.confidence}</span>
+                      )}
+                      {result?.spread_result && (
+                        <span style={{ background: result.spread_result === "HIT" ? S.greenBg : S.redBg, color: result.spread_result === "HIT" ? "#00431a" : "#ffdad6", padding: "0.2rem 0.5rem", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>
+                          {result.spread_result}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+            {bestBets.length === 0 && <p style={{ color: S.textMuted }}>No best bets yet.</p>}
+          </div>
+        </section>
       </div>
     </div>
   )
-}
-
-function OddsBox({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div style={{ background: "#0d0d0d", borderRadius: "0.5rem", padding: "0.75rem", textAlign: "center" }}>
-      <p style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 0.25rem" }}>{label}</p>
-      <p style={{ color: "#f9fafb", fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>{value}</p>
-      {sub && <p style={{ color: "#4b5563", fontSize: "0.75rem", margin: "0.2rem 0 0" }}>{sub}</p>}
-    </div>
-  )
-}
-
-function formatOdds(price: number): string {
-  if (!price) return "—"
-  return price > 0 ? `+${price}` : `${price}`
 }

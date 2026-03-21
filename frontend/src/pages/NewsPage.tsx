@@ -1,117 +1,80 @@
-import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { Helmet } from "react-helmet-async"
 import { getNews } from "../utils/api"
 
-const SOURCES = ["ALL", "ESPN", "NYPOST", "KNICKS", "NBA", "BLEACHER"]
-const SOURCE_LABELS: Record<string, string> = {
-  ALL: "All", ESPN: "ESPN", NYPOST: "NY Post", KNICKS: "Knicks.com", NBA: "NBA.com", BLEACHER: "Bleacher Report"
+const S = {
+  bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
+  border: "rgba(255,255,255,0.08)", orange: "#F58426", peach: "#ffb786",
+  text: "#e5e2e1", textMuted: "#ddc1b1",
 }
 
 export default function NewsPage() {
-  const [activeSource, setActiveSource] = useState("ALL")
-  const source = activeSource === "ALL" ? undefined : activeSource.toLowerCase()
+  const { data: news, isLoading } = useQuery({ queryKey: ["news"], queryFn: () => getNews(undefined) })
 
-  const { data: articles, isLoading } = useQuery({
-    queryKey: ["news", source],
-    queryFn: () => getNews(source),
-  })
-
-  const H1 = { fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426" }
+  const items = (news as any[]) ?? []
+  const featured = items.slice(0, 3)
+  const rest = items.slice(3)
 
   return (
-    <div style={{ maxWidth: "900px" }}>
-      <header style={{ borderBottom: "1px solid #1f2937", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
-        <h1 style={H1}>NEWS FEED</h1>
-      </header>
+    <div style={{ background: S.bg, minHeight: "100vh" }}>
+      <Helmet>
+        <title>Knicks News Feed | KnicksHub</title>
+        <meta name="description" content="Latest New York Knicks news, updates, and analysis." />
+      </Helmet>
 
-      {/* Source filter */}
-      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
-        {SOURCES.map(s => (
-          <button key={s} onClick={() => setActiveSource(s)} style={{
-            padding: "0.35rem 1rem", borderRadius: "999px", border: "1px solid",
-            fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em", cursor: "pointer",
-            background: activeSource === s ? "#F58426" : "transparent",
-            borderColor: activeSource === s ? "#F58426" : "#374151",
-            color: activeSource === s ? "#000" : "#9ca3af",
-          }}>
-            {SOURCE_LABELS[s]}
-          </button>
-        ))}
+      <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "2rem 2.5rem" }}>
+        <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 5vw, 3.5rem)", textTransform: "uppercase", letterSpacing: "-0.03em", color: S.text, margin: "0 0 0.5rem", fontStyle: "italic" }}>
+          Editorial <span style={{ color: S.peach }}>News Feed</span>
+        </h1>
+        <p style={{ color: S.textMuted, fontSize: "0.875rem", margin: 0 }}>The latest from around the Knicks universe</p>
       </div>
 
-      {isLoading && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {[1,2,3,4,5].map(i => (
-            <div key={i} style={{ background: "#111827", borderRadius: "0.75rem", height: "120px", opacity: 0.5 }} />
-          ))}
-        </div>
-      )}
+      <div style={{ padding: "2rem 2.5rem", maxWidth: "1200px" }}>
+        {isLoading ? <p style={{ color: S.textMuted }}>Loading...</p> : (
+          <>
+            {/* Featured 3 */}
+            {featured.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+                {featured.map((item: any, i: number) => (
+                  <a key={i} href={item.url || item.link || "#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
+                    <div style={{ background: S.surface, overflow: "hidden", transition: "transform 0.2s" }}
+                      onMouseEnter={e => (e.currentTarget.style.transform = "translateY(-2px)")}
+                      onMouseLeave={e => (e.currentTarget.style.transform = "translateY(0)")}>
+                      <div style={{ height: "180px", background: S.surfaceHigh, overflow: "hidden" }}>
+                        {item.image && <img src={item.image} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "grayscale(30%)" }} onError={e => ((e.target as HTMLImageElement).style.display = "none")} />}
+                      </div>
+                      <div style={{ padding: "1.25rem" }}>
+                        <span style={{ fontSize: "0.5625rem", fontWeight: 900, color: S.orange, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "0.5rem", fontFamily: "Space Grotesk, sans-serif" }}>{item.source || "ESPN"}</span>
+                        <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "1.0625rem", textTransform: "uppercase", lineHeight: 1.3, color: S.text, margin: "0 0 0.5rem" }}>{item.title}</h3>
+                        {item.description && <p style={{ fontSize: "0.8125rem", color: S.textMuted, lineHeight: 1.5, margin: 0, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.description}</p>}
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
 
-      {!isLoading && (!articles || articles.length === 0) && (
-        <p style={{ color: "#6b7280" }}>No articles found.</p>
-      )}
+            {/* Rest as list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+              {rest.map((item: any, i: number) => (
+                <a key={i} href={item.url || item.link || "#"} target="_blank" rel="noopener noreferrer"
+                  style={{ textDecoration: "none", display: "flex", gap: "1rem", padding: "0.875rem 1rem", transition: "background 0.15s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = S.surface)}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: "0.5625rem", fontWeight: 900, color: S.orange, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "0.25rem", fontFamily: "Space Grotesk, sans-serif" }}>{item.source || "ESPN"}</span>
+                    <h4 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", textTransform: "uppercase", lineHeight: 1.3, color: S.text, margin: 0 }}>{item.title}</h4>
+                  </div>
+                  <span className="material-symbols-outlined" style={{ color: S.textMuted, fontSize: "1.125rem", flexShrink: 0, alignSelf: "center" }}>north_east</span>
+                </a>
+              ))}
+            </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-        {(articles ?? []).map((article: any) => (
-          <ArticleCard key={article.id} article={article} />
-        ))}
+            {items.length === 0 && <p style={{ color: S.textMuted }}>No news available.</p>}
+          </>
+        )}
       </div>
     </div>
-  )
-}
-
-function ArticleCard({ article }: { article: any }) {
-  const sourceColors: Record<string, string> = {
-    espn: "#FF6B35", nypost: "#E4002B", knicks: "#006BB6",
-    nba: "#006BB6", bleacher: "#F5A623",
-  }
-  const color = sourceColors[article.source] ?? "#6b7280"
-  const sourceLabel: Record<string, string> = {
-    espn: "ESPN", nypost: "NY Post", knicks: "Knicks.com",
-    nba: "NBA.com", bleacher: "Bleacher Report",
-  }
-
-  const timeAgo = (iso: string) => {
-    if (!iso) return ""
-    const diff = (Date.now() - new Date(iso).getTime()) / 1000
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-  }
-
-  return (
-    <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-      <div style={{
-        display: "flex", gap: "1rem", alignItems: "flex-start",
-        padding: "1.25rem 0", borderBottom: "1px solid #1f2937",
-        transition: "background 0.15s",
-      }}
-        onMouseEnter={e => (e.currentTarget.style.background = "#0d1117")}
-        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-      >
-        {article.image_url && (
-          <img src={article.image_url} alt="" style={{
-            width: "120px", height: "80px", objectFit: "cover",
-            borderRadius: "0.5rem", flexShrink: 0, background: "#1f2937"
-          }} onError={e => { (e.target as HTMLImageElement).style.display = "none" }} />
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "1rem", margin: "0 0 0.35rem", lineHeight: 1.4 }}>
-            {article.title}
-          </p>
-          {article.summary && (
-            <p style={{ color: "#6b7280", fontSize: "0.82rem", margin: "0 0 0.5rem", lineHeight: 1.5,
-              overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>
-              {article.summary.replace(/<[^>]+>/g, "")}
-            </p>
-          )}
-          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", fontSize: "0.75rem" }}>
-            <span style={{ color, fontWeight: 700 }}>{sourceLabel[article.source] ?? article.source.toUpperCase()}</span>
-            {article.author && <span style={{ color: "#4b5563" }}>{article.author}</span>}
-            <span style={{ color: "#4b5563" }}>{timeAgo(article.published_at)}</span>
-          </div>
-        </div>
-      </div>
-    </a>
   )
 }
