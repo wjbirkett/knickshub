@@ -234,7 +234,7 @@ export default function Dashboard() {
       </div>
 
         {/* Left: Latest Predictions + News — col-start:1 row 2 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", gridColumn: "1", gridRow: "2", paddingTop: "1.5rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", gridColumn: "1", gridRow: "2", paddingTop: "0" }}>
 
           {/* Latest Predictions */}
           <section>
