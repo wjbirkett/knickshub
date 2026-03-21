@@ -83,11 +83,11 @@ export default function PlayerPropsPage() {
         <p style={{ color: S.textMuted, fontSize: "0.875rem", margin: 0 }}>AI-powered prop picks — tracked and graded after the final buzzer</p>
       </div>
 
-      <div style={{ padding: "2rem 2.5rem", maxWidth: "1100px" }}>
+      <div style={{ padding: "1rem 2.5rem", maxWidth: "1100px" }}>
 
         {/* Player Filter Cards */}
         {playerStats.length > 0 && (
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
             <button onClick={() => setSelectedPlayer("ALL")} style={{
               background: selectedPlayer === "ALL" ? S.orange : S.surface,
               color: selectedPlayer === "ALL" ? "#5c2b00" : S.textMuted,

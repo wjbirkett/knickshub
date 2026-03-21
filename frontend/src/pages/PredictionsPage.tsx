@@ -103,7 +103,7 @@ export default function PredictionsPage() {
       </Helmet>
 
       {/* Hero Header */}
-      <section style={{ position: "relative", height: "280px", display: "flex", alignItems: "flex-end", overflow: "hidden", background: "#0a0a0a" }}>
+      <section style={{ position: "relative", height: "200px", display: "flex", alignItems: "flex-end", overflow: "hidden", background: "#0a0a0a" }}>
         <div style={{ position: "absolute", inset: 0 }}>
           <img
             src="/players/msg-exterior.jpg"
@@ -151,7 +151,7 @@ export default function PredictionsPage() {
       </div>
 
       {/* Article Grid */}
-      <section style={{ padding: "2.5rem 3rem" }}>
+      <section style={{ padding: "1.5rem 3rem" }}>
         {isLoading ? (
           <p style={{ color: S.textMuted }}>Loading...</p>
         ) : filtered.length === 0 ? (
