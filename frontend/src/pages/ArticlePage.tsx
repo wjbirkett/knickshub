@@ -13,7 +13,7 @@ const S = {
   text: "#e5e2e1", textMuted: "#ddc1b1",
 }
 
-const TYPE_CONFIG: Record<string, { bg: string; color: string; label: string }> = {
+export const TYPE_CONFIG: Record<string, { bg: string; color: string; label: string }> = {
   prediction: { bg: S.blueBg,  color: "#dbe9ff", label: "PREDICTION" },
   best_bet:   { bg: S.greenBg, color: "#00431a", label: "BEST BET" },
   prop:       { bg: S.redBg,   color: "#ffdad6", label: "PROP BET" },
