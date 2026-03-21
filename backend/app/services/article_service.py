@@ -1070,6 +1070,10 @@ Guidelines:
 - Be specific with stats — mention exact numbers from the data provided
 - Always highlight how opponent injuries affect the spread and total
 - Target keywords naturally: Knicks prediction, Knicks odds, {away_team} vs {home_team} prediction
+- ANTI-REPETITION: Each section must make a different point. Never repeat the same injury or stat in multiple sections.
+- VARIED OPENERS: Do NOT start the intro with injury news. Lead with the sharpest betting angle, a streak, or a matchup edge instead.
+- SPECIFIC NUMBERS: Every analytical claim must include an actual number (e.g. "covering 7 of their last 10" not "covering recently").
+- SHARP ANGLE FIRST: The intro sentence must be the single most compelling reason to bet this game. Make it specific, not generic.
 
 Remember: At the very end, include your picks in the JSON format specified in the system prompt."""
 
@@ -1199,6 +1203,10 @@ Guidelines:
 - Analyze defensive matchups, pace, and usage rate
 - Include "bet responsibly" naturally
 - Target keywords: {player} {prop_config['description']} prop, {player} {prop_config['description']} tonight, {player} prediction
+- VARIED OPENERS: Do NOT start with "With [player] OUT...". Lead with the player's matchup edge or recent form instead.
+- SPECIFIC STATS: Include the player's last 5-game average for this prop type, not just season average.
+- MATCHUP FOCUS: Identify the specific defender/scheme the player faces and why it's favorable or unfavorable.
+- NO COPY-PASTE INJURY INTROS: Each prop article must have a unique opening angle specific to that player.
 
 Remember: At the very end, include your picks in the JSON format specified in the system prompt."""
 
@@ -1365,6 +1373,9 @@ Guidelines:
 - Explain WHY the number is off, not just that you like the team
 - Include "bet responsibly" naturally
 - Target keywords: Knicks best bet tonight, Knicks spread pick, {away_team} vs {home_team} pick
+- ANTI-REPETITION: Do NOT repeat the same points made in the prediction article. Find a new angle.
+- SHARP OPENER: Lead with the market inefficiency or line value, not the team matchup summary.
+- NO GENERIC BULLETS: Each "Why This Bet Wins" bullet must include a specific stat or number.
 
 Remember: At the very end, include your picks in the JSON format specified in the system prompt."""
 
