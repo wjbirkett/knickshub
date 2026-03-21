@@ -150,11 +150,15 @@ def generate_article(force: bool = False):
             await save_article(article)
             logger.info(f"Cron: prediction article generated for {slug}")
 
-            # Best bet
+            # Best bet — force total lean to match prediction article
+            pred_picks = article.get("key_picks") or {}
+            forced_total_lean = pred_picks.get("total_lean") if isinstance(pred_picks, dict) else None
+            forced_total_pick = pred_picks.get("total_pick") if isinstance(pred_picks, dict) else None
             best_bet = await generate_best_bet(
                 home_team=next_game["home_team"], away_team=next_game["away_team"],
                 game_date=game_date_str, spread=spread, moneyline=moneyline, over_under=over_under,
                 injuries=injuries, top_stats=top_stats,
+                forced_total_lean=forced_total_lean, forced_total_pick=forced_total_pick,
             )
             await save_article(best_bet)
             logger.info("Cron: best bet article generated")
@@ -237,12 +241,16 @@ def generate_history_article():
 
 
 def resolve_results():
-    from app.services.results_service import resolve_yesterday
-    try:
-        result = resolve_yesterday()
-        logger.info(f"Results resolved: {result}")
-    except Exception as e:
-        logger.error(f"Results resolution failed: {e}")
+    from app.services.results_service import resolve_game_predictions
+    from datetime import date, timedelta
+    async def _resolve():
+        try:
+            yesterday = str(date.today() - timedelta(days=1))
+            result = await resolve_game_predictions(yesterday)
+            logger.info(f"Results resolved for {yesterday}: {result}")
+        except Exception as e:
+            logger.error(f"Results resolution failed: {e}")
+    _run_async(_resolve())
 
 def start_scheduler():
     _scheduler.add_job(refresh_news,             CronTrigger(minute="*/15"))
