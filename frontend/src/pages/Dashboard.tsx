@@ -71,7 +71,7 @@ export default function Dashboard() {
   const fmt = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
 
   return (
-    <>
+    <div className="main-content">
       <Helmet>
         <title>KnicksHub — Knicks Predictions, Best Bets & Player Props</title>
         <meta name="description" content="AI-powered New York Knicks betting predictions, best bets, spread picks, and player props." />
@@ -353,6 +353,6 @@ export default function Dashboard() {
           </div>
         </div>
       </footer>
-    </>
+    </div>
   )
 }

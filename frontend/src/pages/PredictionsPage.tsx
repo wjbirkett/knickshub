@@ -95,7 +95,7 @@ export default function PredictionsPage() {
   }
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks Predictions Hub — AI Picks & Best Bets | KnicksHub</title>
         <meta name="description" content="All New York Knicks AI predictions, best bets, spread picks, and player props in one place. Filter by type and browse the full archive." />

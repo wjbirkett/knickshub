@@ -109,7 +109,7 @@ export default function ArticlePage() {
   const opp = article.home_team?.includes("Knicks") ? article.away_team : article.home_team
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>{article.title} | KnicksHub</title>
         <meta name="description" content={description} />

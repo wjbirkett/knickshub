@@ -67,7 +67,7 @@ export default function PlayerPropsPage() {
   const getResult = (slug: string) => propResults.find(r => r.slug === slug)
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks Player Props — AI Picks & Analysis | KnicksHub</title>
         <meta name="description" content="New York Knicks player prop predictions for Jalen Brunson, Karl-Anthony Towns, OG Anunoby and more." />
@@ -110,6 +110,7 @@ export default function PlayerPropsPage() {
                   <div style={{ textAlign: "left" }}>
                     <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.6875rem", color: S.text, textTransform: "uppercase" }}>{player.split(" ")[1]}</span>
                     <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.8125rem", color: col }}>{hits}-{total-hits}</span>
+                    {pct !== null && <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.5625rem", color: col, opacity: 0.8 }}>{pct}%</span>}
                   </div>
                 </button>
               )
