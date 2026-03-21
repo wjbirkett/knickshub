@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Helmet } from "react-helmet-async"
 import { getInjuries } from "../utils/api"
@@ -39,13 +40,15 @@ export default function InjuriesPage() {
   const knicks = (injuries as any[])?.filter((i: any) => i.team === "New York Knicks" || i.is_knicks) ?? []
   const others = (injuries as any[])?.filter((i: any) => i.team !== "New York Knicks" && !i.is_knicks) ?? []
 
+  const [leagueFilter, setLeagueFilter] = useState("ALL")
+  const filteredOthers = leagueFilter === "ALL" ? others : others.filter((i: any) => i.status?.toLowerCase().includes(leagueFilter.toLowerCase()))
   const getImg = (name: string) => {
     const key = Object.keys(PLAYER_IMAGES).find(k => name?.toLowerCase().includes(k.toLowerCase().split(" ")[1]))
     return key ? PLAYER_IMAGES[key] : null
   }
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks Injury Report | KnicksHub</title>
         <meta name="description" content="Latest New York Knicks injury report and NBA injury updates." />
@@ -94,12 +97,19 @@ export default function InjuriesPage() {
 
             {/* League-wide */}
             <section>
-              <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.125rem", textTransform: "uppercase", letterSpacing: "0.05em", color: S.textMuted, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>sports_basketball</span>
-                Around the League
-              </h2>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.125rem", textTransform: "uppercase", letterSpacing: "0.05em", color: S.textMuted, display: "flex", alignItems: "center", gap: "0.5rem", margin: 0 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>sports_basketball</span>
+                  Around the League
+                </h2>
+                <div style={{ display: "flex", gap: "0.375rem" }}>
+                  {["ALL", "Out", "GTD", "Probable"].map(f => (
+                    <button key={f} onClick={() => setLeagueFilter(f)} style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.5625rem", textTransform: "uppercase", letterSpacing: "0.1em", padding: "0.25rem 0.625rem", background: leagueFilter === f ? S.orange : S.surfaceHigh, color: leagueFilter === f ? "#5c2b00" : S.textMuted, border: "none", cursor: "pointer" }}>{f}</button>
+                  ))}
+                </div>
+              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "600px", overflowY: "auto" }}>
-                {others.length > 0 ? others.slice(0, 30).map((inj: any, i: number) => {
+                {filteredOthers.length > 0 ? filteredOthers.slice(0, 50).map((inj: any, i: number) => {
                   const st = STATUS_STYLE(inj.status)
                   return (
                     <div key={i} style={{ background: S.surface, padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
