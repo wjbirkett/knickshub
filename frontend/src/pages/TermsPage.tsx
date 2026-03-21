@@ -7,7 +7,7 @@ const S = {
 
 export default function TermsPage() {
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet><title>Terms of Service | KnicksHub</title></Helmet>
       <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "2rem 2.5rem" }}>
         <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 5vw, 3rem)", textTransform: "uppercase", letterSpacing: "-0.03em", color: S.text, margin: 0, fontStyle: "italic" }}>Terms of <span style={{ color: S.peach }}>Service</span></h1>

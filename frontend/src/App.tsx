@@ -25,7 +25,6 @@ export default function App() {
       <BrowserRouter>
         <style>{`
           .knicks-main {
-            margin-left: 16rem;
             padding: 1.5rem;
             padding-bottom: 0;
             flex: 1;
@@ -36,7 +35,6 @@ export default function App() {
           .knicks-content { }
           @media (max-width: 767px) {
             .knicks-main {
-              margin-left: 0;
               padding: 1rem;
               padding-top: 4rem;
               padding-bottom: 0;

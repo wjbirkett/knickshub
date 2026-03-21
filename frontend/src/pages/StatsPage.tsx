@@ -27,7 +27,7 @@ export default function StatsPage() {
   const east = teams.filter((t: any) => t.conference === "East" || t.conferenceRank).slice(0, 15)
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks Stats & Standings | KnicksHub</title>
         <meta name="description" content="New York Knicks stats, standings, and player performance data." />

@@ -65,7 +65,7 @@ export default function GameHubPage() {
   }
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks vs {opponent} Game Hub | KnicksHub</title>
         <meta name="description" content={`Knicks vs ${opponent} predictions, best bets, and player props — ${dateStr}`} />

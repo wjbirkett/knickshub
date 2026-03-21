@@ -9,7 +9,7 @@ const S = {
 
 export default function AboutPage() {
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>About KnicksHub | AI-Powered Knicks Betting Analysis</title>
         <meta name="description" content="KnicksHub is an AI-powered New York Knicks betting analysis platform built by a fan, for fans." />

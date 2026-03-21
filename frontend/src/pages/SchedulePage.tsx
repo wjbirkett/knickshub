@@ -23,7 +23,7 @@ export default function SchedulePage() {
   const oScore = (g: any) => g.home_team?.includes("Knicks") ? g.away_score : g.home_score
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks Schedule 2025-26 | KnicksHub</title>
         <meta name="description" content="New York Knicks 2025-26 season schedule, results, and upcoming games." />

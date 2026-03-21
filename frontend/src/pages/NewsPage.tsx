@@ -16,7 +16,7 @@ export default function NewsPage() {
   const rest = items.slice(3)
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks News Feed | KnicksHub</title>
         <meta name="description" content="Latest New York Knicks news, updates, and analysis." />

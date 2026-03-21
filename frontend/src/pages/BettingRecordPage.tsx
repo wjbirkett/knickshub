@@ -31,7 +31,7 @@ export default function BettingRecordPage() {
   const fmt = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks AI Betting Record | KnicksHub</title>
         <meta name="description" content="Track KnicksHub AI betting record — ATS, Over/Under, and player prop results." />

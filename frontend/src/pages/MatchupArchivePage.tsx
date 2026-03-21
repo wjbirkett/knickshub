@@ -31,7 +31,7 @@ export default function MatchupArchivePage() {
   }
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks vs {oppName} Archive | KnicksHub</title>
         <meta name="description" content={`All KnicksHub predictions and results for Knicks vs ${oppName}`} />

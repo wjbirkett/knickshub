@@ -29,7 +29,7 @@ export default function BettingPage() {
   const opp = (a: any) => a?.home_team?.includes("Knicks") ? a.away_team : a.home_team
 
   return (
-    <div style={{ background: S.bg, minHeight: "100vh" }}>
+    <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks Betting Trends & Best Bets | KnicksHub</title>
         <meta name="description" content="Knicks betting trends, best bets archive, and AI pick performance." />
