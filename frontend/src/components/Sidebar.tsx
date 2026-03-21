@@ -40,7 +40,7 @@ export default function Sidebar() {
             .lg-sidebar { display: flex !important; }
             .mobile-header { display: none !important; }
             .mobile-bottom-nav { display: none !important; }
-            .main-content { margin-left: 16rem; padding-top: 0; padding-bottom: 0; }
+            .main-content { margin-left: 16rem; padding-top: 0 !important; padding-bottom: 0; }
           }
           @media (max-width: 1023px) {
             .main-content { margin-left: 0; padding-top: 4rem; padding-bottom: 4rem; }
