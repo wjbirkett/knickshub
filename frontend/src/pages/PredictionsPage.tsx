@@ -29,17 +29,15 @@ const FILTERS = [
 ]
 
 // NBA stock images for cards by type
-// Use a single reliable basketball image per type, rotated by article index
 const CARD_IMAGES: string[] = [
-  "https://cdn.nba.com/manage/2023/10/GettyImages-1745823252-scaled.jpg",
-  "https://cdn.nba.com/manage/2024/01/GettyImages-1930453399-scaled.jpg",
-  "https://cdn.nba.com/manage/2023/11/GettyImages-1759990386-scaled.jpg",
-  "https://cdn.nba.com/manage/2024/02/GettyImages-2029090053-scaled.jpg",
-  "https://cdn.nba.com/manage/2024/01/GettyImages-1999547619-scaled.jpg",
-  "https://cdn.nba.com/manage/2024/03/GettyImages-2126041548-scaled.jpg",
+  "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&q=80",
+  "https://images.unsplash.com/photo-1519861531473-9200262188bf?w=600&q=80",
+  "https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=600&q=80",
+  "https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=600&q=80",
+  "https://images.unsplash.com/photo-1595429035839-c99c298ffdde?w=600&q=80",
+  "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=600&q=80",
 ]
-// Fallback basketball image
-const FALLBACK_IMG = "https://cdn.nba.com/manage/2023/10/GettyImages-1745823252-scaled.jpg"
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&q=80"
 
 export default function PredictionsPage() {
   const [filter, setFilter] = useState("all")
@@ -80,7 +78,7 @@ export default function PredictionsPage() {
       <section style={{ position: "relative", height: "420px", display: "flex", alignItems: "flex-end", overflow: "hidden", background: "#0a0a0a" }}>
         <div style={{ position: "absolute", inset: 0 }}>
           <img
-            src="https://cdn.nba.com/manage/2024/01/GettyImages-1930453399-scaled.jpg"
+            src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=1600&q=80"
             alt="Basketball court"
             style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.35, filter: "grayscale(80%) contrast(1.2)" }}
           />
@@ -146,14 +144,14 @@ export default function PredictionsPage() {
                       onMouseEnter={e => ((e.target as HTMLImageElement).style.filter = "grayscale(0%)")}
                       onMouseLeave={e => ((e.target as HTMLImageElement).style.filter = "grayscale(100%)")}
                     />
-                    <div style={{ position: "absolute", top: "1rem", left: "1rem" }}>
-                      <span style={{ background: b.bg, color: b.color, padding: "0.25rem 0.625rem", fontSize: "0.625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "Space Grotesk, sans-serif" }}>
-                        {b.label}
-                      </span>
-                    </div>
                   </div>
                   {/* Card Body */}
                   <div style={{ padding: "1.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                      <span style={{ background: b.bg, color: b.color, padding: "0.2rem 0.5rem", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "Space Grotesk, sans-serif" }}>
+                        {b.label}
+                      </span>
+                    </div>
                     <p style={{ fontSize: "0.625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "0.5rem", fontFamily: "Space Grotesk, sans-serif" }}>
                       {fmt(a.game_date)}
                     </p>
