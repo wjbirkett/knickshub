@@ -43,7 +43,7 @@ export default function Sidebar() {
             .main-content { margin-left: 16rem; padding-top: 0 !important; padding-bottom: 0; }
           }
           @media (max-width: 1023px) {
-            .main-content { margin-left: 0; padding-top: 4rem; padding-bottom: 4rem; }
+            .main-content { margin-left: 0; padding-top: 4rem; padding-bottom: 4rem; } .main-content > * { padding-top: 0 !important; }
           }
           .nav-item { transition: background 0.15s, color 0.15s; }
           .nav-item:hover { background: rgba(255,255,255,0.05) !important; color: #FFB786 !important; opacity: 1 !important; }
