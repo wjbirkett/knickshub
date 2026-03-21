@@ -2,17 +2,58 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
+  safelist: [
+    // All design token bg classes
+    { pattern: /^bg-(surface|background|primary|secondary|tertiary|error|outline|inverse)/ },
+    { pattern: /^bg-(on-)?(surface|background|primary|secondary|tertiary|error)/ },
+    { pattern: /^bg-surface-container/ },
+    { pattern: /^text-(on-)?(surface|background|primary|secondary|tertiary|error)/ },
+    { pattern: /^text-surface/ },
+    { pattern: /^border-(surface|primary|secondary|tertiary|outline|white)/ },
+    { pattern: /^from-(primary|secondary|surface)/ },
+    { pattern: /^to-(primary|secondary|surface)/ },
+    // Specific classes used in components
+    'bg-surface-container-high',
+    'bg-surface-container-low',
+    'bg-surface-container-highest',
+    'bg-surface-container-lowest',
+    'bg-surface-container',
+    'bg-background',
+    'bg-surface',
+    'bg-primary',
+    'bg-primary-container',
+    'bg-secondary-container',
+    'bg-tertiary-container',
+    'bg-error-container',
+    'text-on-surface',
+    'text-on-surface-variant',
+    'text-on-background',
+    'text-on-primary',
+    'text-on-primary-container',
+    'text-on-secondary-container',
+    'text-on-tertiary-container',
+    'text-on-tertiary',
+    'text-on-error-container',
+    'text-primary',
+    'text-secondary',
+    'text-tertiary',
+    'text-error',
+    'border-primary',
+    'border-tertiary',
+    'border-outline-variant',
+    'from-primary-container',
+    'to-primary',
+    'from-surface-container-low',
+  ],
   theme: {
     extend: {
       colors: {
-        // Legacy knicks colors kept for backward compat
         knicks: {
           blue:   '#006BB6',
           orange: '#F58426',
           silver: '#BEC0C2',
           dark:   '#0A0A0A',
         },
-        // New design system
         'inverse-surface': '#e5e2e1',
         'outline-variant': '#564336',
         'outline': '#a58c7d',
@@ -65,7 +106,6 @@ export default {
         headline: ['Space Grotesk', 'sans-serif'],
         body: ['Inter', 'sans-serif'],
         label: ['Inter', 'sans-serif'],
-        // Legacy
         display: ['Bebas Neue', 'sans-serif'],
       },
       borderRadius: {
