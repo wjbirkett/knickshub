@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom"
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Helmet } from "react-helmet-async"
 import { getArticle, getArticles, getResults } from "../utils/api"
@@ -56,6 +57,22 @@ function decodeContent(text: string): string {
     .replace(/â€"/g, "—").replace(/â€™/g, "'").replace(/â€œ/g, '"')
     .replace(/â€/g, '"').replace(/â€˜/g, "'").replace(/â€¦/g, "…")
     .replace(/Â·/g, "·").replace(/Ã©/g, "é")
+}
+
+function ShareButtons({ title }: { title: string }) {
+  const [copied, setCopied] = useState(false)
+  const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(window.location.href)}&via=pantyraidaa`
+  const copyLink = () => { navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000) }
+  return (
+    <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+      <a href={tweetUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(255,255,255,0.1)", color: "#e5e2e1", padding: "0.5rem 1rem", fontFamily: "Space Grotesk, sans-serif", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", borderRadius: "0.25rem", textDecoration: "none" }}>
+        <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>share</span> Post on X
+      </a>
+      <button onClick={copyLink} style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: copied ? "rgba(0,200,100,0.2)" : "rgba(255,255,255,0.1)", color: copied ? "#00c864" : "#e5e2e1", padding: "0.5rem 1rem", fontFamily: "Space Grotesk, sans-serif", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: "none", cursor: "pointer", borderRadius: "0.25rem", transition: "all 0.2s" }}>
+        <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>{copied ? "check" : "link"}</span> {copied ? "Copied!" : "Copy Link"}
+      </button>
+    </div>
+  )
 }
 
 export default function ArticlePage() {
@@ -169,22 +186,7 @@ export default function ArticlePage() {
             {article.title.replace(/\s*\([\d-]+\)\s*$/, "")}
           </h1>
 
-          {(() => {
-            const [copied, setCopied] = React.useState(false);
-            const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(window.location.href)}&via=pantyraidaa`;
-            const copyLink = () => { navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-            return (
-              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                <a href={tweetUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(255,255,255,0.1)", color: S.text, padding: "0.5rem 1rem", fontFamily: "Space Grotesk, sans-serif", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: "none", cursor: "pointer", borderRadius: "0.25rem", textDecoration: "none" }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>share</span> Post on X
-                </a>
-                <button style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: copied ? "rgba(0,200,100,0.2)" : "rgba(255,255,255,0.1)", color: copied ? "#00c864" : S.text, padding: "0.5rem 1rem", fontFamily: "Space Grotesk, sans-serif", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: "none", cursor: "pointer", borderRadius: "0.25rem", transition: "all 0.2s" }}
-                  onClick={copyLink}>
-                  <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>{copied ? "check" : "link"}</span> {copied ? "Copied!" : "Copy Link"}
-                </button>
-              </div>
-            );
-          })()}
+<ShareButtons title={article.title} />
         </div>
       </section>
 
