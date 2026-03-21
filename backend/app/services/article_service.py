@@ -1305,6 +1305,8 @@ async def generate_best_bet(
     over_under: str = "N/A",
     injuries: Optional[List[Dict]] = None,
     top_stats: Optional[List[Dict]] = None,
+    forced_total_lean: Optional[str] = None,
+    forced_total_pick: Optional[str] = None,
 ) -> Dict:
     """Generate a sharp best bet article."""
     ctx = await build_game_context(home_team, away_team, injuries, top_stats, over_under)
@@ -1342,6 +1344,8 @@ Knicks vs {ctx['opponent']} H2H This Season:
 
 Top Knicks Players:
 {ctx['stats_text']}
+
+{f"CRITICAL CONSISTENCY RULE: The prediction article already picked {forced_total_pick} ({forced_total_lean}). You MUST use the same total lean in this article. Do NOT pick the opposite side of the total." if forced_total_lean else ""}
 
 Write the article in this exact structure:
 1. Sharp intro (1-2 sentences — what's the best bet and why — lead with the strongest angle)

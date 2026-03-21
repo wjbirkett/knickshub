@@ -94,7 +94,11 @@ async def trigger_all_articles():
             gd = str(today)
             art = await generate_game_preview(home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,spread=spread,moneyline=moneyline,over_under=over_under,injuries=injuries,recent_games=games,top_stats=top_stats)
             await save_article(art)
-            bb = await generate_best_bet(home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,spread=spread,moneyline=moneyline,over_under=over_under,injuries=injuries,top_stats=top_stats)
+            # Extract total lean from prediction to force consistency in best bet
+            pred_picks = art.get("key_picks") or {}
+            forced_total_lean = pred_picks.get("total_lean") if isinstance(pred_picks, dict) else None
+            forced_total_pick = pred_picks.get("total_pick") if isinstance(pred_picks, dict) else None
+            bb = await generate_best_bet(home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,spread=spread,moneyline=moneyline,over_under=over_under,injuries=injuries,top_stats=top_stats,forced_total_lean=forced_total_lean,forced_total_pick=forced_total_pick)
             await save_article(bb)
             from app.services.article_service import generate_daily_props
             prop_players = ["Jalen Brunson","Karl-Anthony Towns","OG Anunoby","Mikal Bridges","Josh Hart"]
