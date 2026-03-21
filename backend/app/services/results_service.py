@@ -182,7 +182,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 "opp_score": opp_score,
                 "resolved_at": datetime.now(timezone.utc).isoformat(),
             }
-            existing = db.table("prediction_results").select("slug").eq("slug", row["slug"])
+            existing = db.table("prediction_results").select("slug").eq("slug", row["slug"]).execute()
             if not existing.execute().data:
                 db.table("prediction_results").upsert(row, on_conflict="slug")
                 resolved["prediction_results"] += 1
