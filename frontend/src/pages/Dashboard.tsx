@@ -196,7 +196,7 @@ export default function Dashboard() {
         )}
 
         {/* Right Column: Next + Last Game */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignSelf: "start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignSelf: "start", gridColumn: "2", gridRow: "1" }}>
           {nextGame && (
             <div style={{ background: S.surfaceHigh, borderRadius: "0.75rem", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <span style={{ fontSize: "0.5625rem", fontWeight: 900, letterSpacing: "0.2rem", color: S.orange, textTransform: "uppercase" }}>Next Battle</span>
@@ -233,8 +233,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-        {/* Left: Latest Predictions + News */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+        {/* Left: Latest Predictions + News — col-start:1 row 2 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", gridColumn: "1", gridRow: "2" }}>
 
           {/* Latest Predictions */}
           <section>
@@ -287,7 +287,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right: Next+Last Game + Injuries + Birthdays */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", gridRow: "1 / 3" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", gridColumn: "2", gridRow: "2" }}>
 
           {/* Injury Report */}
           <section style={{ background: S.surface, padding: "1.5rem", borderRadius: "0.75rem", border: `1px solid ${S.border}` }}>
