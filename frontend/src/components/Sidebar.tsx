@@ -79,6 +79,11 @@ export default function Sidebar() {
         </nav>
 
         <div style={{ padding: "1.5rem", marginTop: "auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "0.75rem" }}>
+            <a href="https://websitesbywillie.com" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>
+              Built by websitesbywillie.com
+            </a>
+          </div>
           <a href="https://www.draftkings.com" target="_blank" rel="noopener noreferrer" style={{
             display: "block", width: "100%", padding: "1rem",
             background: "linear-gradient(135deg, #F58426, #ffb786)",
