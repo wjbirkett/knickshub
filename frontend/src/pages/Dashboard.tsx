@@ -234,7 +234,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content: Predictions + Sidebar */}
-      <div style={{ padding: "0 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "2.5rem", maxWidth: "1400px", margin: "0 auto" }}>
+      <div style={{ padding: "0 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "2.5rem", maxWidth: "1400px", margin: "-320px auto 0" }}>
 
         {/* Left: Latest Predictions + News */}
         <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
