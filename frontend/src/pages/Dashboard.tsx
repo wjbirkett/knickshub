@@ -106,6 +106,9 @@ export default function Dashboard() {
               <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>GB</span>
             </div>
           </>}
+          {knicks && atsTotal > 0 && (
+            <div style={{ width: "1px", height: "2.5rem", background: S.border, alignSelf: "center" }} />
+          )}
           {atsTotal > 0 && (
             <div style={{ textAlign: "center" }}>
               <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: atsHits/atsTotal >= 0.5 ? S.green : S.red }}>{atsHits}-{atsTotal-atsHits}</span>
