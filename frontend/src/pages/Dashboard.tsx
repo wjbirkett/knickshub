@@ -129,9 +129,16 @@ export default function Dashboard() {
                 <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>auto_awesome</span>
                 AI Recommended Best Bet
               </span>
-              <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(1.25rem, 2.5vw, 2rem)", letterSpacing: "-0.02em", lineHeight: 1.15, marginBottom: "1rem", color: S.text }}>
-                {todayBestBet.title}
-              </h2>
+              {todayBestBet.key_picks?.spread_pick ? (
+                <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 4rem)", letterSpacing: "-0.04em", lineHeight: 0.9, marginBottom: "1rem", color: S.text, textTransform: "uppercase" }}>
+                  {todayBestBet.key_picks.spread_lean === "COVER" ? "KNICKS" : opp(todayBestBet).split(" ").pop()}<br/>
+                  <span style={{ color: S.orange }}>{todayBestBet.key_picks.spread_pick.replace(/Knickss*/i,"").replace(/.*?s/,"")}</span> SPREAD
+                </h2>
+              ) : (
+                <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(1.25rem, 2.5vw, 2rem)", letterSpacing: "-0.02em", lineHeight: 1.15, marginBottom: "1rem", color: S.text }}>
+                  {todayBestBet.title}
+                </h2>
+              )}
               {todayBestBet.key_picks && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
                   {todayBestBet.key_picks.spread_pick && (
