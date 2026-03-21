@@ -24,7 +24,7 @@ export default function App() {
         <style>{`
           .knicks-main {
             margin-left: 16rem;
-            padding: 1.5rem;
+            padding: 0 1.5rem 0;
             padding-bottom: 0;
             flex: 1;
             display: flex;
