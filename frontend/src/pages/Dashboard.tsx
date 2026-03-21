@@ -308,8 +308,8 @@ export default function Dashboard() {
               {bdays.map((b: any, i: number) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem", opacity: i > 0 ? 0.5 : 1, paddingTop: i > 0 ? "0.75rem" : 0, borderTop: i > 0 ? `1px solid ${S.border}` : "none", marginTop: i > 0 ? "0.75rem" : 0 }}>
                   <div>
-                    <span style={{ display: "block", fontWeight: 700, fontSize: "0.875rem", color: S.text }}>{b.name}</span>
-                    <span style={{ fontSize: "0.625rem", color: S.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>{i === 0 ? "Today" : "Upcoming"} · {b.date}</span>
+                    <span style={{ display: "block", fontWeight: 700, fontSize: "0.875rem", color: S.text }}>{b.player_name}</span>
+                    <span style={{ fontSize: "0.625rem", color: S.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>{i === 0 ? "Today" : "Upcoming"} · {b.birth_date}</span>
                   </div>
                 </div>
               ))}
