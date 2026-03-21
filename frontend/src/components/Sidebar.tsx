@@ -78,7 +78,7 @@ export default function Sidebar() {
           })}
         </nav>
 
-        <div style={{ padding: "1.5rem" }}>
+        <div style={{ padding: "1.5rem", marginTop: "auto" }}>
           <a href="https://www.draftkings.com" target="_blank" rel="noopener noreferrer" style={{
             display: "block", width: "100%", padding: "1rem",
             background: "linear-gradient(135deg, #F58426, #ffb786)",
