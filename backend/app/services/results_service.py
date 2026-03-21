@@ -133,7 +133,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
 
         # Process prediction and best bet articles
         for article in articles:
-            if article["article_type"] not in ("prediction", "best_bet"):
+            if article["article_type"] != "prediction":
                 continue
             if not article.get("key_picks"):
                 continue
