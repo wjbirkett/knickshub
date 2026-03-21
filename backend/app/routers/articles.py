@@ -91,7 +91,7 @@ async def trigger_all_articles():
                 if ks is not None: spread = f"{ks:+.1f}"
                 if km is not None: moneyline = f"{km:+d}"
                 if ou is not None: over_under = f"{ou}"
-            gd = str(today)
+            gd = str(next_game["game_date"])[:10]
             art = await generate_game_preview(home_team=next_game["home_team"],away_team=next_game["away_team"],game_date=gd,spread=spread,moneyline=moneyline,over_under=over_under,injuries=injuries,recent_games=games,top_stats=top_stats)
             await save_article(art)
             # Extract total lean from prediction to force consistency in best bet
