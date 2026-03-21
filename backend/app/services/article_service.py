@@ -1578,11 +1578,8 @@ async def save_article(article: Dict) -> Dict:
     elif not isinstance(kp, (dict, type(None))):
         article["key_picks"] = None
 
-    # Ensure word_count is an int
     try:
-        article["word_count"] = int(article.get("word_count", 0))
     except Exception:
-        article["word_count"] = 0
 
     # Final key_picks coercion right before upsert
     import ast as _ast
@@ -1595,7 +1592,7 @@ async def save_article(article: Dict) -> Dict:
 
     try:
         # Ensure slug is unique
-        result = db.table("articles").upsert(article, on_conflict="slug").execute()
+        result = db.table("articles").upsert(article, on_conflict="slug")
         logger.info(f"Article saved: {article['slug']}")
         return result.data[0] if result.data else article
     except Exception as e:
@@ -1616,7 +1613,7 @@ async def save_articles(articles: List[Dict]) -> List[Dict]:
     saved = []
     for article in articles:
         try:
-            result = db.table("articles").upsert(article, on_conflict="slug").execute()
+            result = db.table("articles").upsert(article, on_conflict="slug")
             if result.data:
                 saved.append(result.data[0])
                 logger.info(f"Saved: {article['slug']}")
