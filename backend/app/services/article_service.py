@@ -1591,7 +1591,8 @@ async def save_article(article: Dict) -> Dict:
 
     try:
         # Ensure slug is unique
-        result = db.table("articles").upsert(article, on_conflict="slug").execute()
+        raw = db.table("articles").upsert(article, on_conflict="slug")
+        result = raw.execute() if hasattr(raw, "execute") else raw
         logger.info(f"Article saved: {article['slug']}")
         return result.data[0] if result.data else article
     except Exception as e:
@@ -1612,7 +1613,8 @@ async def save_articles(articles: List[Dict]) -> List[Dict]:
     saved = []
     for article in articles:
         try:
-            result = db.table("articles").upsert(article, on_conflict="slug").execute()
+            raw = db.table("articles").upsert(article, on_conflict="slug")
+            result = raw.execute() if hasattr(raw, "execute") else raw
             if result.data:
                 saved.append(result.data[0])
                 logger.info(f"Saved: {article['slug']}")
