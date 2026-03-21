@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import { Helmet } from "react-helmet-async"
@@ -62,6 +63,7 @@ export default function PlayerPropsPage() {
     return { player, hits, total, pct: total > 0 ? Math.round(hits/total*100) : null }
   }).filter(p => p.total > 0)
 
+  const playerSlug = (name) => name.toLowerCase().replace(/s+/g, "-").replace(/[^a-z0-9-]/g, "")
   const fmt = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
 
   const getResult = (slug: string) => propResults.find(r => r.slug === slug)
