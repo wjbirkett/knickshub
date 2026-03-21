@@ -203,7 +203,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <span className={`px-3 py-1 font-headline font-black text-lg rounded uppercase italic ${
-                    lastGame.score?.NYK > Object.values(lastGame.score || {}).filter((_,i) => Object.keys(lastGame.score||{})[i] !== "NYK")[0]
+                    ((lastGame.score?.NYK ?? 0) > ((Object.values(lastGame.score || {}) as number[]).filter((_,i) => Object.keys(lastGame.score||{})[i] !== "NYK")[0] ?? 0))
                       ? "bg-tertiary text-on-tertiary"
                       : "bg-error-container text-on-error-container"
                   }`}>
