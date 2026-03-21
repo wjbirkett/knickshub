@@ -354,7 +354,7 @@ export default function Dashboard() {
       {/* Footer */}
       <footer style={{ background: "#131313", borderTop: `1px solid ${S.border}`, padding: "2.5rem 2rem", marginTop: "1rem" }}>
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "1rem", maxWidth: "1400px" }}>
-          <p style={{ fontSize: "0.625rem", fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.05em", color: S.textMuted, opacity: 0.6 }}>© 2026 KnicksHub. Responsible Gaming Only.</p>
+          <p style={{ fontSize: "0.625rem", fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.05em", color: S.textMuted, opacity: 0.6 }}>© 2026 KnicksHub. Responsible Gaming Only. Built by <a href="https://websitesbywillie.com" target="_blank" rel="noopener noreferrer" style={{ color: S.textMuted, opacity: 0.5, textDecoration: "none" }}>websitesbywillie.com</a></p>
           <div style={{ display: "flex", gap: "1.5rem" }}>
             {[["About", "/about"], ["Privacy", "/privacy"], ["Terms", "/terms"]].map(([label, to]) => (
               <Link key={to} to={to} style={{ fontSize: "0.625rem", fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.05em", color: S.textMuted, opacity: 0.5, textDecoration: "none" }}>{label}</Link>

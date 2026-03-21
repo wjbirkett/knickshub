@@ -62,7 +62,7 @@ export default function PlayerPropsPage() {
     return { player, hits, total, pct: total > 0 ? Math.round(hits/total*100) : null }
   }).filter(p => p.total > 0)
 
-  const playerSlug = (name) => name.toLowerCase().replace(/s+/g, "-").replace(/[^a-z0-9-]/g, "")
+  const playerSlug = (name: string) => name.toLowerCase().replace(/s+/g, "-").replace(/[^a-z0-9-]/g, "")
   const fmt = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
 
   const getResult = (slug: string) => propResults.find(r => r.slug === slug)
@@ -100,7 +100,8 @@ export default function PlayerPropsPage() {
               const col = pct! >= 65 ? S.green : pct! >= 50 ? S.peach : S.red
               const isSelected = selectedPlayer === player
               return (
-                <button key={player} onClick={() => setSelectedPlayer(isSelected ? "ALL" : player)} style={{
+                <Link to={`/props/${playerSlug(player)}`} style={{ textDecoration: "none" }}>
+                <button onClick={e => { e.preventDefault(); setSelectedPlayer(isSelected ? "ALL" : player); }} style={{
                   background: isSelected ? S.surfaceHigh : S.surface,
                   border: `1px solid ${isSelected ? col : S.border}`,
                   cursor: "pointer", padding: "0.5rem 0.75rem",
@@ -114,6 +115,7 @@ export default function PlayerPropsPage() {
                     {pct !== null && <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.5625rem", color: col, opacity: 0.8 }}>{pct}%</span>}
                   </div>
                 </button>
+              </Link>
               )
             })}
           </div>
