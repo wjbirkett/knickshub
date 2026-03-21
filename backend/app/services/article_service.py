@@ -1069,6 +1069,7 @@ Guidelines:
 - Use markdown formatting with proper headers
 - Be specific with stats — mention exact numbers from the data provided
 - Always highlight how opponent injuries affect the spread and total
+- NAME every injured player explicitly (e.g. "With Trae Young out...") — never refer to injuries generically
 - Target keywords naturally: Knicks prediction, Knicks odds, {away_team} vs {home_team} prediction
 - ANTI-REPETITION: Each section must make a different point. Never repeat the same injury or stat in multiple sections.
 - VARIED OPENERS: Do NOT start the intro with injury news. Lead with the sharpest betting angle, a streak, or a matchup edge instead.
@@ -1379,6 +1380,7 @@ Guidelines:
 - Use markdown formatting
 - Give ONE best bet only — be decisive
 - Explain WHY the number is off, not just that you like the team
+- NAME every injured player explicitly when discussing injury impact — never say "key players are out" without naming them
 - Include "bet responsibly" naturally
 - Target keywords: Knicks best bet tonight, Knicks spread pick, {away_team} vs {home_team} pick
 - ANTI-REPETITION: Do NOT repeat the same points made in the prediction article. Find a new angle.
