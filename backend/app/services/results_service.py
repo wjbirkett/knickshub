@@ -106,7 +106,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
 
     try:
         # Get all articles for this game date
-        all_articles = db.table("articles").select("*").eq("game_date", game_date).data
+        all_articles = db.table("articles").select("*").eq("game_date", game_date).execute().data
         articles = [a for a in all_articles if a.get("article_type") != "history"]
         if not articles:
             return {"error": f"No articles found for {game_date}"}
@@ -183,7 +183,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 "resolved_at": datetime.now(timezone.utc).isoformat(),
             }
             existing = db.table("prediction_results").select("slug").eq("slug", row["slug"])
-            if not existing.data:
+            if not existing.execute().data:
                 db.table("prediction_results").upsert(row, on_conflict="slug")
                 resolved["prediction_results"] += 1
 
@@ -246,7 +246,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 "resolved_at": datetime.now(timezone.utc).isoformat(),
             }
             existing2 = db.table("prop_results").select("slug").eq("slug", row["slug"])
-        if not existing2.data:
+        if not existing2.execute().data:
             db.table("prop_results").upsert(row, on_conflict="slug")
             resolved["prop_results"] += 1
             logger.info(f"{player} {prop_type}: {lean} {line} — actual {actual_value} — {result_str}")
