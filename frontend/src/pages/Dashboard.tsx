@@ -128,7 +128,7 @@ export default function Dashboard() {
       </div>
 
       {/* Hero Bento Grid */}
-      <div style={{ padding: "2.5rem 2rem 1.5rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px", margin: "0 auto" }}>
+      <div style={{ padding: "2.5rem 2rem 0", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
 
         {/* AI Best Bet Hero */}
         {todayBestBet ? (
@@ -234,7 +234,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content: Predictions + Sidebar */}
-      <div style={{ padding: "1.5rem 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "2.5rem", maxWidth: "1400px", margin: "0 auto" }}>
+      <div style={{ padding: "1rem 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "2.5rem", maxWidth: "1400px", margin: "0 auto" }}>
 
         {/* Left: Latest Predictions + News */}
         <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
