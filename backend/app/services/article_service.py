@@ -1678,6 +1678,7 @@ async def get_articles_by_player(player: str, limit: int = 10) -> List[Dict]:
             .eq("player", player)\
             .order("game_date", desc=True)\
             .limit(limit)\
+            .execute()
             
         return result.data
     except Exception as e:
