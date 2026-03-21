@@ -184,7 +184,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
             }
             existing = db.table("prediction_results").select("slug").eq("slug", row["slug"]).execute()
             if not existing.data:
-                db.table("prediction_results").upsert(row, on_conflict="slug").execute()
+                db.table("prediction_results").upsert(row, on_conflict="slug")
                 resolved["prediction_results"] += 1
 
         # Process prop articles
