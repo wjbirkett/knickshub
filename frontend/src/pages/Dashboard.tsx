@@ -116,7 +116,7 @@ export default function Dashboard() {
       </div>
 
       {/* Hero Bento Grid */}
-      <div style={{ padding: "1.5rem 2rem", display: "grid", gridTemplateColumns: "1fr 320px", gap: "1.5rem", maxWidth: "1400px" }}>
+      <div style={{ padding: "1.5rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px" }}>
 
         {/* AI Best Bet Hero */}
         {todayBestBet ? (
@@ -126,7 +126,7 @@ export default function Dashboard() {
                 <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>auto_awesome</span>
                 AI Recommended Best Bet
               </span>
-              <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 3.5rem)", letterSpacing: "-0.03em", lineHeight: 1, marginBottom: "1rem", color: S.text }}>
+              <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(1.25rem, 2.5vw, 2rem)", letterSpacing: "-0.02em", lineHeight: 1.15, marginBottom: "1rem", color: S.text }}>
                 {todayBestBet.title}
               </h2>
               {todayBestBet.key_picks && (
@@ -216,7 +216,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content: Predictions + Sidebar */}
-      <div style={{ padding: "0 2rem 2rem", display: "grid", gridTemplateColumns: "1fr 320px", gap: "2.5rem", maxWidth: "1400px" }}>
+      <div style={{ padding: "0 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "2.5rem", maxWidth: "1400px" }}>
 
         {/* Left: Latest Predictions + News */}
         <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
