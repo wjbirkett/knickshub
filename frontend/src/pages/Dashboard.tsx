@@ -51,8 +51,8 @@ export default function Dashboard() {
   const latestPredictions = (articles as any[])?.filter((a: any) =>
     ["prediction","best_bet","prop"].includes(a.article_type)
   ).slice(0, 3)
-  const nextGame  = (schedule as any[])?.find((g: any) => g.status === "scheduled")
-  const lastGame  = (schedule as any[])?.filter((g: any) => g.status === "closed").slice(-1)[0]
+  const nextGame  = (schedule as any[])?.find((g: any) => !g.home_score && g.status !== "Final")
+  const lastGame  = (schedule as any[])?.filter((g: any) => g.status === "Final" || g.home_score).slice(-1)[0]
   const knicksInj = (injuries as any[])?.slice(0, 4) ?? []
   const bdays     = (birthdays as any[])?.slice(0, 2) ?? []
 
@@ -64,7 +64,10 @@ export default function Dashboard() {
   const ouTotal  = preds.filter((r: any) => r.total_result).length
   const propHits = propRes.filter((r: any) => r.result === "HIT").length
 
-  const opp = (a: any) => a?.home_team?.includes("Knicks") ? a.away_team : a.home_team
+  const opp = (a: any) => {
+    if (!a) return "TBD"
+    return a.home_team?.includes("Knicks") ? a.away_team : a.home_team
+  }
   const fmt = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
 
   return (
@@ -191,8 +194,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <p style={{ fontSize: "0.6875rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>
-                {new Date((nextGame.date || nextGame.game_date) + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                {nextGame.time ? ` · ${nextGame.time}` : ""}
+                {new Date(nextGame.game_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
               </p>
             </div>
           )}
@@ -202,7 +204,7 @@ export default function Dashboard() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem" }}>
-                    {lastGame.score?.NYK ?? "—"} - {lastGame.score ? Object.entries(lastGame.score).find(([k]) => k !== "NYK")?.[1] ?? "—" : "—"}
+                    {lastGame.home_team?.includes("Knicks") ? lastGame.home_score : lastGame.away_score} - {lastGame.home_team?.includes("Knicks") ? lastGame.away_score : lastGame.home_score}
                   </span>
                   <span style={{ fontSize: "0.5625rem", fontWeight: 700, color: S.textMuted, textTransform: "uppercase" }}>vs {opp(lastGame)}</span>
                 </div>
