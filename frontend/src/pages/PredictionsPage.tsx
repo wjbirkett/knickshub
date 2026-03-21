@@ -151,7 +151,7 @@ export default function PredictionsPage() {
       </div>
 
       {/* Article Grid */}
-      <section style={{ padding: "1.5rem 3rem" }}>
+      <section style={{ padding: "0.5rem 3rem" }}>
         {isLoading ? (
           <p style={{ color: S.textMuted }}>Loading...</p>
         ) : filtered.length === 0 ? (

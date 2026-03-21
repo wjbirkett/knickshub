@@ -61,7 +61,7 @@ export default function InjuriesPage() {
         <p style={{ color: S.textMuted, fontSize: "0.875rem", margin: 0 }}>Live injury updates — updated daily</p>
       </div>
 
-      <div style={{ padding: "2rem 2.5rem", maxWidth: "1200px" }}>
+      <div style={{ padding: "0 2.5rem 2rem", maxWidth: "1200px" }}>
         {isLoading ? (
           <p style={{ color: S.textMuted }}>Loading...</p>
         ) : (injuries as any[])?.length === 0 ? (
