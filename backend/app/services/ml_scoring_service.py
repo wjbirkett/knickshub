@@ -134,6 +134,7 @@ def _build_features(
         "roll5_opp_pts":         roll("opp_pts",     5),
         "roll5_point_diff":      roll("point_diff",  5),
         "roll5_total":           roll("total_pts",   5),
+        "roll5_total_pts":       roll("total_pts",   5),
         "roll5_fg_pct":          None,  # not available from schedule
         "roll5_tov":             None,
         "roll5_ast":             None,

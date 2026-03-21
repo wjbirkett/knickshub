@@ -2,45 +2,94 @@
   "knicks_score": {
     "model_type": "GradientBoosting",
     "target": "knicks_pts",
-    "cv_mae_points": 11.82,
+    "cv_mae_points": 11.69,
     "features": [
       "is_home",
-      "knicks_rest_days",
+      "rest_days",
       "back_to_back",
       "roll5_knicks_pts",
       "roll5_opp_pts",
       "roll5_point_diff",
-      "roll5_total",
-      "roll5_fg_pct",
-      "roll5_tov",
-      "roll5_ast",
+      "roll5_total_pts",
+      "roll5_knicks_fg_pct",
+      "roll5_knicks_fg3_pct",
+      "roll5_knicks_tov",
+      "roll5_knicks_ast",
+      "roll5_knicks_reb",
       "roll10_knicks_pts",
       "roll10_opp_pts",
       "roll10_point_diff",
-      "roll10_total",
+      "roll10_total_pts",
       "knicks_season_win_pct"
     ],
-    "n_samples": 234,
-    "avg_target": 115.1
+    "n_samples": 243,
+    "avg_target": 114.8
   },
   "opp_score": {
     "model_type": "GradientBoosting",
     "target": "opp_pts",
-    "cv_mae_points": 12.06,
+    "cv_mae_points": 12.28,
     "features": [
       "is_home",
-      "knicks_rest_days",
+      "rest_days",
+      "back_to_back",
+      "roll5_opp_pts",
+      "roll5_total_pts",
+      "roll5_opp_fg_pct",
+      "roll5_opp_tov",
+      "roll10_opp_pts",
+      "roll10_total_pts",
+      "knicks_season_win_pct"
+    ],
+    "n_samples": 243,
+    "avg_target": 111.0
+  },
+  "spread": {
+    "model_type": "GradientBoosting_Classifier",
+    "accuracy_pct": 47.8,
+    "features": [
+      "is_home",
+      "rest_days",
       "back_to_back",
       "roll5_knicks_pts",
       "roll5_opp_pts",
-      "roll5_total",
-      "roll5_tov",
+      "roll5_point_diff",
+      "roll5_total_pts",
+      "roll5_knicks_fg_pct",
+      "roll5_knicks_fg3_pct",
+      "roll5_knicks_tov",
+      "roll5_knicks_ast",
+      "roll5_knicks_reb",
+      "roll10_knicks_pts",
       "roll10_opp_pts",
-      "roll10_total",
+      "roll10_point_diff",
+      "roll10_total_pts",
+      "knicks_season_win_pct"
+    ]
+  },
+  "total": {
+    "model_type": "GradientBoosting_Classifier",
+    "accuracy_pct": 46.9,
+    "features": [
+      "is_home",
+      "rest_days",
+      "back_to_back",
+      "roll5_knicks_pts",
+      "roll5_opp_pts",
+      "roll5_point_diff",
+      "roll5_total_pts",
+      "roll5_knicks_fg_pct",
+      "roll5_knicks_fg3_pct",
+      "roll5_knicks_tov",
+      "roll5_knicks_ast",
+      "roll5_knicks_reb",
+      "roll10_knicks_pts",
+      "roll10_opp_pts",
+      "roll10_point_diff",
+      "roll10_total_pts",
       "knicks_season_win_pct"
     ],
-    "n_samples": 234,
-    "avg_target": 110.1
+    "median_total": 225.0
   },
-  "trained_at": "2026-03-20T18:23:12.013352"
+  "trained_at": "2026-03-21T16:17:48.412032"
 }
