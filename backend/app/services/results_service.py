@@ -106,7 +106,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
 
     try:
         # Get all articles for this game date
-        all_articles = db.table("articles").select("*").eq("game_date", game_date).execute().data
+        all_articles = db.table("articles").select("*").eq("game_date", game_date).data
         articles = [a for a in all_articles if a.get("article_type") != "history"]
         if not articles:
             return {"error": f"No articles found for {game_date}"}
@@ -182,7 +182,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 "opp_score": opp_score,
                 "resolved_at": datetime.now(timezone.utc).isoformat(),
             }
-            existing = db.table("prediction_results").select("slug").eq("slug", row["slug"]).execute()
+            existing = db.table("prediction_results").select("slug").eq("slug", row["slug"])
             if not existing.data:
                 db.table("prediction_results").upsert(row, on_conflict="slug")
                 resolved["prediction_results"] += 1
@@ -245,7 +245,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
                 "result": result_str,
                 "resolved_at": datetime.now(timezone.utc).isoformat(),
             }
-            existing2 = db.table("prop_results").select("slug").eq("slug", row["slug"]).execute()
+            existing2 = db.table("prop_results").select("slug").eq("slug", row["slug"])
         if not existing2.data:
             db.table("prop_results").upsert(row, on_conflict="slug")
             resolved["prop_results"] += 1

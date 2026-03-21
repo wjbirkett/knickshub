@@ -327,7 +327,7 @@ async def get_accuracy_summary() -> str:
     try:
         db = get_supabase()
         if not db: return ""
-        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result").execute()
+        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result")
         rows = result.data or []
         if not rows: return ""
         sh = sum(1 for r in rows if r.get("spread_result") == "HIT")
@@ -869,7 +869,7 @@ async def get_accuracy_summary() -> str:
     try:
         db = get_supabase()
         if not db: return ""
-        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result").execute()
+        result = db.table("prediction_results").select("spread_result,total_result,moneyline_result")
         rows = result.data or []
         if not rows: return ""
         sh = sum(1 for r in rows if r.get("spread_result") == "HIT")
@@ -1603,7 +1603,7 @@ async def save_article(article: Dict) -> Dict:
     try:
         # Ensure slug is unique
         raw = db.table("articles").upsert(article, on_conflict="slug")
-        result = raw.execute() if hasattr(raw, "execute") else raw
+        result = raw if hasattr(raw, "execute") else raw
         logger.info(f"Article saved: {article['slug']}")
         return result.data[0] if result.data else article
     except Exception as e:
@@ -1625,7 +1625,7 @@ async def save_articles(articles: List[Dict]) -> List[Dict]:
     for article in articles:
         try:
             raw = db.table("articles").upsert(article, on_conflict="slug")
-            result = raw.execute() if hasattr(raw, "execute") else raw
+            result = raw if hasattr(raw, "execute") else raw
             if result.data:
                 saved.append(result.data[0])
                 logger.info(f"Saved: {article['slug']}")
@@ -1645,7 +1645,7 @@ async def get_articles(limit: int = 20, article_type: Optional[str] = None) -> L
         query = db.table("articles").select("*").order("created_at", desc=True)
         if article_type:
             query = query.eq("article_type", article_type)
-        result = query.limit(limit).execute()
+        result = query.limit(limit)
         return result.data
     except Exception as e:
         logger.error(f"Failed to fetch articles: {e}")
@@ -1659,7 +1659,7 @@ async def get_article_by_slug(slug: str) -> Optional[Dict]:
         return None
     
     try:
-        result = db.table("articles").select("*").eq("slug", slug).single().execute()
+        result = db.table("articles").select("*").eq("slug", slug).single()
         return result.data
     except Exception as e:
         logger.error(f"Failed to fetch article by slug {slug}: {e}")
@@ -1678,7 +1678,7 @@ async def get_articles_by_player(player: str, limit: int = 10) -> List[Dict]:
             .eq("player", player)\
             .order("game_date", desc=True)\
             .limit(limit)\
-            .execute()
+            
         return result.data
     except Exception as e:
         logger.error(f"Failed to fetch articles for player {player}: {e}")
