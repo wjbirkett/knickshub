@@ -25,7 +25,7 @@ def refresh_odds():
 
 def generate_article(force: bool = False):
     """
-    Runs every hour. Checks if there's a Knicks game today and whether
+    Runs every 15 minutes. Checks if there's a Knicks game today and whether
     we're within 2 hours of tip-off. If so, generates all betting articles.
     Falls back to 5pm ET (22:00 UTC) if game time can't be determined.
     """
@@ -91,7 +91,7 @@ def generate_article(force: bool = False):
 
             logger.info(f"Cron: game today at {game_time_utc.isoformat()}, {minutes_until_tip:.0f} min until tip-off")
 
-            # Generate articles between 2h15min and 1h45min before tip (30-min window each hour)
+            # Generate articles 40-70 minutes before tip (after NBA 1hr injury deadline)
             if not force and not (40 <= minutes_until_tip <= 70):
                 logger.info(f"Cron: not in generation window ({minutes_until_tip:.0f} min to tip) — skipping")
                 return
@@ -256,8 +256,8 @@ def start_scheduler():
     _scheduler.add_job(refresh_news,             CronTrigger(minute="*/15"))
     _scheduler.add_job(refresh_injuries,         CronTrigger(hour="*/3"))
     _scheduler.add_job(refresh_odds,             CronTrigger(hour="*/1"))
-    # Check every hour — generates articles when within 2hr window of tip-off
-    _scheduler.add_job(generate_article,         CronTrigger(minute=0))
+    # Check every 15min — generates articles when 40-70min before tip-off (after 1hr injury report deadline)
+    _scheduler.add_job(generate_article,         CronTrigger(minute="*/15"))
     # History articles: off days only, 10am ET (15:00 UTC)
     _scheduler.add_job(generate_history_article, CronTrigger(hour=15, minute=0, timezone="UTC"))
     _scheduler.add_job(resolve_results, CronTrigger(hour=4, minute=0, timezone="UTC"))  # 11pm ET - resolve last night
