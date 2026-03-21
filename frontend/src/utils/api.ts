@@ -21,6 +21,8 @@ export interface Article {
   key_picks?: any
   player?: string
   prop_type?: string
+  created_at?: string
+  updated_at?: string
 }
 
 // ===== API functions =====
