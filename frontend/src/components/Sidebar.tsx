@@ -1,86 +1,93 @@
-import { useState } from "react"
-import { NavLink } from "react-router-dom"
-import { Home, Target, TrendingUp, Newspaper, Activity, Calendar, BarChart2, LineChart, Menu, X } from "lucide-react"
+import { Link, useLocation } from "react-router-dom"
 
-const NAV = [
-  { to: "/",            label: "Dashboard",      icon: Home },
-  { to: "/predictions", label: "Predictions",    icon: Target },
-  { to: "/props",       label: "Player Props",   icon: Target },
-  { to: "/betting",     label: "Betting",        icon: TrendingUp },
-  { to: "/news",        label: "News Feed",      icon: Newspaper },
-  { to: "/injuries",    label: "Injuries",       icon: Activity },
-  { to: "/schedule",    label: "Schedule",       icon: Calendar },
-  { to: "/stats",       label: "Stats",          icon: BarChart2 },
-  { to: "/knicks-betting-record",      label: "Betting Record", icon: LineChart },
+const NAV_ITEMS = [
+  { to: "/",                        label: "Dashboard",      icon: "dashboard" },
+  { to: "/predictions",             label: "Predictions",    icon: "analytics" },
+  { to: "/props",                   label: "Player Props",   icon: "sports_basketball" },
+  { to: "/knicks-betting-record",   label: "Betting Record", icon: "receipt_long" },
+  { to: "/betting",                 label: "Betting",        icon: "trending_up" },
+  { to: "/news",                    label: "News Feed",      icon: "newspaper" },
+  { to: "/injuries",                label: "Injuries",       icon: "medical_services" },
+  { to: "/schedule",                label: "Schedule",       icon: "calendar_month" },
+  { to: "/stats",                   label: "Stats",          icon: "leaderboard" },
 ]
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(false)
-
-  const sidebarContent = (
-    <>
-      <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #1f2937", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <span style={{ fontFamily: "Bebas Neue,sans-serif", fontSize: "2.25rem", letterSpacing: "0.15em", color: "#F58426" }}>KNICKS</span>
-          <span style={{ fontFamily: "Bebas Neue,sans-serif", fontSize: "2.25rem", letterSpacing: "0.15em", color: "#006BB6" }}>HUB</span>
-        </div>
-        <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", display: "none" }} className="mobile-close-btn">
-          <X size={22} />
-        </button>
-      </div>
-
-      <nav style={{ flex: 1, padding: "1rem 0.75rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-        {NAV.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} end={to === "/"} onClick={() => setOpen(false)}
-            style={({ isActive }) => ({
-              display: "flex", alignItems: "center", gap: "0.75rem",
-              padding: "0.6rem 1rem", borderRadius: "0.5rem",
-              fontSize: "0.875rem", fontWeight: 500, textDecoration: "none",
-              background: isActive ? "#1d4ed8" : "transparent",
-              color: isActive ? "#fff" : "#9ca3af",
-              transition: "all 0.15s",
-            })}
-          >
-            <Icon size={18} />
-            {label}
-          </NavLink>
-        ))}
-      </nav>
-
-      <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #1f2937", fontSize: "0.75rem", color: "#4b5563" }}>
-        KnicksHub 2026
-      </div>
-    </>
-  )
+  const { pathname } = useLocation()
 
   return (
     <>
-      <style>{`
-        @media (max-width: 767px) {
-          .mobile-close-btn { display: block !important; }
-          .mobile-hamburger { display: block !important; }
-          .mobile-backdrop  { display: block !important; }
-          .knicks-sidebar   { transform: translateX(${open ? "0" : "-100%"}); }
-        }
-      `}</style>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex flex-col h-screen fixed left-0 top-0 w-64 border-r border-white/15 bg-[#1C1B1B]/70 backdrop-blur-xl z-50 shadow-[24px_0_48px_rgba(0,0,0,0.4)]">
+        <div className="p-8">
+          <Link to="/">
+            <h1 className="text-2xl font-black text-[#F58426] tracking-tighter italic font-headline uppercase">KnicksHub</h1>
+          </Link>
+          <p className="text-[10px] uppercase tracking-widest text-[#DDC1B1] font-headline mt-1 opacity-70">The Courtside Editorial</p>
+        </div>
 
-      <button onClick={() => setOpen(true)} className="mobile-hamburger"
-        style={{ position: "fixed", top: "1rem", left: "1rem", zIndex: 60, background: "#0d0d0d", border: "1px solid #1f2937", borderRadius: "0.5rem", padding: "0.5rem", color: "#F58426", cursor: "pointer", display: "none" }}
-      >
-        <Menu size={22} />
-      </button>
+        <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+          {NAV_ITEMS.map(({ to, label, icon }) => {
+            const isActive = pathname === to || (to !== "/" && pathname.startsWith(to))
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={`flex items-center gap-3 px-4 py-3 font-headline tracking-tight uppercase font-bold text-sm transition-all duration-200 ${
+                  isActive
+                    ? "text-[#FFB786] border-l-2 border-[#FFB786] bg-gradient-to-r from-[#F58426]/10 to-transparent"
+                    : "text-[#DDC1B1] opacity-70 hover:bg-white/5 hover:text-[#FFB786] hover:opacity-100"
+                }`}
+              >
+                <span className="material-symbols-outlined text-xl">{icon}</span>
+                <span>{label}</span>
+              </Link>
+            )
+          })}
+        </nav>
 
-      {open && (
-        <div onClick={() => setOpen(false)} className="mobile-backdrop"
-          style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.6)", display: "none" }}
-        />
-      )}
-
-      <aside className="knicks-sidebar"
-        style={{ position: "fixed", inset: "0 auto 0 0", width: "16rem", background: "#0d0d0d", borderRight: "1px solid #1f2937", display: "flex", flexDirection: "column", zIndex: 50, transition: "transform 0.25s ease" }}
-      >
-        {sidebarContent}
+        <div className="p-6">
+          <a
+            href="https://www.draftkings.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full py-4 bg-gradient-to-br from-primary-container to-primary text-on-primary-container font-headline font-black uppercase tracking-widest text-sm rounded shadow-lg text-center transition-all active:scale-95 hover:opacity-90"
+          >
+            Place Bet
+          </a>
+        </div>
       </aside>
+
+      {/* Mobile Top Bar */}
+      <header className="lg:hidden fixed top-0 w-full z-50 h-16 bg-[#131313]/80 backdrop-blur-lg border-b border-white/10 flex justify-between items-center px-6">
+        <Link to="/">
+          <h1 className="text-xl font-black text-[#F58426] font-headline italic uppercase">KnicksHub</h1>
+        </Link>
+        <span className="material-symbols-outlined text-[#FFB786]">menu</span>
+      </header>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="lg:hidden fixed bottom-0 w-full z-50 bg-[#131313]/80 backdrop-blur-lg border-t border-white/10 h-16 flex items-center justify-around px-2">
+        {[
+          { to: "/",            icon: "dashboard",        label: "Home" },
+          { to: "/predictions", icon: "analytics",        label: "Picks" },
+          { to: "/props",       icon: "sports_basketball",label: "Props" },
+          { to: "/betting",     icon: "trending_up",      label: "Bet" },
+          { to: "/news",        icon: "newspaper",        label: "News" },
+        ].map(({ to, icon, label }) => {
+          const isActive = pathname === to || (to !== "/" && pathname.startsWith(to))
+          return (
+            <Link
+              key={to}
+              to={to}
+              className={`flex flex-col items-center gap-0.5 ${isActive ? "text-[#FFB786]" : "text-[#DDC1B1] opacity-50"}`}
+            >
+              <span className="material-symbols-outlined text-xl">{icon}</span>
+              <span className="text-[8px] font-bold uppercase tracking-tighter">{label}</span>
+            </Link>
+          )
+        })}
+      </nav>
     </>
   )
 }
