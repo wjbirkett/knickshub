@@ -54,14 +54,14 @@ const FILTERS = [
 
 // NBA stock images for cards by type
 const CARD_IMAGES: string[] = [
-  "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&q=80",
-  "https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=600&q=80",
-  "https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=600&q=80",
-  "https://images.unsplash.com/photo-1627627256672-027a4613d028?w=600&q=80",
-  "https://images.unsplash.com/photo-1518063319789-7217e6706b04?w=600&q=80",
-  "https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=600&q=80",
+  "/players/msg-court.jpg",
+  "/players/msg-arena.jpg",
+  "/players/msg-court.jpg",
+  "/players/msg-arena.jpg",
+  "/players/msg-court.jpg",
+  "/players/msg-arena.jpg",
 ]
-const FALLBACK_IMG = "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&q=80"
+const FALLBACK_IMG = "/players/msg-court.jpg"
 
 export default function PredictionsPage() {
   const [filter, setFilter] = useState("all")
@@ -102,7 +102,7 @@ export default function PredictionsPage() {
       <section style={{ position: "relative", height: "420px", display: "flex", alignItems: "flex-end", overflow: "hidden", background: "#0a0a0a" }}>
         <div style={{ position: "absolute", inset: 0 }}>
           <img
-            src="https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1600&q=80"
+            src="/players/msg-exterior.jpg"
             alt="Basketball court"
             style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.35, filter: "grayscale(80%) contrast(1.2)" }}
           />

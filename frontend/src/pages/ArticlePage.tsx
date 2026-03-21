@@ -46,8 +46,8 @@ const getPlayerImage = (name: string): string | null => {
 const HERO_IMAGES = [
   "https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=1600https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1600&q=80q=80",
   "https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=1600https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=1600&q=80q=80",
-  "https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=1600&q=80",
-  "https://images.unsplash.com/photo-1627627256672-027a4613d028?w=1600&q=80",
+  "/players/msg-arena.jpg",
+  "/players/msg-court.jpg",
 ]
 
 // Decode common UTF-8 mojibake
