@@ -29,7 +29,8 @@ def generate_article(force: bool = False):
     we're within 2 hours of tip-off. If so, generates all betting articles.
     Falls back to 5pm ET (22:00 UTC) if game time can't be determined.
     """
-    from datetime import date, datetime, timezone, timedelta
+    import threading
+from datetime import date, datetime, timezone, timedelta
     from app.services.article_service import (
         generate_game_preview, generate_best_bet, generate_player_prop, generate_daily_props,
         save_article, get_article_by_slug, slugify
