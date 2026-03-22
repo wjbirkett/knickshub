@@ -1,5 +1,8 @@
 import asyncio
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+limiter = Limiter(key_func=get_remote_address)
 from fastapi.responses import Response
 from app.services.article_service import (
     generate_game_preview, save_article, get_articles, get_article_by_slug

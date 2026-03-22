@@ -20,3 +20,4 @@ tenacity
 aiocache
 scikit-learn
 joblib
+slowapi==0.1.9

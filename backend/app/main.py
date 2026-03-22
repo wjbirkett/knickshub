@@ -5,6 +5,8 @@ from app.config import settings
 from app.routers import news, injuries, betting, schedule, stats, tweets, birthdays, articles
 from app.scheduler import start_scheduler, shutdown_scheduler
 
+limiter = Limiter(key_func=get_remote_address)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     start_scheduler()
@@ -12,6 +14,8 @@ async def lifespan(app: FastAPI):
     shutdown_scheduler()
 
 app = FastAPI(title="KnicksHub API", version="0.1.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
