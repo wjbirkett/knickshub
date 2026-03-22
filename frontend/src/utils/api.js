@@ -19,3 +19,4 @@ export const getArticles = (limit = 20) => api.get("/api/articles/", { params: {
 export const getResults = () => fetch(`${BASE_URL}/api/articles/results`).then(r => r.json());
 export const getArticle = (slug) => api.get(`/api/articles/${slug}`).then(r => r.data);
 export const generateNextGameArticle = () => api.post("/api/articles/generate/next-game").then(r => r.data);
+export const getOdds = () => api.get("/api/articles/odds").then(r => r.data);

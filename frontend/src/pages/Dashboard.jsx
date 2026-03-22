@@ -1,305 +1,300 @@
 import { useQuery } from "@tanstack/react-query";
-import { getNews, getInjuries, getBirthdays, getSchedule, getStandings, getArticles, getResults } from "../utils/api";
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-const ARTICLE_BADGE = {
-    prediction: { bg: "#0c1a4b", color: "#93c5fd", label: "PREDICTION" },
-    best_bet: { bg: "#14532d", color: "#86efac", label: "BEST BET" },
-    prop: { bg: "#4a1d1d", color: "#fca5a5", label: "PROP BET" },
-    history: { bg: "#2e1a4b", color: "#d8b4fe", label: "HISTORY" },
+import { Helmet } from "react-helmet-async";
+import { getNews, getInjuries, getBirthdays, getSchedule, getStandings, getArticles, getResults } from "../utils/api";
+const S = {
+    // Colors
+    bg: "#131313",
+    surface: "#1c1b1b",
+    surfaceHigh: "#2a2a2a",
+    surfaceHighest: "#353534",
+    border: "rgba(255,255,255,0.08)",
+    orange: "#F58426",
+    peach: "#ffb786",
+    blue: "#a0caff",
+    green: "#4ae176",
+    greenBg: "#06bb55",
+    red: "#ffb4ab",
+    redBg: "#93000a",
+    text: "#e5e2e1",
+    textMuted: "#ddc1b1",
+    textDim: "rgba(221,193,177,0.5)",
+};
+const badge = (type) => {
+    const map = {
+        prediction: ["#006bb6", "#dbe9ff"],
+        best_bet: ["#06bb55", "#00431a"],
+        prop: ["#93000a", "#ffdad6"],
+        history: ["#4a1d96", "#d8b4fe"],
+    };
+    const labels = {
+        prediction: "PREDICTION", best_bet: "BEST BET", prop: "PROP BET", history: "HISTORY"
+    };
+    return { bg: map[type]?.[0] ?? "#333", color: map[type]?.[1] ?? "#fff", label: labels[type] ?? type.toUpperCase() };
 };
 export default function Dashboard() {
     const { data: news } = useQuery({ queryKey: ["news"], queryFn: () => getNews(undefined) });
     const { data: injuries } = useQuery({ queryKey: ["injuries"], queryFn: getInjuries });
     const { data: birthdays } = useQuery({ queryKey: ["birthdays"], queryFn: getBirthdays });
-    const { data: games } = useQuery({ queryKey: ["schedule"], queryFn: getSchedule });
+    const { data: schedule } = useQuery({ queryKey: ["schedule"], queryFn: getSchedule });
     const { data: standings } = useQuery({ queryKey: ["standings"], queryFn: getStandings });
-    const { data: articles } = useQuery({ queryKey: ["articles"], queryFn: () => getArticles(6) });
-    const today = new Date().toISOString().slice(0, 10);
-    const nextGame = (games ?? []).find((g) => g.game_date >= today && g.status !== "Final");
-    const lastGame = (games ?? []).filter((g) => g.status === "Final").slice(-1)[0];
-    const knicks = (standings ?? []).find((t) => t.team_name.includes("Knicks"));
-    const knicksWon = (g) => (g.home_team.includes("Knicks") && g.home_score > g.away_score) ||
-        (g.away_team.includes("Knicks") && g.away_score > g.home_score);
-    const finishedGames = (games ?? []).filter((g) => g.status === "Final").slice().reverse();
-    let streak = "—";
-    if (finishedGames.length > 0) {
-        const first = knicksWon(finishedGames[0]);
-        let count = 0;
-        for (const g of finishedGames) {
-            if (knicksWon(g) === first)
-                count++;
-            else
-                break;
-        }
-        streak = `${first ? "W" : "L"}${count}`;
-    }
+    const { data: articles } = useQuery({ queryKey: ["articles"], queryFn: () => getArticles(20) });
     const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults });
-    const predictions = resultsData?.predictions ?? [];
-    const propResults = resultsData?.props ?? [];
-    const uniquePreds = predictions.filter((p, i, arr) => arr.findIndex((x) => x.game_date === p.game_date) === i);
-    const spreadHits = uniquePreds.filter((p) => p.spread_result === "HIT").length;
-    const spreadTotal = uniquePreds.filter((p) => p.spread_result).length;
-    const totalHits = uniquePreds.filter((p) => p.total_result === "HIT").length;
-    const totalTotal = uniquePreds.filter((p) => p.total_result).length;
-    const propHits = propResults.filter((p) => p.result === "HIT").length;
-    const propTotal = propResults.length;
-    const todayArticles = (articles ?? []).filter((a) => a.game_date === today);
-    const todayBestBet = todayArticles.find((a) => a.article_type === "best_bet");
-    const todayPrediction = todayArticles.find((a) => a.article_type === "prediction");
-    const todayHub = todayPrediction ? (() => { const opp = todayPrediction.home_team?.includes("Knicks") ? todayPrediction.away_team : todayPrediction.home_team; const s = opp?.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") ?? "unknown"; return "knicks-vs-" + s + "-" + today; })() : null;
-    const recentArticles = (articles ?? []).slice(0, 3);
-    const sectionTitle = recentArticles.length > 0 && recentArticles[0]?.article_type === "history"
-        ? "THIS DAY IN KNICKS HISTORY"
-        : "LATEST PREDICTIONS";
-    return (<div style={{ maxWidth: "1200px" }}>
-      <style>{`
-        .db-header { margin-bottom: 1.5rem; }
-        .db-title  { font-family: "Bebas Neue, sans-serif"; font-size: 3rem; letter-spacing: 0.15em; color: #F58426; margin: 0; padding-left: 0; }
-        .db-record { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
-        .db-games  { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
-        .db-main   { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
-        @media (max-width: 767px) {
-          .db-title  { padding-left: 3rem; font-size: 2.2rem; }
-          .db-record { grid-template-columns: repeat(3, 1fr); }
-          .db-games  { grid-template-columns: 1fr; }
-          .db-main   { grid-template-columns: 1fr; }
-        }
-      `}</style>
-
-      {(todayBestBet || spreadTotal > 0) && (<div style={{ background: "linear-gradient(135deg, #0d1117 0%, #1a0a00 100%)", border: "1px solid #F58426", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "0.9rem", letterSpacing: "0.15em", color: "#F58426", margin: "0 0 0.4rem" }}>FIRE AI BEST BET TONIGHT</p>
-              {todayBestBet ? (<>
-                  <p style={{ color: "#f9fafb", fontWeight: 700, fontSize: "1rem", margin: "0 0 0.5rem", lineHeight: 1.4 }}>{todayBestBet.title}</p>
-                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                    {todayHub && <a href={"/game/" + todayHub} style={{ fontSize: "0.75rem", fontWeight: 700, color: "#F58426", border: "1px solid #F58426", borderRadius: "999px", padding: "0.2rem 0.6rem", textDecoration: "none" }}>View Game Hub</a>}
-                    <a href={"/predictions/" + todayBestBet.slug} style={{ fontSize: "0.75rem", fontWeight: 700, color: "#9ca3af", border: "1px solid #374151", borderRadius: "999px", padding: "0.2rem 0.6rem", textDecoration: "none" }}>Full Analysis</a>
-                  </div>
-                </>) : (<p style={{ color: "#6b7280", fontSize: "0.875rem", margin: 0 }}>AI picks drop 45 min before tip-off</p>)}
-            </div>
-            {spreadTotal > 0 && (<div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                {[
-                    { label: "ATS", hits: spreadHits, total: spreadTotal },
-                    { label: "O/U", hits: totalHits, total: totalTotal },
-                    { label: "Props", hits: propHits, total: propTotal },
-                ].map(r => {
-                    const pct = r.total > 0 ? Math.round((r.hits / r.total) * 100) : 0;
-                    const color = pct >= 60 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171";
-                    return (<div key={r.label} style={{ textAlign: "center", minWidth: "52px" }}>
-                      <p style={{ color: "#6b7280", fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.2rem" }}>{r.label}</p>
-                      <p style={{ color, fontSize: "1rem", fontWeight: 700, margin: 0 }}>{r.hits}-{r.total - r.hits}</p>
-                      <p style={{ color, fontSize: "0.65rem", margin: 0 }}>{pct}%</p>
-                    </div>);
-                })}
-              </div>)}
-          </div>
-        </div>)}
-      <div className="db-header">
-        <h1 className="db-title" style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>
-          DASHBOARD
-        </h1>
-        <p style={{ color: "#6b7280", margin: "0.25rem 0 0", fontSize: "0.875rem" }}>Everything Knicks, all in one place.</p>
-      </div>
-
-      {knicks && (<div className="db-record">
-          {[
-                { label: "Record", value: `${knicks.wins}-${knicks.losses}` },
-                { label: "Win %", value: (knicks.win_pct * 100).toFixed(1) + "%" },
-                { label: "East Rank", value: `#${knicks.conference_rank}` },
-                { label: "Games Back", value: knicks.games_back === 0 ? "—" : knicks.games_back.toFixed(1) },
-                { label: "Streak", value: streak },
-            ].map(s => (<div key={s.label} style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.5rem", padding: "0.75rem", textAlign: "center" }}>
-              <p style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{s.label}</p>
-              <p style={{ color: "#f9fafb", fontSize: "1.1rem", fontWeight: 700, margin: "0.2rem 0 0" }}>{s.value}</p>
-            </div>))}
-        </div>)}
-
-      <div className="db-games">
-        {nextGame && (<div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-            <p style={{ color: "#F58426", fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", margin: "0 0 0.75rem" }}>NEXT GAME</p>
-            <p style={{ color: "#f9fafb", fontWeight: 700, fontSize: "1rem", margin: "0 0 0.2rem" }}>
-              <span style={{ color: nextGame.away_team.includes("Knicks") ? "#F58426" : "#e5e7eb" }}>{nextGame.away_team}</span>
-              <span style={{ color: "#4b5563", margin: "0 0.4rem" }}>@</span>
-              <span style={{ color: nextGame.home_team.includes("Knicks") ? "#F58426" : "#e5e7eb" }}>{nextGame.home_team}</span>
-            </p>
-            <p style={{ color: "#6b7280", fontSize: "0.8rem", margin: "0 0 0.75rem" }}>
-              {new Date(nextGame.game_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-            </p>
-            <Countdown gameDate={nextGame.game_date}/>
-          </div>)}
-        {lastGame && (<div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-            <p style={{ color: "#F58426", fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", margin: "0 0 0.75rem" }}>LAST RESULT</p>
-            <p style={{ color: "#f9fafb", fontWeight: 700, fontSize: "1rem", margin: "0 0 0.2rem" }}>
-              <span style={{ color: lastGame.away_team.includes("Knicks") ? "#F58426" : "#e5e7eb" }}>{lastGame.away_team}</span>
-              <span style={{ color: "#4b5563", margin: "0 0.4rem" }}>@</span>
-              <span style={{ color: lastGame.home_team.includes("Knicks") ? "#F58426" : "#e5e7eb" }}>{lastGame.home_team}</span>
-            </p>
-            <p style={{ color: "#f9fafb", fontSize: "1.5rem", fontWeight: 700, margin: "0.25rem 0" }}>
-              {lastGame.away_score} – {lastGame.home_score}
-            </p>
-            {(() => {
-                const kWon = (lastGame.home_team.includes("Knicks") && lastGame.home_score > lastGame.away_score) ||
-                    (lastGame.away_team.includes("Knicks") && lastGame.away_score > lastGame.home_score);
-                return (<span style={{ display: "inline-block", padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700, background: kWon ? "#14532d" : "#7f1d1d", color: kWon ? "#4ade80" : "#f87171" }}>
-                  {kWon ? "WIN" : "LOSS"}
-                </span>);
-            })()}
-          </div>)}
-      </div>
-
-      <div className="db-main">
-        <div style={{ minWidth: 0 }}>
-
-          {recentArticles.length > 0 && (<div style={{ marginBottom: "1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-                <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>
-                  {sectionTitle}
-                </h2>
-                <Link to="/predictions" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View all →</Link>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                {recentArticles.map((a) => {
-                const badge = ARTICLE_BADGE[a.article_type] ?? ARTICLE_BADGE.prediction;
-                return (<Link key={a.slug} to={`/predictions/${a.slug}`} style={{ textDecoration: "none" }}>
-                      <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1rem", display: "flex", alignItems: "flex-start", gap: "0.75rem", transition: "border-color 0.15s" }} onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#1f2937")}>
-                        <span style={{ display: "inline-block", background: badge.bg, color: badge.color, flexShrink: 0, fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em", padding: "0.2rem 0.6rem", borderRadius: "999px", marginTop: "0.1rem" }}>
-                          {badge.label}
-                        </span>
-                        <div>
-                          <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.25rem", lineHeight: 1.4 }}>{a.title}</p>
-                          <p style={{ color: "#4b5563", fontSize: "0.72rem", margin: 0 }}>
-                            {new Date(a.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </p>
-                        </div>
-                      </div>
-                    </Link>);
-            })}
-              </div>
-            </div>)}
-
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>LATEST NEWS</h2>
-              <Link to="/news" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View all →</Link>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              {(news ?? []).slice(0, 8).map((a) => <NewsCard key={a.id} article={a}/>)}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.2rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>INJURY REPORT</h2>
-              <Link to="/injuries" style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View all →</Link>
-            </div>
-            {(injuries ?? []).length === 0 && <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: 0 }}>No injuries reported</p>}
-            {(injuries ?? []).map((inj) => (<div key={inj.player_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #1f2937" }}>
-                <div>
-                  <p style={{ color: "#f9fafb", fontSize: "0.875rem", fontWeight: 600, margin: 0 }}>{inj.player_name}</p>
-                  <p style={{ color: "#6b7280", fontSize: "0.75rem", margin: "0.1rem 0 0" }}>{inj.reason}</p>
-                </div>
-                <StatusBadge status={inj.status}/>
-              </div>))}
-          </div>
-
-          {(birthdays ?? []).length > 0 && (<div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-              <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.2rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>🎂 BIRTHDAYS</h2>
-              {(birthdays ?? []).slice(0, 5).map((b) => (<div key={b.player_name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #1f2937" }}>
-                  <p style={{ color: "#f9fafb", fontSize: "0.875rem", margin: 0 }}>{b.player_name}</p>
-                  <p style={{ color: "#6b7280", fontSize: "0.75rem", margin: 0 }}>
-                    {new Date(b.birth_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} · turns {b.age}
-                  </p>
-                </div>))}
-            </div>)}
-
-          <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-            <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.2rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>QUICK LINKS</h2>
-            {[
-            { label: "nba.com/knicks", url: "https://www.nba.com/team/1610612752/knicks" },
-            { label: "NY Post Knicks", url: "https://nypost.com/sports/knicks/" },
-            { label: "ESPN Knicks", url: "https://www.espn.com/nba/team/_/name/ny/new-york-knicks" },
-            { label: "Knicks Twitter/X", url: "https://twitter.com/nyknicks" },
-            { label: "MSG Networks", url: "https://www.msgsports.com/knicks/" },
-        ].map(l => (<a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", color: "#006BB6", fontSize: "0.85rem", padding: "0.35rem 0", textDecoration: "none", borderBottom: "1px solid #1f2937" }} onMouseEnter={e => (e.currentTarget.style.color = "#F58426")} onMouseLeave={e => (e.currentTarget.style.color = "#006BB6")}>{l.label}</a>))}
-          </div>
-        </div>
-      </div>
-    </div>);
-}
-function NewsCard({ article }) {
-    const sourceColors = { espn: "#FF6B35", nypost: "#E4002B", knicks: "#006BB6", nba: "#006BB6", bleacher: "#F5A623" };
-    const sourceLabels = { espn: "ESPN", nypost: "NY Post", knicks: "Knicks.com", nba: "NBA.com", bleacher: "BR" };
-    const color = sourceColors[article.source] ?? "#6b7280";
-    const timeAgo = (iso) => {
-        if (!iso)
-            return "";
-        const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-        if (diff < 3600)
-            return `${Math.floor(diff / 60)}m ago`;
-        if (diff < 86400)
-            return `${Math.floor(diff / 3600)}h ago`;
-        return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const knicks = standings?.find((t) => (t.team_name || t.team || t.teamName || "").includes("Knicks"));
+    const todayBestBet = articles?.find((a) => a.article_type === "best_bet");
+    const latestPredictions = articles?.filter((a) => ["prediction", "best_bet", "prop"].includes(a.article_type)).slice(0, 3);
+    const nextGame = schedule?.find((g) => !g.home_score && g.status !== "Final");
+    const lastGame = schedule?.filter((g) => g.status === "Final" || g.home_score).slice(-1)[0];
+    const knicksInj = injuries?.slice(0, 4) ?? [];
+    const bdays = birthdays?.slice(0, 2) ?? [];
+    const preds = resultsData?.predictions ?? [];
+    const propRes = resultsData?.props ?? [];
+    const atsHits = preds.filter((r) => r.spread_result === "HIT").length;
+    const atsTotal = preds.filter((r) => r.spread_result).length;
+    const ouHits = preds.filter((r) => r.total_result === "HIT").length;
+    const ouTotal = preds.filter((r) => r.total_result).length;
+    const propHits = propRes.filter((r) => r.result === "HIT").length;
+    const opp = (a) => {
+        if (!a)
+            return "TBD";
+        return a.home_team?.includes("Knicks") ? a.away_team : a.home_team;
     };
-    return (<a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-      <div style={{ display: "flex", gap: "0.75rem", padding: "0.9rem 0", borderBottom: "1px solid #1f2937" }} onMouseEnter={e => (e.currentTarget.style.background = "#0d1117")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-        {article.image_url && (<img src={article.image_url} alt="" style={{ width: "80px", height: "56px", objectFit: "cover", borderRadius: "0.375rem", flexShrink: 0 }} onError={e => { e.target.style.display = "none"; }}/>)}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.875rem", margin: "0 0 0.35rem", lineHeight: 1.4 }}>{article.title}</p>
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", fontSize: "0.72rem" }}>
-            <span style={{ color, fontWeight: 700 }}>{sourceLabels[article.source] ?? article.source.toUpperCase()}</span>
-            <span style={{ color: "#374151" }}>·</span>
-            <span style={{ color: "#4b5563" }}>{timeAgo(article.published_at)}</span>
+    const fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return (<div className="main-content">
+      <Helmet>
+        <title>KnicksHub — Knicks Predictions, Best Bets & Player Props</title>
+        <meta name="description" content="AI-powered New York Knicks betting predictions, best bets, spread picks, and player props."/>
+        <link rel="canonical" href="https://knickshub.vercel.app"/>
+      </Helmet>
+
+      {/* Team Record Bar */}
+      <h1 style={{ position: "absolute", width: "1px", height: "1px", padding: 0, margin: "-1px", overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>KnicksHub — New York Knicks Predictions, Best Bets & Player Props</h1>
+      <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "0.75rem 2rem", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div>
+            <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.1rem", letterSpacing: "-0.02em", textTransform: "uppercase", color: S.text }}>NEW YORK KNICKS</span>
+            <span style={{ fontSize: "0.625rem", color: S.textMuted, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Eastern Conference</span>
           </div>
         </div>
+        <div style={{ display: "flex", gap: "2.5rem", alignItems: "center" }}>
+          {knicks && <>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem" }}>{knicks.wins}-{knicks.losses}</span>
+              <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>W-L RECORD</span>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: S.peach }}>#{knicks.conference_rank || knicks.conferenceRank || "—"}</span>
+              <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>SEED</span>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: S.green }}>{knicks.win_pct ? (knicks.win_pct * 100).toFixed(1) + "%" : "—"}</span>
+              <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>WIN %</span>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: S.textMuted }}>{knicks.games_back === 0 ? "—" : knicks.games_back ?? "—"}</span>
+              <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>GB</span>
+            </div>
+          </>}
+          {atsTotal > 0 && (<div style={{ textAlign: "center" }}>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: atsHits / atsTotal >= 0.5 ? S.green : S.red }}>{atsHits}-{atsTotal - atsHits}</span>
+              <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>ATS</span>
+            </div>)}
+          {ouTotal > 0 && (<div style={{ textAlign: "center" }}>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: ouHits / ouTotal >= 0.5 ? S.green : S.red }}>{ouHits}-{ouTotal - ouHits}</span>
+              <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>O/U</span>
+            </div>)}
+          {propRes.length > 0 && (<div style={{ textAlign: "center" }}>
+              <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.4rem", color: propHits / propRes.length >= 0.5 ? S.green : S.red }}>{propHits}-{propRes.length - propHits}</span>
+              <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>PROPS</span>
+            </div>)}
+        </div>
       </div>
-    </a>);
-}
-function StatusBadge({ status }) {
-    const s = status?.toLowerCase() ?? "";
-    let bg = "#1f2937", color = "#9ca3af";
-    if (s.includes("out")) {
-        bg = "#7f1d1d";
-        color = "#f87171";
-    }
-    else if (s.includes("day")) {
-        bg = "#78350f";
-        color = "#fbbf24";
-    }
-    else if (s.includes("questionable")) {
-        bg = "#1e3a5f";
-        color = "#93c5fd";
-    }
-    return (<span style={{ background: bg, color, padding: "0.15rem 0.6rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, whiteSpace: "nowrap" }}>
-      {status}
-    </span>);
-}
-function Countdown({ gameDate }) {
-    const target = new Date(gameDate + "T19:30:00").getTime();
-    const [diff, setDiff] = useState(target - Date.now());
-    useEffect(() => {
-        const t = setInterval(() => setDiff(target - Date.now()), 1000);
-        return () => clearInterval(t);
-    }, [target]);
-    if (diff <= 0)
-        return <span style={{ color: "#4ade80", fontWeight: 700, fontSize: "0.875rem" }}>GAME TIME 🏀</span>;
-    const h = Math.floor(diff / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    const d = Math.floor(h / 24);
-    return (<div style={{ display: "flex", gap: "0.5rem" }}>
-      {d > 0 && <MiniBlock v={d} l="D"/>}
-      <MiniBlock v={d > 0 ? h % 24 : h} l="H"/>
-      <MiniBlock v={m} l="M"/>
-      <MiniBlock v={s} l="S"/>
-    </div>);
-}
-function MiniBlock({ v, l }) {
-    return (<div style={{ background: "#0d0d0d", borderRadius: "0.375rem", padding: "0.4rem 0.6rem", textAlign: "center", minWidth: "42px" }}>
-      <p style={{ color: "#F58426", fontSize: "1.1rem", fontWeight: 700, margin: 0, fontVariantNumeric: "tabular-nums" }}>{String(v).padStart(2, "0")}</p>
-      <p style={{ color: "#4b5563", fontSize: "0.55rem", margin: 0 }}>{l}</p>
+
+      {/* Unified Dashboard Grid */}
+      <div style={{ padding: "1.5rem 2rem 2rem", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "0 1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
+
+        {/* AI Best Bet Hero */}
+        {todayBestBet ? (<Link to={`/predictions/${todayBestBet.slug}`} style={{ textDecoration: "none" }}>
+            <div style={{ position: "relative", overflow: "hidden", backgroundImage: `url(/players/msg-court.jpg)`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.75rem", padding: "1.25rem", borderLeft: `4px solid ${S.orange}`, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", minHeight: "0", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: S.orange, color: "#5c2b00", padding: "0.25rem 0.75rem", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: "0.25rem", marginBottom: "1.25rem", fontFamily: "Space Grotesk, sans-serif", fontStyle: "italic" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>auto_awesome</span>
+                AI Recommended Best Bet
+              </span>
+              {todayBestBet.key_picks?.spread_pick ? (<h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 4rem)", letterSpacing: "-0.04em", lineHeight: 0.9, marginBottom: "1rem", color: S.text, textTransform: "uppercase" }}>
+                  {todayBestBet.key_picks.spread_lean === "COVER" ? "KNICKS" : opp(todayBestBet).split(" ").pop()}<br />
+                  <span style={{ color: S.orange }}>{todayBestBet.key_picks.spread_pick.replace(/Knickss*/i, "").replace(/.*?s/, "")}</span> SPREAD
+                </h2>) : (<h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(1.25rem, 2.5vw, 2rem)", letterSpacing: "-0.02em", lineHeight: 1.15, marginBottom: "1rem", color: S.text }}>
+                  {todayBestBet.title}
+                </h2>)}
+              {todayBestBet.key_picks && (<div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+                  {todayBestBet.key_picks.spread_pick && (<span style={{ background: S.surfaceHighest, padding: "0.375rem 0.75rem", borderRadius: "0.25rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem" }}>
+                      {todayBestBet.key_picks.spread_pick}
+                      <span style={{ marginLeft: "0.5rem", color: todayBestBet.key_picks.spread_lean === "COVER" ? S.green : S.red, fontSize: "0.6875rem" }}>{todayBestBet.key_picks.spread_lean}</span>
+                    </span>)}
+                  {todayBestBet.key_picks.total_pick && (<span style={{ background: S.surfaceHighest, padding: "0.375rem 0.75rem", borderRadius: "0.25rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem" }}>
+                      {todayBestBet.key_picks.total_pick}
+                      <span style={{ marginLeft: "0.5rem", color: todayBestBet.key_picks.total_lean === "OVER" ? S.green : S.red, fontSize: "0.6875rem" }}>{todayBestBet.key_picks.total_lean}</span>
+                    </span>)}
+                  {todayBestBet.key_picks.confidence && (<span style={{ background: todayBestBet.key_picks.confidence === "High" ? S.greenBg : S.surfaceHighest, color: todayBestBet.key_picks.confidence === "High" ? "#00431a" : S.textMuted, padding: "0.375rem 0.75rem", borderRadius: "0.25rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.6875rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                      {todayBestBet.key_picks.confidence} Confidence
+                    </span>)}
+                </div>)}
+              <p style={{ color: S.textMuted, fontSize: "0.8125rem" }}>vs {opp(todayBestBet)} · {fmt(todayBestBet.game_date)} · Read full analysis →</p>
+            </div>
+          </Link>) : (<div style={{ background: S.surfaceHigh, borderRadius: "0.75rem", padding: "2rem", borderLeft: `4px solid rgba(245,132,38,0.3)`, minHeight: "280px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "rgba(245,132,38,0.15)", color: S.peach, padding: "0.25rem 0.75rem", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: "0.25rem", marginBottom: "1.25rem", fontFamily: "Space Grotesk, sans-serif", fontStyle: "italic", width: "fit-content" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>schedule</span>
+              AI Picks Drop ~45 Min Before Tip-Off
+            </span>
+            <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(1.75rem, 3vw, 3rem)", letterSpacing: "-0.03em", lineHeight: 1, marginBottom: "0.75rem", color: S.text }}>
+              {nextGame ? `Next: vs ${opp(nextGame)}` : "No Upcoming Game"}
+            </h2>
+            <p style={{ color: S.textMuted, fontSize: "0.875rem", marginBottom: "1.5rem" }}>Best bet, prediction, and player props auto-generate before tip-off.</p>
+            {atsTotal > 0 && (<div style={{ display: "flex", gap: "2rem" }}>
+                {[["ATS", atsHits, atsTotal], ["O/U", ouHits, ouTotal], ["PROPS", propHits, propRes.length]].filter(([, , t]) => t > 0).map(([label, h, t]) => (<div key={label}>
+                    <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.75rem", color: h / t >= 0.5 ? S.green : S.red }}>{h}-{t - h}</span>
+                    <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</span>
+                  </div>))}
+              </div>)}
+          </div>)}
+
+        {/* Right Column: Next + Last Game */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignSelf: "start", gridColumn: "2", gridRow: "1" }}>
+          {nextGame && (<div style={{ background: S.surfaceHigh, borderRadius: "0.75rem", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <span style={{ fontSize: "0.5625rem", fontWeight: 900, letterSpacing: "0.2rem", color: S.orange, textTransform: "uppercase" }}>Next Battle</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ textAlign: "center" }}>
+                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.75rem" }}>NYK</span>
+                </div>
+                <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.25rem", color: S.textDim, fontStyle: "italic" }}>VS</span>
+                <div style={{ textAlign: "center" }}>
+                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.75rem" }}>{opp(nextGame)?.split(" ").pop()}</span>
+                </div>
+              </div>
+              <p style={{ fontSize: "0.6875rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>
+                {new Date(nextGame.game_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+              </p>
+            </div>)}
+          {lastGame && (<div style={{ background: S.surfaceHigh, borderRadius: "0.75rem", padding: "1.25rem", borderLeft: `4px solid ${S.green}`, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <span style={{ fontSize: "0.5625rem", fontWeight: 900, letterSpacing: "0.2rem", color: S.green, textTransform: "uppercase" }}>Last Result</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem" }}>
+                    {lastGame.home_team?.includes("Knicks") ? lastGame.home_score : lastGame.away_score} - {lastGame.home_team?.includes("Knicks") ? lastGame.away_score : lastGame.home_score}
+                  </span>
+                  <span style={{ fontSize: "0.5625rem", fontWeight: 700, color: S.textMuted, textTransform: "uppercase" }}>vs {opp(lastGame)}</span>
+                </div>
+                <span style={{ background: S.green, color: "#003915", padding: "0.25rem 0.625rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.125rem", borderRadius: "0.25rem", textTransform: "uppercase", fontStyle: "italic" }}>
+                  {lastGame.result || "W"}
+                </span>
+              </div>
+            </div>)}
+        </div>
+      </div>
+
+        {/* Left: Latest Predictions + News — col-start:1 row 2 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem", gridColumn: "1", gridRow: "2" }}>
+
+          {/* Latest Predictions */}
+          <section>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.375rem", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "-0.01em", color: S.text }}>Latest Predictions</h3>
+              <Link to="/predictions" style={{ fontSize: "0.6875rem", fontWeight: 700, color: S.orange, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>See All</Link>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+              {latestPredictions?.map((a) => {
+            const b = badge(a.article_type);
+            return (<Link key={a.slug} to={`/predictions/${a.slug}`} style={{ textDecoration: "none" }}>
+                    <div style={{ background: S.surfaceHigh, padding: "1.25rem", borderRadius: "0.5rem", border: `1px solid ${S.border}`, height: "100%", display: "flex", flexDirection: "column", gap: "0.5rem", transition: "border-color 0.15s" }} onMouseEnter={e => (e.currentTarget.style.borderColor = S.orange)} onMouseLeave={e => (e.currentTarget.style.borderColor = S.border)}>
+                      <span style={{ background: b.bg, color: b.color, padding: "0.1875rem 0.5rem", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", borderRadius: "999px", width: "fit-content" }}>{b.label}</span>
+                      <h4 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", lineHeight: 1.3, color: S.text, flex: 1 }}>{a.title.replace(/s*([d-]+)s*$/, "").replace(/AI Prediction,?s*/i, "").replace(/Best Bets & Player Props/i, "").trim()}</h4>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.625rem", fontWeight: 900, textTransform: "uppercase", color: S.orange }}>
+                        <span>{fmt(a.game_date)}</span>
+                        {a.key_picks?.confidence && <span style={{ color: a.key_picks.confidence === "High" ? S.green : S.textMuted }}>{a.key_picks.confidence} Conf</span>}
+                      </div>
+                    </div>
+                  </Link>);
+        })}
+            </div>
+          </section>
+
+          {/* News Feed */}
+          <section>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.375rem", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "-0.01em", color: S.text }}>Editorial News Feed</h3>
+              <Link to="/news" style={{ fontSize: "0.6875rem", fontWeight: 700, color: S.orange, letterSpacing: "0.15em", textTransform: "uppercase", textDecoration: "none" }}>See All</Link>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+              {news?.slice(0, 8).map((item, i) => (<a key={i} href={item.url || item.link || "#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "flex", gap: "1rem", padding: "0.75rem", borderRadius: "0.5rem", transition: "background 0.15s" }} onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: "0.5625rem", fontWeight: 900, color: S.orange, letterSpacing: "0.15em", textTransform: "uppercase", display: "block", marginBottom: "0.25rem" }}>{item.source || "ESPN"}</span>
+                    <h4 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", lineHeight: 1.3, color: S.text }}>{item.title}</h4>
+                  </div>
+                </a>))}
+            </div>
+          </section>
+        </div>
+
+        {/* Right: Next+Last Game + Injuries + Birthdays */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", gridColumn: "2", gridRow: "2" }}>
+
+          {/* Injury Report */}
+          <section style={{ background: S.surface, padding: "1.5rem", borderRadius: "0.75rem", border: `1px solid ${S.border}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+              <span className="material-symbols-outlined" style={{ color: S.peach, fontSize: "1.25rem" }}>medical_services</span>
+              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.0625rem", textTransform: "uppercase", fontStyle: "italic", color: S.text }}>Injury Report</h3>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {knicksInj.length > 0 ? knicksInj.map((inj, i) => (<div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <span style={{ display: "block", fontWeight: 700, fontSize: "0.875rem", color: S.text }}>{inj.player_name || inj.name}</span>
+                    <span style={{ fontSize: "0.625rem", color: S.textMuted, textTransform: "uppercase" }}>{inj.reason || inj.injury}</span>
+                  </div>
+                  <span style={{
+                background: (inj.status || "").toLowerCase().includes("out") ? S.redBg : S.surfaceHighest,
+                color: (inj.status || "").toLowerCase().includes("out") ? "#ffdad6" : S.orange,
+                padding: "0.1875rem 0.5rem", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", borderRadius: "0.25rem"
+            }}>{inj.status || "GTD"}</span>
+                </div>)) : <p style={{ fontSize: "0.8125rem", color: S.textMuted }}>No injuries reported.</p>}
+            </div>
+            <Link to="/injuries" style={{ display: "block", marginTop: "1rem", fontSize: "0.625rem", fontWeight: 700, color: S.orange, textTransform: "uppercase", letterSpacing: "0.15em", textDecoration: "none" }}>Full Report →</Link>
+          </section>
+
+          {/* Birthdays */}
+          {bdays.length > 0 && (<section style={{ background: S.surface, padding: "1.5rem", borderRadius: "0.75rem", border: `1px solid ${S.border}`, position: "relative", overflow: "hidden" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
+                <span className="material-symbols-outlined" style={{ color: S.orange, fontSize: "1.25rem" }}>cake</span>
+                <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.0625rem", textTransform: "uppercase", fontStyle: "italic", color: S.text }}>Birthdays</h3>
+              </div>
+              {bdays.map((b, i) => (<div key={i} style={{ display: "flex", alignItems: "center", gap: "0.75rem", opacity: i > 0 ? 0.5 : 1, paddingTop: i > 0 ? "0.75rem" : 0, borderTop: i > 0 ? `1px solid ${S.border}` : "none", marginTop: i > 0 ? "0.75rem" : 0 }}>
+                  <div>
+                    <span style={{ display: "block", fontWeight: 700, fontSize: "0.875rem", color: S.text }}>{b.player_name}</span>
+                    <span style={{ fontSize: "0.625rem", color: S.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>{i === 0 ? "Today" : "Upcoming"} · {b.birth_date}</span>
+                  </div>
+                </div>))}
+            </section>)}
+
+          {/* AI Record */}
+          {atsTotal > 0 && (<div style={{ background: "linear-gradient(135deg, #1c1b1b, #131313)", padding: "1.5rem", borderRadius: "0.75rem", borderLeft: `4px solid ${S.orange}` }}>
+              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.15em", color: S.text, marginBottom: "1rem" }}>AI Season Record</h3>
+              <div style={{ display: "flex", gap: "1.5rem" }}>
+                {[[atsHits, atsTotal - atsHits, "ATS"], [ouHits, ouTotal - ouHits, "O/U"], [propHits, propRes.length - propHits, "PROPS"]].filter(([, , l]) => l === "PROPS" ? propRes.length > 0 : (l === "O/U" ? ouTotal > 0 : atsTotal > 0)).map(([h, m, l]) => (<div key={l}>
+                    <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem", color: h / (h + m) >= 0.5 ? S.green : S.red }}>{h}-{m}</span>
+                    <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase" }}>{l}</span>
+                  </div>))}
+              </div>
+            </div>)}
+      </div>
+
+
+      {/* Footer */}
+      <footer style={{ background: "#131313", borderTop: `1px solid ${S.border}`, padding: "2.5rem 2rem", marginTop: "1rem" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "1rem", maxWidth: "1400px" }}>
+          <p style={{ fontSize: "0.625rem", fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.05em", color: S.textMuted, opacity: 0.6 }}>© 2026 KnicksHub. Responsible Gaming Only. Built by <a href="https://websitesbywillie.com" target="_blank" rel="noopener noreferrer" style={{ color: S.textMuted, opacity: 0.5, textDecoration: "none" }}>websitesbywillie.com</a></p>
+          <div style={{ display: "flex", gap: "1.5rem" }}>
+            {[["About", "/about"], ["Privacy", "/privacy"], ["Terms", "/terms"]].map(([label, to]) => (<Link key={to} to={to} style={{ fontSize: "0.625rem", fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.05em", color: S.textMuted, opacity: 0.5, textDecoration: "none" }}>{label}</Link>))}
+          </div>
+        </div>
+      </footer>
     </div>);
 }

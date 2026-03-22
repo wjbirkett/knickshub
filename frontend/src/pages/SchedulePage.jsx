@@ -1,121 +1,73 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSchedule, getStandings } from "../utils/api";
+import { Helmet } from "react-helmet-async";
+import { getSchedule } from "../utils/api";
+const S = {
+    bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
+    border: "rgba(255,255,255,0.08)", orange: "#F58426", peach: "#ffb786",
+    green: "#4ae176", greenBg: "#06bb55", red: "#ffb4ab", redBg: "#93000a",
+    text: "#e5e2e1", textMuted: "#ddc1b1",
+};
 export default function SchedulePage() {
-    const { data: games, isLoading: gLoading } = useQuery({ queryKey: ["schedule"], queryFn: getSchedule });
-    const { data: standings, isLoading: sLoading } = useQuery({ queryKey: ["standings"], queryFn: getStandings });
-    const H1 = { fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426" };
-    const H2 = { fontFamily: "Bebas Neue, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" };
-    const knicks = standings?.find((t) => t.team_name.includes("Knicks"));
-    const today = new Date().toISOString().slice(0, 10);
-    const upcoming = (games ?? []).filter((g) => g.status === "Scheduled" || (g.game_date >= today && g.status !== "Final"));
-    const recent = (games ?? []).filter((g) => g.status === "Final").slice(-10).reverse();
-    return (<div style={{ maxWidth: "900px" }}>
-      <header style={{ borderBottom: "1px solid #1f2937", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
-        <h1 style={H1}>SCHEDULE</h1>
-      </header>
+    const { data: schedule, isLoading } = useQuery({ queryKey: ["schedule"], queryFn: getSchedule });
+    const games = schedule ?? [];
+    const past = games.filter((g) => g.status === "Final" || g.home_score).reverse();
+    const upcoming = games.filter((g) => !g.home_score && g.status !== "Final");
+    const fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    const opp = (g) => g.home_team?.includes("Knicks") ? g.away_team : g.home_team;
+    const isHome = (g) => g.home_team?.includes("Knicks");
+    const kScore = (g) => g.home_team?.includes("Knicks") ? g.home_score : g.away_score;
+    const oScore = (g) => g.home_team?.includes("Knicks") ? g.away_score : g.home_score;
+    return (<div style={{ background: S.bg, minHeight: "100vh" }}>
+      <Helmet>
+        <title>Knicks Schedule 2025-26 | KnicksHub</title>
+        <meta name="description" content="New York Knicks 2025-26 season schedule, results, and upcoming games."/>
+      </Helmet>
 
-      {knicks && (<div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-          <h2 style={H2}>KNICKS STANDING</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.75rem" }}>
-            <Stat label="Record" value={`${knicks.wins}-${knicks.losses}`}/>
-            <Stat label="Win %" value={(knicks.win_pct * 100).toFixed(1) + "%"}/>
-            <Stat label="Conf Rank" value={`#${knicks.conference_rank}`}/>
-            <Stat label="Games Back" value={knicks.games_back === 0 ? "—" : knicks.games_back.toFixed(1)}/>
-            <Stat label="Conference" value={knicks.conference}/>
-          </div>
-        </div>)}
-
-      <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-        <h2 style={H2}>UPCOMING GAMES</h2>
-        {gLoading && <p style={{ color: "#6b7280" }}>Loading...</p>}
-        {!gLoading && upcoming.length === 0 && <p style={{ color: "#6b7280", fontSize: "0.875rem" }}>No upcoming games scheduled</p>}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {upcoming.slice(0, 10).map((g) => (<GameRow key={g.game_id} game={g}/>))}
-        </div>
+      <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "2rem 2.5rem" }}>
+        <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 5vw, 3.5rem)", textTransform: "uppercase", letterSpacing: "-0.03em", color: S.text, margin: "0 0 0.5rem", fontStyle: "italic" }}>
+          2025-26 <span style={{ color: S.peach }}>Schedule</span>
+        </h1>
+        <p style={{ color: S.textMuted, fontSize: "0.875rem", margin: 0 }}>New York Knicks season results & upcoming games</p>
       </div>
 
-      <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-        <h2 style={H2}>RECENT RESULTS</h2>
-        {gLoading && <p style={{ color: "#6b7280" }}>Loading...</p>}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {recent.map((g) => (<GameRow key={g.game_id} game={g}/>))}
-        </div>
-      </div>
+      <div style={{ padding: "2rem 2.5rem", maxWidth: "900px" }}>
+        {isLoading ? <p style={{ color: S.textMuted }}>Loading...</p> : (<>
+            {/* Upcoming */}
+            {upcoming.length > 0 && (<section style={{ marginBottom: "2.5rem" }}>
+                <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.125rem", textTransform: "uppercase", letterSpacing: "0.05em", color: S.peach, marginBottom: "1rem" }}>Upcoming Games</h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {upcoming.slice(0, 10).map((g, i) => (<div key={i} style={{ background: S.surface, padding: "1rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                        <span style={{ fontSize: "0.625rem", color: S.textMuted, fontFamily: "Inter, sans-serif", minWidth: "70px" }}>{fmt(g.game_date)}</span>
+                        <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", background: S.surfaceHigh, padding: "0.1rem 0.375rem" }}>{isHome(g) ? "HOME" : "AWAY"}</span>
+                        <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", textTransform: "uppercase", color: S.text }}>vs {opp(g)}</span>
+                      </div>
+                      <span style={{ fontSize: "0.625rem", color: S.textMuted, fontFamily: "Inter, sans-serif" }}>{g.arena || ""}</span>
+                    </div>))}
+                </div>
+              </section>)}
 
-      <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-        <h2 style={H2}>EASTERN CONFERENCE STANDINGS</h2>
-        {sLoading && <p style={{ color: "#6b7280" }}>Loading standings...</p>}
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-            <thead>
-              <tr style={{ color: "#6b7280", textAlign: "left" }}>
-                <th style={{ padding: "0.5rem 0.75rem" }}>Team</th>
-                <th style={{ padding: "0.5rem 0.75rem", textAlign: "center" }}>W</th>
-                <th style={{ padding: "0.5rem 0.75rem", textAlign: "center" }}>L</th>
-                <th style={{ padding: "0.5rem 0.75rem", textAlign: "center" }}>PCT</th>
-                <th style={{ padding: "0.5rem 0.75rem", textAlign: "center" }}>GB</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(standings ?? []).filter((t) => t.conference === "East").map((t) => (<tr key={t.team_name} style={{
-                borderTop: "1px solid #1f2937",
-                background: t.team_name.includes("Knicks") ? "#0c1a4b" : "transparent",
-            }}>
-                  <td style={{ padding: "0.6rem 0.75rem", color: t.team_name.includes("Knicks") ? "#93c5fd" : "#e5e7eb", fontWeight: t.team_name.includes("Knicks") ? 700 : 400 }}>
-                    {t.conference_rank}. {t.team_name}
-                  </td>
-                  <td style={{ padding: "0.6rem 0.75rem", textAlign: "center", color: "#d1d5db" }}>{t.wins}</td>
-                  <td style={{ padding: "0.6rem 0.75rem", textAlign: "center", color: "#d1d5db" }}>{t.losses}</td>
-                  <td style={{ padding: "0.6rem 0.75rem", textAlign: "center", color: "#d1d5db" }}>{(t.win_pct * 100).toFixed(1)}%</td>
-                  <td style={{ padding: "0.6rem 0.75rem", textAlign: "center", color: "#d1d5db" }}>{t.games_back === 0 ? "—" : t.games_back.toFixed(1)}</td>
-                </tr>))}
-            </tbody>
-          </table>
-        </div>
+            {/* Past results */}
+            {past.length > 0 && (<section>
+                <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.125rem", textTransform: "uppercase", letterSpacing: "0.05em", color: S.textMuted, marginBottom: "1rem" }}>Results</h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {past.slice(0, 30).map((g, i) => {
+                    const win = kScore(g) > oScore(g);
+                    return (<div key={i} style={{ background: S.surface, padding: "1rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", borderLeft: `3px solid ${win ? S.green : S.red}` }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1 }}>
+                          <span style={{ fontSize: "0.625rem", color: S.textMuted, fontFamily: "Inter, sans-serif", minWidth: "70px" }}>{fmt(g.game_date)}</span>
+                          <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", background: S.surfaceHigh, padding: "0.1rem 0.375rem" }}>{isHome(g) ? "HOME" : "AWAY"}</span>
+                          <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", textTransform: "uppercase", color: S.text }}>vs {opp(g)}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1rem", color: S.text }}>{kScore(g)} - {oScore(g)}</span>
+                          <span style={{ background: win ? S.greenBg : S.redBg, color: win ? "#00431a" : "#ffdad6", padding: "0.2rem 0.5rem", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif", minWidth: "28px", textAlign: "center" }}>{win ? "W" : "L"}</span>
+                        </div>
+                      </div>);
+                })}
+                </div>
+              </section>)}
+          </>)}
       </div>
-    </div>);
-}
-function GameRow({ game }) {
-    const isKnicksHome = game.home_team.includes("Knicks");
-    const isKnicksAway = game.away_team.includes("Knicks");
-    const knickWon = game.status === "Final" && ((isKnicksHome && game.home_score > game.away_score) ||
-        (isKnicksAway && game.away_score > game.home_score));
-    const knickLost = game.status === "Final" && !knickWon;
-    return (<div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "0.75rem 0", borderBottom: "1px solid #1f2937",
-        }}>
-      <div style={{ minWidth: "120px" }}>
-        <p style={{ color: "#6b7280", fontSize: "0.75rem", margin: 0 }}>
-          {new Date(game.game_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-        </p>
-        {game.arena && <p style={{ color: "#4b5563", fontSize: "0.7rem", margin: "0.1rem 0 0" }}>{game.arena}</p>}
-      </div>
-      <div style={{ flex: 1, textAlign: "center" }}>
-        <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.9rem", margin: 0 }}>
-          <span style={{ color: isKnicksAway ? "#F58426" : "#e5e7eb" }}>{game.away_team}</span>
-          <span style={{ color: "#4b5563", margin: "0 0.4rem" }}>@</span>
-          <span style={{ color: isKnicksHome ? "#F58426" : "#e5e7eb" }}>{game.home_team}</span>
-        </p>
-      </div>
-      <div style={{ minWidth: "90px", textAlign: "right" }}>
-        {game.status === "Final" ? (<div style={{ textAlign: "right" }}>
-            <p style={{ color: "#f9fafb", fontWeight: 700, margin: 0, fontSize: "0.9rem" }}>{game.away_score} - {game.home_score}</p>
-            <span style={{
-                fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em",
-                color: knickWon ? "#4ade80" : knickLost ? "#f87171" : "#9ca3af"
-            }}>
-              {knickWon ? "WIN" : knickLost ? "LOSS" : "FINAL"}
-            </span>
-          </div>) : game.status === "Live" ? (<span style={{ background: "#7f1d1d", color: "#fca5a5", padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700 }}>LIVE</span>) : (<span style={{ background: "#0c1a4b", color: "#93c5fd", padding: "0.2rem 0.6rem", borderRadius: "999px", fontSize: "0.75rem" }}>
-            {new Date(game.game_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-          </span>)}
-      </div>
-    </div>);
-}
-function Stat({ label, value }) {
-    return (<div style={{ background: "#0d0d0d", borderRadius: "0.5rem", padding: "0.75rem", textAlign: "center" }}>
-      <p style={{ color: "#6b7280", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{label}</p>
-      <p style={{ color: "#f9fafb", fontSize: "1.1rem", fontWeight: 700, margin: "0.25rem 0 0" }}>{value}</p>
     </div>);
 }

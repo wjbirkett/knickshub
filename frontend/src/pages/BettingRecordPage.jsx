@@ -1,109 +1,105 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSchedule, getResults } from "../utils/api";
-export default function TweetsPage() {
-    const { data: games, isLoading } = useQuery({ queryKey: ["schedule"], queryFn: getSchedule });
-    const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults });
-    const predictions = resultsData?.predictions ?? [];
+import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { getResults } from "../utils/api";
+const S = {
+    bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
+    surfaceHighest: "#353534", border: "rgba(255,255,255,0.08)",
+    orange: "#F58426", peach: "#ffb786", green: "#4ae176",
+    greenBg: "#06bb55", red: "#ffb4ab", redBg: "#93000a",
+    text: "#e5e2e1", textMuted: "#ddc1b1",
+};
+export default function BettingRecordPage() {
+    const { data: resultsData, isLoading } = useQuery({ queryKey: ["results"], queryFn: getResults });
+    const preds = resultsData?.predictions ?? [];
     const props = resultsData?.props ?? [];
-    const finished = (games ?? []).filter((g) => g.status === "Final");
-    const knicksWon = (g) => (g.home_team.includes("Knicks") && g.home_score > g.away_score) || (g.away_team.includes("Knicks") && g.away_score > g.home_score);
-    const knicksScore = (g) => g.home_team.includes("Knicks") ? g.home_score : g.away_score;
-    const oppScore = (g) => g.home_team.includes("Knicks") ? g.away_score : g.home_score;
-    const isHome = (g) => g.home_team.includes("Knicks");
-    const wins = finished.filter(knicksWon).length;
-    const losses = finished.length - wins;
-    const totals = finished.map((g) => (g.home_score ?? 0) + (g.away_score ?? 0)).filter((t) => t > 0);
-    const avgTotal = totals.length ? (totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(1) : "N/A";
-    const margins = finished.map((g) => knicksScore(g) - oppScore(g));
-    const avgMargin = margins.length ? (margins.reduce((a, b) => a + b, 0) / margins.length).toFixed(1) : "N/A";
-    const last10 = finished.slice(-10).reverse();
-    const last10Wins = last10.filter(knicksWon).length;
-    const reversed = [...finished].reverse();
-    let streakType = reversed.length > 0 ? knicksWon(reversed[0]) : null;
-    let streakCount = 0;
-    for (const g of reversed) {
-        if (knicksWon(g) === streakType)
-            streakCount++;
-        else
-            break;
-    }
-    const streak = streakType !== null ? `${streakType ? "W" : "L"}${streakCount}` : "\u2014";
-    const uniquePreds = predictions.filter((p, i, arr) => p.slug.includes("-prediction-") && arr.findIndex((x) => x.slug === p.slug) === i);
-    const spreadHits = uniquePreds.filter((p) => p.spread_result === "HIT").length;
-    const spreadTotal = uniquePreds.filter((p) => p.spread_result).length;
-    const totalHits = uniquePreds.filter((p) => p.total_result === "HIT").length;
-    const totalTotal = uniquePreds.filter((p) => p.total_result).length;
-    const mlHits = uniquePreds.filter((p) => p.moneyline_result === "HIT").length;
-    const mlTotal = uniquePreds.filter((p) => p.moneyline_result).length;
-    const uniqueProps = props.filter((p, i, arr) => arr.findIndex((x) => x.slug === p.slug) === i);
-    const propHits = uniqueProps.filter((p) => p.result === "HIT").length;
-    const propTotal = uniqueProps.length;
-    const statCard = (label, value, sub, highlight) => (<div key={label} style={{ background: "#111827", border: `1px solid ${highlight ? "#F58426" : "#1f2937"}`, borderRadius: "0.75rem", padding: "1.25rem", textAlign: "center" }}>
-      <p style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.4rem" }}>{label}</p>
-      <p style={{ color: highlight ? "#F58426" : "#f9fafb", fontSize: "1.6rem", fontWeight: 700, margin: 0 }}>{value}</p>
-      {sub && <p style={{ color: "#4b5563", fontSize: "0.7rem", margin: "0.25rem 0 0" }}>{sub}</p>}
-    </div>);
-    const pickCard = (label, hits, total) => {
-        const pct = total > 0 ? Math.round((hits / total) * 100) : 0;
-        const color = pct >= 60 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171";
-        return (<div key={label} style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", textAlign: "center" }}>
-        <p style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.4rem" }}>{label}</p>
-        <p style={{ color, fontSize: "1.6rem", fontWeight: 700, margin: 0 }}>{hits}-{total - hits}</p>
-        <p style={{ color, fontSize: "0.75rem", margin: "0.25rem 0 0", fontWeight: 600 }}>{pct}%</p>
-      </div>);
-    };
-    return (<div style={{ maxWidth: "900px" }}>
-      <div style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426", margin: 0 }}>KNICKS BETTING TRENDS</h1>
-        <p style={{ color: "#6b7280", margin: "0.25rem 0 0", fontSize: "0.875rem" }}>Season stats and trends. Based on {finished.length} games played.</p>
+    const atsHits = preds.filter((r) => r.spread_result === "HIT").length;
+    const atsTotal = preds.filter((r) => r.spread_result).length;
+    const ouHits = preds.filter((r) => r.total_result === "HIT").length;
+    const ouTotal = preds.filter((r) => r.total_result).length;
+    const mlHits = preds.filter((r) => r.moneyline_result === "HIT").length;
+    const mlTotal = preds.filter((r) => r.moneyline_result).length;
+    const propHits = props.filter((r) => r.result === "HIT").length;
+    const pct = (h, t) => t > 0 ? Math.round(h / t * 100) : 0;
+    const color = (h, t) => pct(h, t) >= 55 ? S.green : pct(h, t) >= 45 ? S.peach : S.red;
+    const fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return (<div style={{ background: S.bg, minHeight: "100vh" }}>
+      <Helmet>
+        <title>Knicks AI Betting Record | KnicksHub</title>
+        <meta name="description" content="Track KnicksHub AI betting record — ATS, Over/Under, and player prop results."/>
+      </Helmet>
+
+      {/* Header */}
+      <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "2rem 2.5rem" }}>
+        <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 5vw, 3.5rem)", textTransform: "uppercase", letterSpacing: "-0.03em", color: S.text, margin: "0 0 0.5rem", fontStyle: "italic" }}>
+          AI Betting <span style={{ color: S.peach }}>Record</span>
+        </h1>
+        <p style={{ color: S.textMuted, fontSize: "0.875rem", margin: 0 }}>Season-to-date performance tracking for all AI picks</p>
       </div>
-      {isLoading && <p style={{ color: "#6b7280" }}>Loading trends...</p>}
-      {isLoading === false && (<>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem", marginBottom: "1.5rem" }}>
-            {statCard("Season Record", `${wins}-${losses}`, "W-L", true)}
-            {statCard("Current Streak", streak, undefined, streak.startsWith("W"))}
-            {statCard("Last 10", `${last10Wins}-${10 - last10Wins}`, "W-L last 10")}
-            {statCard("Avg Total", avgTotal, "combined pts/game")}
-            {statCard("Avg Margin", Number(avgMargin) > 0 ? `+${avgMargin}` : String(avgMargin), "pts per game")}
-          </div>
-          {uniquePreds.length > 0 && (<>
-              <div style={{ marginBottom: "1rem" }}>
-                <h2 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.5rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.25rem" }}>KNICKSHUB PICKS RECORD</h2>
-                <p style={{ color: "#6b7280", fontSize: "0.8rem", margin: 0 }}>Tracked since March 2026. {uniquePreds.length} games graded.</p>
+
+      <div style={{ padding: "2rem 2.5rem", maxWidth: "1200px" }}>
+
+        {/* Summary Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
+          {[
+            ["ATS", atsHits, atsTotal],
+            ["Over/Under", ouHits, ouTotal],
+            ["Moneyline", mlHits, mlTotal],
+            ["Props", propHits, props.length],
+        ].map(([label, h, t]) => (<div key={label} style={{ background: S.surface, padding: "1.5rem", borderTop: `3px solid ${color(h, t)}` }}>
+              <p style={{ fontSize: "0.625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, margin: "0 0 0.5rem", fontFamily: "Space Grotesk, sans-serif" }}>{label}</p>
+              <p style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "2rem", color: color(h, t), margin: "0 0 0.25rem" }}>{h}-{t - h}</p>
+              <p style={{ fontSize: "0.75rem", color: S.textMuted, margin: 0 }}>{pct(h, t)}% · {t} picks</p>
+            </div>))}
+        </div>
+
+        {/* Prediction Results Table */}
+        {preds.length > 0 && (<section style={{ marginBottom: "2.5rem" }}>
+            <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.25rem", textTransform: "uppercase", letterSpacing: "-0.01em", fontStyle: "italic", color: S.text, marginBottom: "1rem" }}>
+              Game Predictions
+            </h2>
+            <div style={{ background: S.surface, overflow: "hidden" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto auto", gap: 0, borderBottom: `1px solid ${S.border}`, padding: "0.625rem 1rem" }}>
+                {["Game", "Spread", "Total", "ML", "Date"].map(h => (<span key={h} style={{ fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, fontFamily: "Space Grotesk, sans-serif", textAlign: h !== "Game" ? "center" : "left" }}>{h}</span>))}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem", marginBottom: "1.5rem" }}>
-                {pickCard("Against The Spread", spreadHits, spreadTotal)}
-                {pickCard("Over/Under", totalHits, totalTotal)}
-                {pickCard("Moneyline", mlHits, mlTotal)}
-                {propTotal > 0 && pickCard("Player Props", propHits, propTotal)}
+              {preds.map((r, i) => (<div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto auto", gap: 0, padding: "0.875rem 1rem", borderBottom: i < preds.length - 1 ? `1px solid ${S.border}` : "none", alignItems: "center" }} onMouseEnter={e => (e.currentTarget.style.background = S.surfaceHigh)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <Link to={`/predictions/${r.slug}`} style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem", color: S.text, textDecoration: "none", textTransform: "uppercase" }}>
+                    {r.slug?.replace(/-prediction-\d{4}-\d{2}-\d{2}$/, "").replace(/-/g, " ").slice(0, 35)}
+                  </Link>
+                  {["spread_result", "total_result", "moneyline_result"].map(key => (<span key={key} style={{ width: "64px", textAlign: "center", padding: "0.2rem 0.375rem", background: r[key] === "HIT" ? S.greenBg : r[key] === "MISS" ? S.redBg : S.surfaceHigh, color: r[key] === "HIT" ? "#00431a" : r[key] === "MISS" ? "#ffdad6" : S.textMuted, fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif", margin: "0 4px" }}>
+                      {r[key] ?? "—"}
+                    </span>))}
+                  <span style={{ fontSize: "0.625rem", color: S.textMuted, fontFamily: "Inter, sans-serif", width: "60px", textAlign: "right" }}>{fmt(r.game_date)}</span>
+                </div>))}
+            </div>
+          </section>)}
+
+        {/* Prop Results Table */}
+        {props.length > 0 && (<section>
+            <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.25rem", textTransform: "uppercase", letterSpacing: "-0.01em", fontStyle: "italic", color: S.text, marginBottom: "1rem" }}>
+              Player Props
+            </h2>
+            <div style={{ background: S.surface, overflow: "hidden" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 60px 60px 60px", gap: 0, borderBottom: `1px solid ${S.border}`, padding: "0.625rem 1rem" }}>
+                {["Player", "Type", "Line", "Lean", "Result"].map(h => (<span key={h} style={{ fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, fontFamily: "Space Grotesk, sans-serif", textAlign: h !== "Player" ? "center" : "left" }}>{h}</span>))}
               </div>
-              <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-                <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>RECENT PICKS RESULTS</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  {uniquePreds.slice(0, 10).map((p) => {
-                    const gameProps = uniqueProps.filter((pr) => pr.game_date === p.game_date);
-                    return (<div key={p.id} style={{ padding: "0.6rem 0", borderBottom: "1px solid #1f2937" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
-                          <div>
-                            <span style={{ color: "#f9fafb", fontSize: "0.875rem", fontWeight: 600 }}>vs {p.opponent}</span>
-                            <span style={{ color: "#6b7280", fontSize: "0.75rem", marginLeft: "0.5rem" }}>{p.game_date}</span>
-                          </div>
-                          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                            <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.5rem", borderRadius: "999px", background: p.spread_result === "HIT" ? "#14532d" : "#7f1d1d", color: p.spread_result === "HIT" ? "#4ade80" : "#f87171" }}>ATS {p.spread_result}</span>
-                            <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.5rem", borderRadius: "999px", background: p.total_result === "HIT" ? "#14532d" : "#7f1d1d", color: p.total_result === "HIT" ? "#4ade80" : "#f87171" }}>O/U {p.total_result}</span>
-                            <span style={{ color: "#6b7280", fontSize: "0.75rem" }}>{p.knicks_score}-{p.opp_score}</span>
-                          </div>
-                        </div>
-                        {gameProps.length > 0 && (<div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                            {gameProps.map((pr) => (<span key={pr.slug} style={{ fontSize: "0.65rem", fontWeight: 600, padding: "0.15rem 0.4rem", borderRadius: "999px", background: pr.result === "HIT" ? "#14532d" : "#7f1d1d", color: pr.result === "HIT" ? "#4ade80" : "#f87171" }}>
-                                {pr.player.split(" ").pop()} {pr.prop_type} {pr.lean} {pr.line} ({pr.actual_value}) {pr.result}
-                              </span>))}
-                          </div>)}
-                      </div>);
-                })}
-                </div>
-              </div>
-            </>)}
-        </>)}
+              {props.map((r, i) => (<div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 80px 60px 60px 60px", gap: 0, padding: "0.875rem 1rem", borderBottom: i < props.length - 1 ? `1px solid ${S.border}` : "none", alignItems: "center" }} onMouseEnter={e => (e.currentTarget.style.background = S.surfaceHigh)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                  <div>
+                    <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem", color: S.text, textTransform: "uppercase" }}>{r.player}</span>
+                    <span style={{ display: "block", fontSize: "0.5625rem", color: S.textMuted }}>{fmt(r.game_date)}</span>
+                  </div>
+                  <span style={{ fontSize: "0.625rem", color: S.textMuted, textAlign: "center", textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700 }}>{r.prop_type}</span>
+                  <span style={{ fontSize: "0.75rem", color: S.text, textAlign: "center", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700 }}>{r.line}</span>
+                  <span style={{ fontSize: "0.625rem", color: r.lean === "OVER" ? S.green : S.red, textAlign: "center", fontWeight: 900, fontFamily: "Space Grotesk, sans-serif", textTransform: "uppercase" }}>{r.lean}</span>
+                  <span style={{ textAlign: "center", padding: "0.2rem 0.375rem", background: r.result === "HIT" ? S.greenBg : S.redBg, color: r.result === "HIT" ? "#00431a" : "#ffdad6", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif", margin: "0 auto", display: "block", width: "fit-content" }}>
+                    {r.result}
+                  </span>
+                </div>))}
+            </div>
+          </section>)}
+
+        {isLoading && <p style={{ color: S.textMuted }}>Loading...</p>}
+        {!isLoading && preds.length === 0 && props.length === 0 && (<p style={{ color: S.textMuted }}>No results yet. Check back after games are resolved.</p>)}
+      </div>
     </div>);
 }

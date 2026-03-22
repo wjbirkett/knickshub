@@ -1,65 +1,125 @@
-import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { Home, Target, TrendingUp, Newspaper, Activity, Calendar, BarChart2, LineChart, Menu, X } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 const NAV = [
-    { to: "/", label: "Dashboard", icon: Home },
-    { to: "/predictions", label: "Predictions", icon: Target },
-    { to: "/betting", label: "Betting", icon: TrendingUp },
-    { to: "/news", label: "News Feed", icon: Newspaper },
-    { to: "/injuries", label: "Injuries", icon: Activity },
-    { to: "/schedule", label: "Schedule", icon: Calendar },
-    { to: "/stats", label: "Stats", icon: BarChart2 },
-    { to: "/knicks-betting-record", label: "Betting Record", icon: LineChart },
+    { to: "/", label: "Dashboard", icon: "dashboard" },
+    { to: "/predictions", label: "Predictions", icon: "analytics" },
+    { to: "/props", label: "Player Props", icon: "sports_basketball" },
+    { to: "/knicks-betting-record", label: "Betting Record", icon: "receipt_long" },
+    { to: "/betting", label: "Betting", icon: "trending_up" },
+    { to: "/news", label: "News Feed", icon: "newspaper" },
+    { to: "/injuries", label: "Injuries", icon: "medical_services" },
+    { to: "/schedule", label: "Schedule", icon: "calendar_month" },
+    { to: "/stats", label: "Stats", icon: "leaderboard" },
+];
+const MOBILE_NAV = [
+    { to: "/", icon: "dashboard", label: "Home" },
+    { to: "/predictions", icon: "analytics", label: "Picks" },
+    { to: "/props", icon: "sports_basketball", label: "Props" },
+    { to: "/betting", icon: "trending_up", label: "Bet" },
+    { to: "/news", icon: "newspaper", label: "News" },
 ];
 export default function Sidebar() {
-    const [open, setOpen] = useState(false);
-    const sidebarContent = (<>
-      <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #1f2937", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <span style={{ fontFamily: "Bebas Neue,sans-serif", fontSize: "2.25rem", letterSpacing: "0.15em", color: "#F58426" }}>KNICKS</span>
-          <span style={{ fontFamily: "Bebas Neue,sans-serif", fontSize: "2.25rem", letterSpacing: "0.15em", color: "#006BB6" }}>HUB</span>
-        </div>
-        <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", display: "none" }} className="mobile-close-btn">
-          <X size={22}/>
-        </button>
-      </div>
-
-      <nav style={{ flex: 1, padding: "1rem 0.75rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-        {NAV.map(({ to, label, icon: Icon }) => (<NavLink key={to} to={to} end={to === "/"} onClick={() => setOpen(false)} style={({ isActive }) => ({
-                display: "flex", alignItems: "center", gap: "0.75rem",
-                padding: "0.6rem 1rem", borderRadius: "0.5rem",
-                fontSize: "0.875rem", fontWeight: 500, textDecoration: "none",
-                background: isActive ? "#1d4ed8" : "transparent",
-                color: isActive ? "#fff" : "#9ca3af",
-                transition: "all 0.15s",
-            })}>
-            <Icon size={18}/>
-            {label}
-          </NavLink>))}
-      </nav>
-
-      <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #1f2937", fontSize: "0.75rem", color: "#4b5563" }}>
-        KnicksHub 2026
-      </div>
-    </>);
+    const { pathname } = useLocation();
+    const isActive = (to) => to === "/" ? pathname === "/" : pathname.startsWith(to);
     return (<>
-      <style>{`
-        @media (max-width: 767px) {
-          .mobile-close-btn { display: block !important; }
-          .mobile-hamburger { display: block !important; }
-          .mobile-backdrop  { display: block !important; }
-          .knicks-sidebar   { transform: translateX(${open ? "0" : "-100%"}); }
-        }
-      `}</style>
+      {/* Desktop Sidebar */}
+      <aside style={{
+            display: "none",
+            position: "fixed", left: 0, top: 0, height: "100vh", width: "16rem",
+            borderRight: "1px solid rgba(255,255,255,0.1)",
+            background: "rgba(28,27,27,0.85)", backdropFilter: "blur(20px)",
+            zIndex: 50, flexDirection: "column",
+            boxShadow: "24px 0 48px rgba(0,0,0,0.4)", overflow: "hidden"
+        }} className="lg-sidebar">
+        <style>{`
+          @media (min-width: 1024px) {
+            .lg-sidebar { display: flex !important; }
+            .mobile-header { display: none !important; }
+            .mobile-bottom-nav { display: none !important; }
+            .main-content { margin-left: 16rem; padding-top: 0; padding-bottom: 0; }
+          }
+          @media (max-width: 1023px) {
+            .main-content { margin-left: 0; padding-top: 4rem; padding-bottom: 4rem; }
+          }
+          .nav-item { transition: background 0.15s, color 0.15s; }
+          .nav-item:hover { background: rgba(255,255,255,0.05) !important; color: #FFB786 !important; opacity: 1 !important; }
+        `}</style>
 
-      <button onClick={() => setOpen(true)} className="mobile-hamburger" style={{ position: "fixed", top: "1rem", left: "1rem", zIndex: 60, background: "#0d0d0d", border: "1px solid #1f2937", borderRadius: "0.5rem", padding: "0.5rem", color: "#F58426", cursor: "pointer", display: "none" }}>
-        <Menu size={22}/>
-      </button>
+        <div style={{ padding: "2rem" }}>
+          <Link to="/" style={{ textDecoration: "none" }}>
+            <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem", color: "#F58426", letterSpacing: "-0.03em", fontStyle: "italic", textTransform: "uppercase", margin: 0 }}>KnicksHub</h1>
+          </Link>
+        </div>
 
-      {open && (<div onClick={() => setOpen(false)} className="mobile-backdrop" style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.6)", display: "none" }}/>)}
+        <nav style={{ flex: 1, padding: "0 1rem", display: "flex", flexDirection: "column", gap: "0.125rem", overflowY: "auto" }}>
+          {NAV.map(({ to, label, icon }) => {
+            const active = isActive(to);
+            return (<Link key={to} to={to} className="nav-item" style={{
+                    display: "flex", alignItems: "center", gap: "0.75rem",
+                    padding: "0.75rem 1rem", textDecoration: "none",
+                    fontFamily: "Space Grotesk, sans-serif", fontWeight: 700,
+                    fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.05em",
+                    color: active ? "#FFB786" : "#DDC1B1",
+                    opacity: active ? 1 : 0.7,
+                    borderLeft: active ? "2px solid #FFB786" : "2px solid transparent",
+                    background: active ? "linear-gradient(to right, rgba(245,132,38,0.1), transparent)" : "transparent",
+                    borderRadius: "0 0.25rem 0.25rem 0",
+                }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>{icon}</span>
+                {label}
+              </Link>);
+        })}
+        </nav>
 
-      <aside className="knicks-sidebar" style={{ position: "fixed", inset: "0 auto 0 0", width: "16rem", background: "#0d0d0d", borderRight: "1px solid #1f2937", display: "flex", flexDirection: "column", zIndex: 50, transition: "transform 0.25s ease" }}>
-        {sidebarContent}
+        <div style={{ padding: "1.5rem", marginTop: "auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "0.75rem" }}>
+            <a href="https://websitesbywillie.com" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>
+              Built by websitesbywillie.com
+            </a>
+          </div>
+          <a href="https://www.draftkings.com" target="_blank" rel="noopener noreferrer" style={{
+            display: "block", width: "100%", padding: "1rem",
+            background: "linear-gradient(135deg, #F58426, #ffb786)",
+            color: "#5c2b00", fontFamily: "Space Grotesk, sans-serif",
+            fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.15em",
+            fontSize: "0.8125rem", textAlign: "center", textDecoration: "none",
+            borderRadius: "0.25rem", boxShadow: "0 4px 16px rgba(245,132,38,0.3)",
+            fontStyle: "italic"
+        }}>Place Bet</a>
+        </div>
       </aside>
+
+      {/* Mobile Header */}
+      <header className="mobile-header" style={{
+            position: "fixed", top: 0, width: "100%", zIndex: 50, height: "4rem",
+            background: "rgba(19,19,19,0.85)", backdropFilter: "blur(16px)",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "0 1.5rem"
+        }}>
+        <Link to="/" style={{ textDecoration: "none" }}>
+          <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.25rem", color: "#F58426", fontStyle: "italic", textTransform: "uppercase", margin: 0 }}>KnicksHub</h1>
+        </Link>
+        <span className="material-symbols-outlined" style={{ color: "#FFB786", fontSize: "1.5rem" }}>menu</span>
+      </header>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="mobile-bottom-nav" style={{
+            position: "fixed", bottom: 0, width: "100%", zIndex: 50, height: "4rem",
+            background: "rgba(19,19,19,0.85)", backdropFilter: "blur(16px)",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            display: "flex", alignItems: "center", justifyContent: "space-around", padding: "0 0.5rem"
+        }}>
+        {MOBILE_NAV.map(({ to, icon, label }) => {
+            const active = isActive(to);
+            return (<Link key={to} to={to} style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: "0.125rem",
+                    color: active ? "#FFB786" : "#DDC1B1", opacity: active ? 1 : 0.5,
+                    textDecoration: "none"
+                }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>{icon}</span>
+              <span style={{ fontSize: "0.5rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "Space Grotesk, sans-serif" }}>{label}</span>
+            </Link>);
+        })}
+      </nav>
     </>);
 }

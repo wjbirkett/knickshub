@@ -1,48 +1,115 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { getInjuries } from "../utils/api";
-const STATUS_COLORS = {
-    "Out": { bg: "#450a0a", color: "#fca5a5" },
-    "Doubtful": { bg: "#431407", color: "#fdba74" },
-    "Questionable": { bg: "#422006", color: "#fcd34d" },
-    "Day-To-Day": { bg: "#0c1a4b", color: "#93c5fd" },
+const S = {
+    bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
+    border: "rgba(255,255,255,0.08)", orange: "#F58426", peach: "#ffb786",
+    green: "#4ae176", greenBg: "#06bb55", red: "#ffb4ab", redBg: "#93000a",
+    text: "#e5e2e1", textMuted: "#ddc1b1",
+};
+const STATUS_STYLE = (status) => {
+    const s = status?.toLowerCase() ?? "";
+    if (s.includes("out"))
+        return { bg: S.redBg, color: "#ffdad6" };
+    if (s.includes("day") || s.includes("gtd"))
+        return { bg: "#451a03", color: S.peach };
+    if (s.includes("probable"))
+        return { bg: "#14532d", color: S.green };
+    return { bg: S.surfaceHigh, color: S.textMuted };
+};
+const PLAYER_IMAGES = {
+    "Jalen Brunson": "/players/jalen.png",
+    "Karl-Anthony Towns": "/players/KAT.png",
+    "Mikal Bridges": "/players/mikal.png",
+    "OG Anunoby": "/players/OG.png",
+    "Josh Hart": "/players/josh.png",
+    "Miles McBride": "/players/miles.png",
+    "Mitchell Robinson": "/players/mitchell.png",
+    "Jordan Clarkson": "/players/jordan.png",
+    "Jose Alvarado": "/players/jose.png",
+    "Landry Shamet": "/players/landry.png",
+    "Jeremy Sochan": "/players/jeremy.png",
+    "Tyler Kolek": "/players/tyler.png",
+    "Mohamed Diawara": "/players/mohamed.png",
 };
 export default function InjuriesPage() {
-    const { data, isLoading } = useQuery({ queryKey: ["injuries"], queryFn: getInjuries });
-    const H1 = { fontFamily: "Bebas Neue, sans-serif", fontSize: "3rem", letterSpacing: "0.15em", color: "#F58426" };
-    return (<div style={{ maxWidth: "700px" }}>
-      <header style={{ borderBottom: "1px solid #1f2937", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
-        <h1 style={H1}>INJURY REPORT</h1>
-        <p style={{ color: "#6b7280", fontSize: "0.875rem", marginTop: "0.25rem" }}>New York Knicks — updated via ESPN</p>
-      </header>
+    const { data: injuries, isLoading } = useQuery({ queryKey: ["injuries"], queryFn: getInjuries });
+    const knicks = injuries?.filter((i) => i.team === "New York Knicks" || i.is_knicks) ?? [];
+    const others = injuries?.filter((i) => i.team !== "New York Knicks" && !i.is_knicks) ?? [];
+    const [leagueFilter, setLeagueFilter] = useState("ALL");
+    const filteredOthers = leagueFilter === "ALL" ? others : others.filter((i) => i.status?.toLowerCase().includes(leagueFilter.toLowerCase()));
+    const getImg = (name) => {
+        const key = Object.keys(PLAYER_IMAGES).find(k => name?.toLowerCase().includes(k.toLowerCase().split(" ")[1]));
+        return key ? PLAYER_IMAGES[key] : null;
+    };
+    return (<div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
+      <Helmet>
+        <title>Knicks Injury Report | KnicksHub</title>
+        <meta name="description" content="Latest New York Knicks injury report and NBA injury updates."/>
+      </Helmet>
 
-      {isLoading && (<ul style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          {Array.from({ length: 5 }).map((_, i) => (<li key={i} style={{ background: "#111827", borderRadius: "0.75rem", height: "64px" }}/>))}
-        </ul>)}
+      <div style={{ background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "2rem 2.5rem" }}>
+        <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 5vw, 3.5rem)", textTransform: "uppercase", letterSpacing: "-0.03em", color: S.text, margin: "0 0 0.5rem", fontStyle: "italic" }}>
+          Injury <span style={{ color: S.peach }}>Report</span>
+        </h1>
+        <p style={{ color: S.textMuted, fontSize: "0.875rem", margin: 0 }}>Live injury updates — updated daily</p>
+      </div>
 
-      {data && data.length === 0 && (<div style={{ background: "#052e16", border: "1px solid #166534", borderRadius: "0.75rem", padding: "1.5rem", textAlign: "center" }}>
-          <p style={{ color: "#4ade80", fontSize: "1rem", fontWeight: 600 }}>No injuries reported</p>
-          <p style={{ color: "#16a34a", fontSize: "0.875rem", marginTop: "0.25rem" }}>Full roster appears healthy</p>
-        </div>)}
-
-      <ul style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        {(data ?? []).map((p) => {
-            const style = STATUS_COLORS[p.status] ?? { bg: "#1f2937", color: "#d1d5db" };
-            return (<li key={p.player_id} style={{
-                    background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem",
-                    padding: "1rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between",
-                }}>
-              <div>
-                <p style={{ color: "#f9fafb", fontWeight: 600, fontSize: "0.95rem", margin: 0 }}>{p.player_name}</p>
-                {p.reason && <p style={{ color: "#6b7280", fontSize: "0.8rem", marginTop: "0.2rem" }}>{p.reason}</p>}
+      <div style={{ padding: "2rem 2.5rem", maxWidth: "1200px" }}>
+        {isLoading ? (<p style={{ color: S.textMuted }}>Loading...</p>) : injuries?.length === 0 ? (<p style={{ color: S.textMuted }}>No injuries reported.</p>) : (<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+            {/* Knicks */}
+            <section>
+              <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.125rem", textTransform: "uppercase", letterSpacing: "0.05em", color: S.orange, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>medical_services</span>
+                Knicks
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {knicks.length > 0 ? knicks.map((inj, i) => {
+                const img = getImg(inj.player_name || inj.name);
+                const st = STATUS_STYLE(inj.status);
+                return (<div key={i} style={{ background: S.surface, padding: "1rem", display: "flex", alignItems: "center", gap: "0.875rem" }}>
+                      {img && <img src={img} alt={inj.player_name} style={{ width: "3rem", height: "3rem", objectFit: "cover", borderRadius: "50%", flexShrink: 0 }}/>}
+                      {!img && <div style={{ width: "3rem", height: "3rem", background: S.surfaceHigh, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><span className="material-symbols-outlined" style={{ fontSize: "1.25rem", color: S.textMuted }}>person</span></div>}
+                      <div style={{ flex: 1 }}>
+                        <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", color: S.text }}>{inj.player_name || inj.name}</span>
+                        <span style={{ fontSize: "0.6875rem", color: S.textMuted, textTransform: "uppercase" }}>{inj.reason || inj.injury || inj.shortComment || "Injury"}</span>
+                      </div>
+                      <span style={{ background: st.bg, color: st.color, padding: "0.2rem 0.5rem", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "Space Grotesk, sans-serif", whiteSpace: "nowrap" }}>
+                        {inj.status || "GTD"}
+                      </span>
+                    </div>);
+            }) : <p style={{ color: S.textMuted, fontSize: "0.875rem" }}>No Knicks injuries reported.</p>}
               </div>
-              <span style={{
-                    background: style.bg, color: style.color,
-                    padding: "0.3rem 0.8rem", borderRadius: "999px",
-                    fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em",
-                    whiteSpace: "nowrap",
-                }}>{p.status}</span>
-            </li>);
-        })}
-      </ul>
+            </section>
+
+            {/* League-wide */}
+            <section>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.125rem", textTransform: "uppercase", letterSpacing: "0.05em", color: S.textMuted, display: "flex", alignItems: "center", gap: "0.5rem", margin: 0 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "1.25rem" }}>sports_basketball</span>
+                  Around the League
+                </h2>
+                <div style={{ display: "flex", gap: "0.375rem" }}>
+                  {["ALL", "Out", "GTD", "Probable"].map(f => (<button key={f} onClick={() => setLeagueFilter(f)} style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.5625rem", textTransform: "uppercase", letterSpacing: "0.1em", padding: "0.25rem 0.625rem", background: leagueFilter === f ? S.orange : S.surfaceHigh, color: leagueFilter === f ? "#5c2b00" : S.textMuted, border: "none", cursor: "pointer" }}>{f}</button>))}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "600px", overflowY: "auto" }}>
+                {filteredOthers.length > 0 ? filteredOthers.slice(0, 50).map((inj, i) => {
+                const st = STATUS_STYLE(inj.status);
+                return (<div key={i} style={{ background: S.surface, padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+                      <div>
+                        <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem", color: S.text }}>{inj.player_name || inj.name}</span>
+                        <span style={{ fontSize: "0.5625rem", color: S.textMuted, textTransform: "uppercase" }}>{inj.team} · {inj.reason || inj.injury || inj.shortComment || "Injury"}</span>
+                      </div>
+                      <span style={{ background: st.bg, color: st.color, padding: "0.2rem 0.5rem", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "Space Grotesk, sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>
+                        {inj.status || "GTD"}
+                      </span>
+                    </div>);
+            }) : <p style={{ color: S.textMuted, fontSize: "0.875rem" }}>Loading league injuries...</p>}
+              </div>
+            </section>
+          </div>)}
+      </div>
     </div>);
 }

@@ -1,207 +1,279 @@
-import { Helmet } from "react-helmet-async";
-import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { getArticle, getArticles, getResults } from "../utils/api";
-export const TYPE_CONFIG = {
-    prediction: { label: "PREDICTION", bg: "#0c1a4b", color: "#93c5fd" },
-    best_bet: { label: "BEST BET", bg: "#14532d", color: "#86efac" },
-    prop: { label: "PROP BET", bg: "#4a1d1d", color: "#fca5a5" },
-    history: { label: "HISTORY", bg: "#2e1a4b", color: "#d8b4fe" },
+import ReactMarkdown from "react-markdown";
+const S = {
+    bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
+    surfaceHighest: "#353534", border: "rgba(255,255,255,0.08)",
+    orange: "#F58426", peach: "#ffb786", green: "#4ae176",
+    greenBg: "#06bb55", red: "#ffb4ab", redBg: "#93000a",
+    blue: "#a0caff", blueBg: "#006bb6",
+    text: "#e5e2e1", textMuted: "#ddc1b1",
 };
-function KeyPicksBox({ picks, articleType }) {
-    if (!picks || articleType === "history")
+export const TYPE_CONFIG = {
+    prediction: { bg: S.blueBg, color: "#dbe9ff", label: "PREDICTION" },
+    best_bet: { bg: S.greenBg, color: "#00431a", label: "BEST BET" },
+    prop: { bg: S.redBg, color: "#ffdad6", label: "PROP BET" },
+    history: { bg: "#4a1d96", color: "#d8b4fe", label: "HISTORY" },
+};
+const PLAYER_IMAGES = {
+    "Jalen Brunson": "/players/jalen.png",
+    "Karl-Anthony Towns": "/players/KAT.png",
+    "Mikal Bridges": "/players/mikal.png",
+    "OG Anunoby": "/players/OG.png",
+    "Josh Hart": "/players/josh.png",
+    "Miles McBride": "/players/miles.png",
+    "Mitchell Robinson": "/players/mitchell.png",
+    "Jordan Clarkson": "/players/jordan.png",
+    "Jose Alvarado": "/players/jose.png",
+    "Landry Shamet": "/players/landry.png",
+    "Jeremy Sochan": "/players/jeremy.png",
+    "Tyler Kolek": "/players/tyler.png",
+    "Mohamed Diawara": "/players/mohamed.png",
+    "Pacome Dadiet": "/players/pacome.png",
+    "Ariel Hukporti": "/players/ariel.png",
+};
+const getPlayerImage = (name) => {
+    if (!name)
         return null;
-    if (articleType === "prop") {
-        const isMultiProp = picks.points_pick || picks.rebounds_pick || picks.assists_pick || picks.threes_pick;
-        const leanBg = (l) => l === "OVER" ? "#14532d" : "#7f1d1d";
-        const leanCol = (l) => l === "OVER" ? "#4ade80" : "#f87171";
-        const confColor = picks.confidence === "High" ? "#4ade80" : picks.confidence === "Medium" ? "#fbbf24" : "#f87171";
-        if (isMultiProp) {
-            return (<div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-          <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>KEY PROPS AT A GLANCE — {picks.player}</p>
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-            {picks.points_pick && <PickCard label="Points" value={picks.points_pick} leanBg={leanBg(picks.points_lean)} leanColor={leanCol(picks.points_lean)} lean={picks.points_lean}/>}
-            {picks.rebounds_pick && <PickCard label="Rebounds" value={picks.rebounds_pick} leanBg={leanBg(picks.rebounds_lean)} leanColor={leanCol(picks.rebounds_lean)} lean={picks.rebounds_lean}/>}
-            {picks.assists_pick && <PickCard label="Assists" value={picks.assists_pick} leanBg={leanBg(picks.assists_lean)} leanColor={leanCol(picks.assists_lean)} lean={picks.assists_lean}/>}
-            {picks.threes_pick && <PickCard label="Made 3s" value={picks.threes_pick} leanBg={leanBg(picks.threes_lean)} leanColor={leanCol(picks.threes_lean)} lean={picks.threes_lean}/>}
-            <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-              <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
-              <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>
-            </div>
-          </div>
-        </div>);
-        }
-        const leanColor = picks.lean === "OVER" ? "#4ade80" : "#f87171";
-        const leanBgLeg = picks.lean === "OVER" ? "#14532d" : "#7f1d1d";
-        return (<div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-        <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>🎯 KEY PICK</p>
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-          <PickCard label={`${picks.player} ${picks.prop_type ? picks.prop_type.charAt(0).toUpperCase() + picks.prop_type.slice(1) : "Points"}`} value={picks.pick} leanBg={leanBgLeg} leanColor={leanColor} lean={picks.lean}/>
-          <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-            <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
-            <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>
-          </div>
-        </div>
-      </div>);
-    }
-    const totalLeanColor = picks.total_lean === "OVER" ? "#4ade80" : "#f87171";
-    const totalLeanBg = picks.total_lean === "OVER" ? "#14532d" : "#7f1d1d";
-    const spreadLeanColor = picks.spread_lean === "COVER" ? "#4ade80" : "#f87171";
-    const spreadLeanBg = picks.spread_lean === "COVER" ? "#14532d" : "#7f1d1d";
-    const mlLeanColor = picks.moneyline_lean === "WIN" ? "#4ade80" : "#f87171";
-    const mlLeanBg = picks.moneyline_lean === "WIN" ? "#14532d" : "#7f1d1d";
-    const confColor = picks.confidence === "High" ? "#4ade80" : picks.confidence === "Medium" ? "#fbbf24" : "#f87171";
-    return (<div style={{ background: "#0d1117", border: "1px solid #374151", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-      <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 1rem" }}>🎯 KEY PICKS AT A GLANCE</p>
-      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-        <PickCard label="Spread" value={picks.spread_pick} leanBg={spreadLeanBg} leanColor={spreadLeanColor} lean={picks.spread_lean}/>
-        <PickCard label="Moneyline" value={picks.moneyline_pick} leanBg={mlLeanBg} leanColor={mlLeanColor} lean={picks.moneyline_lean}/>
-        <PickCard label="Total" value={picks.total_pick} leanBg={totalLeanBg} leanColor={totalLeanColor} lean={picks.total_lean}/>
-        <div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
-          <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>Confidence</span>
-          <span style={{ color: confColor, fontSize: "1rem", fontWeight: 700 }}>{picks.confidence}</span>
-        </div>
-      </div>
-    </div>);
+    const key = Object.keys(PLAYER_IMAGES).find(k => name.toLowerCase().includes(k.toLowerCase().split(" ")[1]));
+    return key ? PLAYER_IMAGES[key] : null;
+};
+const HERO_IMAGES = [
+    "https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=1600https://images.unsplash.com/photo-1546519638-68e109498ffc?w=1600&q=80q=80",
+    "https://images.unsplash.com/photo-1608245449230-4ac19066d2d0?w=1600https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=1600&q=80q=80",
+    "/players/msg-arena.jpg",
+    "/players/msg-court.jpg",
+];
+// Decode common UTF-8 mojibake
+function decodeContent(text) {
+    return text
+        .replace(/â€"/g, "—").replace(/â€™/g, "'").replace(/â€œ/g, '"')
+        .replace(/â€/g, '"').replace(/â€˜/g, "'").replace(/â€¦/g, "…")
+        .replace(/Â·/g, "·").replace(/Ã©/g, "é");
 }
-function PickCard({ label, value, lean, leanBg, leanColor }) {
-    return (<div style={{ background: "#111827", borderRadius: "0.5rem", padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.2rem", minWidth: "120px" }}>
-      <span style={{ color: "#6b7280", fontSize: "0.65rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</span>
-      <span style={{ color: "#f9fafb", fontSize: "0.9rem", fontWeight: 700 }}>{value}</span>
-      <span style={{ background: leanBg, color: leanColor, fontSize: "0.6rem", fontWeight: 700, padding: "0.1rem 0.4rem", borderRadius: "999px", display: "inline-block", width: "fit-content" }}>{lean}</span>
-    </div>);
-}
-function ShareButtons({ title, slug }) {
+function ShareButtons({ title }) {
     const [copied, setCopied] = useState(false);
-    const url = `https://knickshub.vercel.app/predictions/${slug}`;
-    const tweetText = encodeURIComponent(`${title}\n\n${url}\n\n#Knicks #NBA #KnicksTape`);
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
-    const handleCopy = () => {
-        navigator.clipboard.writeText(url).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
-    };
-    return (<div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-      <span style={{ color: "#6b7280", fontSize: "0.75rem" }}>Share:</span>
-      <a href={twitterUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "#0d1117", border: "1px solid #1f2937", color: "#f9fafb", padding: "0.35rem 0.75rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 600, textDecoration: "none" }} onMouseEnter={e => (e.currentTarget.style.borderColor = "#006BB6")} onMouseLeave={e => (e.currentTarget.style.borderColor = "#1f2937")}>𝕏 Post</a>
-      <button onClick={handleCopy} style={{ display: "flex", alignItems: "center", gap: "0.4rem", background: "#0d1117", border: "1px solid #1f2937", color: copied ? "#4ade80" : "#f9fafb", padding: "0.35rem 0.75rem", borderRadius: "0.4rem", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>{copied ? "✓ Copied!" : "🔗 Copy Link"}</button>
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(window.location.href)}&via=pantyraidaa`;
+    const copyLink = () => { navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+    return (<div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+      <a href={tweetUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(255,255,255,0.1)", color: "#e5e2e1", padding: "0.5rem 1rem", fontFamily: "Space Grotesk, sans-serif", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", borderRadius: "0.25rem", textDecoration: "none" }}>
+        <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>share</span> Post on X
+      </a>
+      <button onClick={copyLink} style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: copied ? "rgba(0,200,100,0.2)" : "rgba(255,255,255,0.1)", color: copied ? "#00c864" : "#e5e2e1", padding: "0.5rem 1rem", fontFamily: "Space Grotesk, sans-serif", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: "none", cursor: "pointer", borderRadius: "0.25rem", transition: "all 0.2s" }}>
+        <span className="material-symbols-outlined" style={{ fontSize: "1rem" }}>{copied ? "check" : "link"}</span> {copied ? "Copied!" : "Copy Link"}
+      </button>
     </div>);
 }
 export default function ArticlePage() {
     const { slug } = useParams();
-    const { data: article, isLoading } = useQuery({
+    const { data: article, isLoading, error } = useQuery({
         queryKey: ["article", slug],
         queryFn: () => getArticle(slug),
         enabled: !!slug,
     });
     const { data: allArticles } = useQuery({
-        queryKey: ["articles"],
-        queryFn: () => getArticles(),
+        queryKey: ["articles", 20],
+        queryFn: () => getArticles(20),
+    });
+    const { data: resultsData } = useQuery({
+        queryKey: ["results"],
+        queryFn: getResults,
     });
     if (isLoading)
-        return <p style={{ color: "#6b7280" }}>Loading...</p>;
-    if (!article)
-        return <p style={{ color: "#f87171" }}>Article not found.</p>;
-    const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults });
+        return (<div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", color: S.textMuted }}>
+      Loading...
+    </div>);
+    if (error || !article)
+        return (<div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: "1rem" }}>
+      <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "2rem", color: S.text }}>Article not found.</h2>
+      <Link to="/predictions" style={{ color: S.orange, textDecoration: "none", fontWeight: 700 }}>← Back to Predictions</Link>
+    </div>);
+    const badge = TYPE_CONFIG[article.article_type] ?? TYPE_CONFIG.prediction;
+    const picks = article.key_picks;
+    const playerImg = article.player ? getPlayerImage(article.player) : null;
+    const heroImg = (article.article_type === "prop" && playerImg) ? playerImg : HERO_IMAGES[Math.abs(slug.length % HERO_IMAGES.length)];
+    const description = article.content?.replace(/[#*]/g, "").slice(0, 160) + "...";
+    // Related articles (same game date or same type, excluding current)
+    const related = allArticles?.filter((a) => a.slug !== slug && (a.game_date === article.game_date || a.article_type === article.article_type)).slice(0, 3) ?? [];
+    // Find result for this article
+    const predResults = resultsData?.predictions ?? [];
     const propResults = resultsData?.props ?? [];
-    const preds = resultsData?.predictions ?? [];
-    const confidenceBadge = (() => {
-        if (article.article_type === "prop" && article.player) {
-            const pp = propResults.filter(r => r.player === article.player);
-            if (!pp.length)
-                return null;
-            const hits = pp.filter(r => r.result === "HIT").length;
-            const pct = Math.round(hits / pp.length * 100);
-            const color = pct >= 70 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171";
-            return { label: (pct >= 70 ? "HIGH CONF" : pct >= 50 ? "MODERATE" : "LOW CONF") + " " + pct + "%", color, bg: pct >= 70 ? "#14532d" : pct >= 50 ? "#451a03" : "#450a0a" };
-        }
-        if (["prediction", "best_bet"].includes(article.article_type)) {
-            const total = preds.filter(r => r.spread_result).length;
-            if (!total)
-                return null;
-            const hits = preds.filter(r => r.spread_result === "HIT").length;
-            const pct = Math.round(hits / total * 100);
-            const color = pct >= 60 ? "#4ade80" : pct >= 50 ? "#fbbf24" : "#f87171";
-            return { label: "ATS " + hits + "-" + (total - hits), color, bg: pct >= 60 ? "#14532d" : "#1f2937" };
-        }
-        return null;
-    })();
-    const isHistory = article.article_type === "history";
-    const opponent = article.home_team === "New York Knicks" ? article.away_team : article.home_team;
-    const formattedDate = new Date(article.game_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    const description = isHistory
-        ? `${article.title} — Knicks history and memorable moments from KnicksHub.`
-        : `Knicks vs ${opponent} prediction, odds, and best bet for ${formattedDate}. Expert analysis, injury report, and picks from KnicksHub.`;
-    const badge = TYPE_CONFIG[article.article_type] ?? { label: "PREVIEW", bg: "#1f2937", color: "#9ca3af" };
-    const related = (allArticles ?? []).filter((a) => a.game_date === article.game_date && a.slug !== slug && a.article_type !== "history");
-    const renderContent = (content) => content.split("\n").map((line, i) => {
-        if (line.startsWith("## "))
-            return <h2 key={i} style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.5rem", letterSpacing: "0.1em", color: "#F58426", margin: "1.5rem 0 0.75rem" }}>{line.replace("## ", "")}</h2>;
-        if (line.startsWith("# "))
-            return <h1 key={i} style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "2rem", letterSpacing: "0.1em", color: "#F58426", margin: "1.5rem 0 0.75rem" }}>{line.replace("# ", "")}</h1>;
-        if (line.trim() === "")
-            return <br key={i}/>;
-        return <p key={i} style={{ color: "#d1d5db", lineHeight: 1.75, margin: "0 0 0.75rem", fontSize: "0.95rem" }} dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\*(.*?)\*/g, "<em>$1</em>") }}/>;
-    });
-    return (<div style={{ maxWidth: "780px" }}>
+    const result = [...predResults, ...propResults].find((r) => r.slug === slug);
+    const opp = article.home_team?.includes("Knicks") ? article.away_team : article.home_team;
+    return (<div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>{article.title} | KnicksHub</title>
         <meta name="description" content={description}/>
         <meta property="og:title" content={article.title}/>
         <meta property="og:description" content={description}/>
+        <meta property="og:image" content={heroImg.startsWith("http") ? heroImg : `https://knickshub.com${heroImg}`}/>
+        <meta property="og:image:width" content="1200"/>
+        <meta property="og:image:height" content="630"/>
+        <meta name="twitter:card" content="summary_large_image"/>
+        <meta name="twitter:image" content={heroImg.startsWith("http") ? heroImg : `https://knickshub.com${heroImg}`}/>
         <meta property="og:type" content="article"/>
         <link rel="canonical" href={`https://knickshub.vercel.app/predictions/${slug}`}/>
+        <script type="application/ld+json">{JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": article.title,
+            "description": description,
+            "image": heroImg.startsWith("http") ? heroImg : `https://knickshub.com${heroImg}`,
+            "author": { "@type": "Person", "name": "Nick Knicks" },
+            "publisher": { "@type": "Organization", "name": "KnicksHub", "url": "https://knickshub.com", "logo": { "@type": "ImageObject", "url": "https://knickshub.com/favicon.jpg" } },
+            "datePublished": article.created_at,
+            "dateModified": article.updated_at || article.created_at,
+            "mainEntityOfPage": { "@type": "WebPage", "@id": `https://knickshub.com/predictions/${slug}` }
+        })}</script>
       </Helmet>
 
-      <Link to="/predictions" style={{ color: "#6b7280", fontSize: "0.8rem", textDecoration: "none", display: "block", marginBottom: "1rem" }}>← Back to Predictions</Link>
+      {/* Back Link */}
+      <div style={{ padding: "1rem 3rem", background: S.bg }}>
+        <Link to="/predictions" style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: S.textMuted, textDecoration: "none", opacity: 0.6, display: "inline-flex", alignItems: "center", gap: "0.375rem" }}>
+          ← All Predictions
+        </Link>
+      </div>
 
-      <div style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "2.5rem", letterSpacing: "0.1em", color: "#F58426", lineHeight: 1.2 }}>{article.title}</h1>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.75rem", flexWrap: "wrap", gap: "0.75rem" }}>
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <span style={{ background: badge.bg, color: badge.color, padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700 }}>{badge.label}</span>
-            {confidenceBadge && <span style={{ background: confidenceBadge.bg, color: confidenceBadge.color, padding: "0.2rem 0.75rem", borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700, marginLeft: "0.25rem" }}>{confidenceBadge.label}</span>}
-            <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>{new Date(article.game_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</span>
-          </div>
-          <ShareButtons title={article.title} slug={slug}/>
+      {/* Hero Header */}
+      <section style={{ position: "relative", height: "clamp(240px, 40vw, 580px)", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0 }}>
+          <img src={heroImg} alt={article.title} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.5, filter: "grayscale(60%) contrast(1.1)" }}/>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, #131313 35%, rgba(19,19,19,0.55) 65%, rgba(19,19,19,0.2) 100%)" }}/>
         </div>
-      </div>
 
-      <KeyPicksBox picks={article.key_picks} articleType={article.article_type}/>
+        <div style={{ position: "relative", zIndex: 10, padding: "0 3rem 2.5rem", width: "100%", maxWidth: "900px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+            <span style={{ background: badge.bg, color: badge.color, padding: "0.25rem 0.75rem", fontSize: "0.625rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>
+              {badge.label}
+            </span>
+            {picks?.confidence && (<span style={{ background: picks.confidence === "High" ? S.greenBg : S.surfaceHigh, color: picks.confidence === "High" ? "#00431a" : S.textMuted, padding: "0.25rem 0.75rem", fontSize: "0.625rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>
+                {picks.confidence.toUpperCase()} CONF
+              </span>)}
+            {result && (<span style={{ background: result.result === "HIT" || result.spread_result === "HIT" ? S.greenBg : S.redBg, color: result.result === "HIT" || result.spread_result === "HIT" ? "#00431a" : "#ffdad6", padding: "0.25rem 0.75rem", fontSize: "0.625rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>
+                {result.result || result.spread_result}
+              </span>)}
+          </div>
 
-      <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "2rem", marginBottom: "1.5rem" }}>
-        {renderContent(article.content)}
-      </div>
+          <h1 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(1.75rem, 5vw, 3.5rem)", letterSpacing: "-0.03em", lineHeight: 1, color: S.text, textTransform: "uppercase", margin: "0 0 1.5rem" }}>
+            {article.title.replace(/\s*\([\d-]+\)\s*$/, "")}
+          </h1>
 
-      {related.length > 0 && (<div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-          <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>MORE FOR THIS GAME</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {related.map((a) => {
-                const rb = TYPE_CONFIG[a.article_type] ?? { label: a.article_type?.toUpperCase(), bg: "#1f2937", color: "#9ca3af" };
-                return (<Link key={a.slug} to={`/predictions/${a.slug}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                  <span style={{ background: rb.bg, color: rb.color, padding: "0.15rem 0.6rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700, flexShrink: 0 }}>{rb.label}</span>
-                  <span style={{ color: "#d1d5db", fontSize: "0.875rem" }}>{a.title}</span>
-                </Link>);
+    <ShareButtons title={article.title}/>
+        </div>
+      </section>
+
+      {/* Article Body + Sidebar */}
+      <section style={{ maxWidth: "1400px", margin: "0 auto", padding: "3rem", display: "grid", gridTemplateColumns: "1fr 340px", gap: "3rem", alignItems: "start" }}>
+
+        {/* Main Content */}
+        <div>
+          <style>{`
+            .article-body h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 900; font-size: 2rem; text-transform: uppercase; letter-spacing: -0.02em; color: ${S.peach}; margin: 2.5rem 0 1rem; line-height: 1.1; }
+            .article-body h2 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.375rem; text-transform: uppercase; letter-spacing: -0.01em; color: ${S.peach}; margin: 2rem 0 0.75rem; }
+            .article-body h3 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.125rem; color: ${S.text}; margin: 1.5rem 0 0.5rem; }
+            .article-body p { color: ${S.textMuted}; font-size: 1.0625rem; line-height: 1.75; margin-bottom: 1.25rem; font-family: 'Inter', sans-serif; }
+            .article-body strong { color: ${S.text}; font-weight: 700; }
+            .article-body ul, .article-body ol { color: ${S.textMuted}; padding-left: 1.5rem; margin-bottom: 1.25rem; }
+            .article-body li { margin-bottom: 0.5rem; line-height: 1.6; font-family: 'Inter', sans-serif; font-size: 1rem; }
+            .article-body blockquote { border-left: 4px solid ${S.orange}; padding: 1rem 1.5rem; background: ${S.surface}; margin: 1.5rem 0; font-style: italic; color: ${S.text}; font-size: 1.125rem; font-family: 'Space Grotesk', sans-serif; font-weight: 500; }
+          `}</style>
+          <div className="article-body">
+            <ReactMarkdown>{decodeContent(article.content || "")}</ReactMarkdown>
+          </div>
+
+          {/* Responsible Gambling */}
+          <div style={{ marginTop: "3rem", padding: "1.25rem", background: S.surface, borderLeft: `4px solid ${S.orange}` }}>
+            <p style={{ fontSize: "0.8125rem", color: S.textMuted, margin: 0, lineHeight: 1.6, fontFamily: "Inter, sans-serif" }}>
+              <strong style={{ color: S.peach }}>Bet Responsibly.</strong> Sports betting is for entertainment only. Never bet more than you can afford to lose.
+              Help: <a href="tel:18005224700" style={{ color: S.orange, fontWeight: 700 }}>1-800-522-4700</a> (National) ·{" "}
+              <a href="tel:18887897777" style={{ color: S.orange, fontWeight: 700 }}>1-888-789-7777</a> (CT). Must be 21+.
+            </p>
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", position: "sticky", top: "1rem" }}>
+
+          {/* Key Picks Box */}
+          {picks && (picks.spread_pick || picks.pick) && (<div style={{ background: S.surfaceHigh, padding: "1.5rem", boxShadow: "0 24px 48px rgba(0,0,0,0.4)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
+                <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.1rem", textTransform: "uppercase", letterSpacing: "-0.01em", color: S.text, margin: 0 }}>Key Picks</h3>
+                <span className="material-symbols-outlined" style={{ color: S.orange, fontSize: "1.25rem" }}>verified</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+                {picks.spread_pick && (<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.875rem 1rem", background: S.surfaceHighest }}>
+                    <div>
+                      <p style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 0.25rem", fontFamily: "Space Grotesk, sans-serif" }}>Spread</p>
+                      <p style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, color: S.text, margin: 0 }}>{picks.spread_pick}</p>
+                    </div>
+                    <span style={{ fontSize: "0.625rem", fontWeight: 900, color: picks.spread_lean === "COVER" ? S.green : S.red, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>{picks.spread_lean}</span>
+                  </div>)}
+                {picks.total_pick && (<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.875rem 1rem", background: S.surfaceHighest }}>
+                    <div>
+                      <p style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 0.25rem", fontFamily: "Space Grotesk, sans-serif" }}>Total</p>
+                      <p style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, color: S.text, margin: 0 }}>{picks.total_pick}</p>
+                    </div>
+                    <span style={{ fontSize: "0.625rem", fontWeight: 900, color: picks.total_lean === "OVER" ? S.green : S.red, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>{picks.total_lean}</span>
+                  </div>)}
+                {picks.moneyline_pick && (<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.875rem 1rem", background: S.surfaceHighest, border: `2px solid rgba(245,132,38,0.2)` }}>
+                    <div>
+                      <p style={{ fontSize: "0.5625rem", color: S.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 0.25rem", fontFamily: "Space Grotesk, sans-serif" }}>Best Bet (ML)</p>
+                      <p style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, color: S.text, margin: 0 }}>{picks.moneyline_pick}</p>
+                    </div>
+                    <span style={{ fontSize: "0.625rem", fontWeight: 900, color: picks.moneyline_lean === "WIN" ? S.green : S.red, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>{picks.moneyline_lean}</span>
+                  </div>)}
+                {picks.pick && (<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.875rem 1rem", background: S.surfaceHighest, border: `2px solid rgba(245,132,38,0.2)` }}>
+                    <div>
+                      <p style={{ fontSize: "0.5625rem", color: S.orange, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 0.25rem", fontFamily: "Space Grotesk, sans-serif" }}>Best Prop Bet</p>
+                      <p style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, color: S.text, margin: 0 }}>{picks.pick}</p>
+                    </div>
+                    <span style={{ fontSize: "0.625rem", fontWeight: 900, color: picks.lean === "OVER" ? S.green : S.red, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>{picks.lean}</span>
+                  </div>)}
+              </div>
+              <a href="https://www.draftkings.com" target="_blank" rel="noopener noreferrer" style={{
+                display: "block", width: "100%", marginTop: "1rem", padding: "0.875rem",
+                background: "linear-gradient(135deg, #F58426, #ffb786)", color: "#5c2b00",
+                fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, textTransform: "uppercase",
+                letterSpacing: "0.15em", fontSize: "0.8125rem", textAlign: "center",
+                textDecoration: "none", fontStyle: "italic", boxSizing: "border-box"
+            }}>Tail This Pick</a>
+            </div>)}
+
+          {/* Related Articles */}
+          {related.length > 0 && (<div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, margin: 0 }}>More For This Game</h3>
+              {related.map((a) => {
+                const b = TYPE_CONFIG[a.article_type] ?? TYPE_CONFIG.prediction;
+                return (<Link key={a.slug} to={`/predictions/${a.slug}`} style={{ display: "flex", gap: "0.75rem", alignItems: "center", textDecoration: "none", padding: "0.5rem", transition: "background 0.15s" }} onMouseEnter={e => (e.currentTarget.style.background = S.surfaceHigh)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                    <div style={{ width: "3.5rem", height: "3.5rem", background: S.surfaceHigh, flexShrink: 0, overflow: "hidden" }}>
+                      <img src={HERO_IMAGES[related.indexOf(a) % HERO_IMAGES.length]} alt={a.title} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "grayscale(80%)" }}/>
+                    </div>
+                    <div>
+                      <span style={{ display: "inline-block", background: b.bg, color: b.color, padding: "0.1rem 0.375rem", fontSize: "0.5rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "0.25rem", fontFamily: "Space Grotesk, sans-serif" }}>{b.label}</span>
+                      <p style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem", textTransform: "uppercase", color: S.text, margin: 0, lineHeight: 1.3 }}>{a.title.replace(/\s*\([\d-]+\)\s*$/, "").slice(0, 60)}</p>
+                    </div>
+                  </Link>);
             })}
-          </div>
-        </div>)}
+            </div>)}
 
-      {!isHistory && (<div style={{ background: "#0c1a4b", border: "1px solid #1d4ed8", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-          <div>
-            <p style={{ color: "#f9fafb", fontWeight: 700, margin: "0 0 0.25rem" }}>Ready to bet on the Knicks?</p>
-            <p style={{ color: "#93c5fd", fontSize: "0.8rem", margin: 0 }}>Get a welcome bonus at DraftKings Sportsbook</p>
+          {/* Game Info */}
+          <div style={{ background: S.surface, padding: "1.25rem" }}>
+            <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, marginBottom: "0.75rem" }}>Game Info</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {[
+            ["Date", new Date(article.game_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })],
+            ["Matchup", `${article.away_team} @ ${article.home_team}`],
+            opp ? ["Opponent", opp] : null,
+        ].filter(Boolean).map(([label, value]) => (<div key={label} style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+                  <span style={{ fontSize: "0.625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "Space Grotesk, sans-serif" }}>{label}</span>
+                  <span style={{ fontSize: "0.75rem", color: S.text, fontWeight: 600, fontFamily: "Inter, sans-serif", textAlign: "right" }}>{value}</span>
+                </div>))}
+            </div>
           </div>
-          <a href="https://www.draftkings.com" target="_blank" rel="noopener noreferrer" style={{ background: "#F58426", color: "#000", padding: "0.6rem 1.25rem", borderRadius: "0.5rem", fontWeight: 700, fontSize: "0.875rem", textDecoration: "none" }}>
-            Bet at DraftKings →
-          </a>
-        </div>)}
-
-      <p style={{ color: "#374151", fontSize: "0.7rem", textAlign: "center" }}>
-        {isHistory
-            ? "Historical content is AI-generated for entertainment. Always verify facts independently."
-            : "Predictions are for entertainment purposes only. Must be 21+ and located in a state where sports betting is legal. Please bet responsibly."}
-      </p>
+        </div>
+      </section>
     </div>);
 }

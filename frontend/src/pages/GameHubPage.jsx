@@ -2,187 +2,239 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getArticles, getResults, getSchedule } from "../utils/api";
 import { Helmet } from "react-helmet-async";
+const S = {
+    bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
+    surfaceHighest: "#353534", border: "rgba(255,255,255,0.08)",
+    orange: "#F58426", peach: "#ffb786", green: "#4ae176",
+    greenBg: "#06bb55", red: "#ffb4ab", redBg: "#93000a",
+    blue: "#a0caff", text: "#e5e2e1", textMuted: "#ddc1b1",
+};
+const PLAYER_IMAGES = {
+    "Jalen Brunson": "/players/jalen.png",
+    "Karl-Anthony Towns": "/players/KAT.png",
+    "Mikal Bridges": "/players/mikal.png",
+    "OG Anunoby": "/players/OG.png",
+    "Josh Hart": "/players/josh.png",
+    "Miles McBride": "/players/miles.png",
+    "Mitchell Robinson": "/players/mitchell.png",
+};
 export default function GameHubPage() {
     const { gameSlug } = useParams();
-    const { data: articles } = useQuery({ queryKey: ["articles"], queryFn: () => getArticles(50) });
+    const { data: articles } = useQuery({ queryKey: ["articles", 50], queryFn: () => getArticles(50) });
     const { data: resultsData } = useQuery({ queryKey: ["results"], queryFn: getResults });
     const { data: games } = useQuery({ queryKey: ["schedule"], queryFn: getSchedule });
-    if (!gameSlug || !articles)
-        return <p style={{ color: "#6b7280" }}>Loading...</p>;
-    // Parse date and opponent from slug e.g. "knicks-vs-indiana-pacers-2026-03-17"
+    if (!gameSlug)
+        return null;
     const slugParts = gameSlug.split("-");
     const dateStr = slugParts.slice(-3).join("-");
     const opponentRaw = slugParts.slice(2, -3).join(" ");
     const opponent = opponentRaw.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-    // Find all articles for this game date
-    const gameArticles = articles.filter((a) => a.game_date === dateStr);
+    const gameArticles = articles?.filter((a) => a.game_date === dateStr) ?? [];
     const prediction = gameArticles.find((a) => a.article_type === "prediction");
     const bestBet = gameArticles.find((a) => a.article_type === "best_bet");
-    const props = gameArticles.filter((a) => a.article_type === "prop");
-    const parlay = gameArticles.find((a) => a.article_type === "parlay");
-    // Find game result
+    const propArticles = gameArticles.filter((a) => a.article_type === "prop");
     const predictions = resultsData?.predictions ?? [];
     const propResults = resultsData?.props ?? [];
     const gameResult = predictions.find((p) => p.game_date === dateStr);
     const gamePropResults = propResults.filter((p) => p.game_date === dateStr);
-    // Find game from schedule
-    const game = (games ?? []).find((g) => {
-        const gDate = typeof g.game_date === "string" ? g.game_date : String(g.game_date);
-        return gDate.substring(0, 10) === dateStr;
-    });
-    // Get picks from prediction article
-    const picks = prediction?.key_picks ?? {};
+    const game = games?.find((g) => String(g.game_date).substring(0, 10) === dateStr);
+    const picks = prediction?.key_picks ?? bestBet?.key_picks ?? {};
+    const isHome = game?.home_team?.includes("Knicks");
+    const kScore = isHome ? game?.home_score : game?.away_score;
+    const oScore = isHome ? game?.away_score : game?.home_score;
+    const hasScore = kScore != null && oScore != null;
+    const win = hasScore && kScore > oScore;
+    const fmt = (d) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }).toUpperCase();
     const resultBadge = (result) => {
         if (!result)
             return null;
-        const hit = result === "HIT";
-        return (<span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "0.15rem 0.45rem", borderRadius: "999px", background: hit ? "#14532d" : "#7f1d1d", color: hit ? "#4ade80" : "#f87171" }}>
-        {hit ? "HIT" : "MISS"}
+        return (<span style={{ background: result === "HIT" ? S.greenBg : S.redBg, color: result === "HIT" ? "#00431a" : "#ffdad6", padding: "0.15rem 0.5rem", fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif" }}>
+        {result}
       </span>);
     };
-    const title = prediction?.title ?? `Knicks vs ${opponent} Prediction, Best Bets & Player Props (${dateStr})`;
-    const description = `AI-powered Knicks vs ${opponent} prediction, best bet, spread pick and player props. Updated 45 minutes before tip-off. KnicksHub AI betting analysis.`;
-    return (<div style={{ maxWidth: "900px" }}>
+    return (<div style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
-        <title>{title} | KnicksHub</title>
-        <meta name="description" content={description}/>
-        <meta property="og:title" content={title}/>
-        <meta property="og:description" content={description}/>
+        <title>Knicks vs {opponent} Game Hub | KnicksHub</title>
+        <meta name="description" content={`Knicks vs ${opponent} predictions, best bets, and player props — ${dateStr}`}/>
       </Helmet>
 
-      {/* Breadcrumb */}
-      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "1rem", fontSize: "0.75rem", color: "#6b7280" }}>
-        <Link to="/" style={{ color: "#6b7280", textDecoration: "none" }}>Home</Link>
-        <span>/</span>
-        <Link to="/predictions" style={{ color: "#6b7280", textDecoration: "none" }}>Predictions</Link>
-        <span>/</span>
-        <span style={{ color: "#F58426" }}>Knicks vs {opponent}</span>
-      </div>
-
-      {/* Hero */}
-      <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.5rem", marginBottom: "1.5rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-          <div>
-            <h1 style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "2rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.25rem" }}>
-              KNICKS VS {opponent.toUpperCase()}
-            </h1>
-            <p style={{ color: "#6b7280", fontSize: "0.875rem", margin: 0 }}>{dateStr}</p>
+      {/* Hero Scoreboard */}
+      <section style={{ position: "relative", height: "420px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", background: "#0a0a0a" }}>
+        <div style={{ position: "absolute", inset: 0 }}>
+          <img src="/players/msg-arena.jpg" alt="MSG" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.35, filter: "grayscale(60%)" }}/>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(19,19,19,0.3), rgba(19,19,19,0.8))" }}/>
+        </div>
+        <div style={{ position: "relative", zIndex: 10, textAlign: "center", width: "100%", maxWidth: "900px", padding: "0 2rem" }}>
+          {hasScore && (<span style={{ fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.3em", textTransform: "uppercase", color: S.textMuted, display: "block", marginBottom: "1rem", fontFamily: "Space Grotesk, sans-serif" }}>
+              {game?.status === "Final" ? "Final" : "Live"} · {dateStr}
+            </span>)}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "3rem" }}>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(3rem, 8vw, 6rem)", letterSpacing: "-0.04em", color: S.text, lineHeight: 1 }}>NYK</span>
+              <span style={{ display: "block", fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: S.orange, marginTop: "0.5rem" }}>New York Knicks</span>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              {hasScore ? (<div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(3.5rem, 10vw, 7rem)", letterSpacing: "-0.05em", color: S.text }}>{kScore}</span>
+                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "2rem", color: "rgba(221,193,177,0.3)", fontStyle: "italic" }}>-</span>
+                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(3.5rem, 10vw, 7rem)", letterSpacing: "-0.05em", color: S.text }}>{oScore}</span>
+                </div>) : (<div>
+                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem", letterSpacing: "-0.02em", color: S.textMuted, display: "block" }}>{fmt(dateStr)}</span>
+                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "2rem", letterSpacing: "-0.02em", color: S.peach }}>VS</span>
+                </div>)}
+              {!hasScore && game?.arena && (<span style={{ display: "block", fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: S.textMuted, marginTop: "0.5rem", border: `1px solid rgba(86,67,54,0.3)`, padding: "0.25rem 0.75rem", fontFamily: "Space Grotesk, sans-serif" }}>{game.arena}</span>)}
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(3rem, 8vw, 6rem)", letterSpacing: "-0.04em", color: S.text, lineHeight: 1 }}>
+                {opponent.split(" ").pop()?.substring(0, 3).toUpperCase()}
+              </span>
+              <span style={{ display: "block", fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: S.blue, marginTop: "0.5rem" }}>{opponent}</span>
+            </div>
           </div>
-          {game && (<div style={{ textAlign: "right" }}>
-              {game.status === "Final" ? (<div>
-                  <p style={{ color: "#4ade80", fontSize: "0.75rem", fontWeight: 700, margin: "0 0 0.25rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Final</p>
-                  <p style={{ color: "#f9fafb", fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
-                    {game.home_team?.includes("Knicks") ? game.home_score : game.away_score}
-                    <span style={{ color: "#6b7280", fontSize: "1rem", margin: "0 0.5rem" }}>-</span>
-                    {game.home_team?.includes("Knicks") ? game.away_score : game.home_score}
-                  </p>
-                </div>) : (<p style={{ color: "#fbbf24", fontSize: "0.875rem", fontWeight: 600, margin: 0 }}>Upcoming</p>)}
+          {hasScore && (<span style={{ display: "inline-block", marginTop: "1.5rem", fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: S.textMuted, border: `1px solid rgba(86,67,54,0.3)`, padding: "0.25rem 0.75rem", fontFamily: "Space Grotesk, sans-serif" }}>
+              {fmt(dateStr)} · {game?.arena || "Madison Square Garden"}
+            </span>)}
+        </div>
+      </section>
+
+      {/* Odds Strip */}
+      {(picks.spread_pick || picks.total_pick || picks.moneyline_pick) && (<div style={{ position: "sticky", top: 0, zIndex: 40, background: S.surface, borderBottom: `1px solid ${S.border}`, padding: "0.875rem 2.5rem", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "3rem" }}>
+          {[
+                ["Spread", picks.spread_pick, gameResult?.spread_result],
+                ["Total", picks.total_pick, gameResult?.total_result],
+                ["Moneyline", picks.moneyline_pick, gameResult?.moneyline_result],
+            ].filter(([, v]) => v).map(([label, value, result]) => (<div key={label} style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <span style={{ fontSize: "0.5625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, fontFamily: "Space Grotesk, sans-serif" }}>{label}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.25rem", color: S.text }}>{value}</span>
+                {resultBadge(result)}
+              </div>
+            </div>))}
+        </div>)}
+
+      {/* Main Content */}
+      <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "2.5rem", display: "grid", gridTemplateColumns: "1fr 340px", gap: "2.5rem", alignItems: "start" }}>
+
+        {/* Left: Game Analysis + Prop Market Watch */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
+
+          {/* Game Analysis */}
+          {prediction && (<section>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem" }}>
+                <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "-0.02em", color: S.text, margin: 0 }}>The Game Analysis</h2>
+                <Link to={`/predictions/${prediction.slug}`} style={{ fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: S.orange, textDecoration: "none", display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                  Read Full Predictions <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>north_east</span>
+                </Link>
+              </div>
+              <div style={{ background: S.surfaceHigh, padding: "2rem", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: 0, right: 0, width: "8rem", height: "8rem", background: "rgba(245,132,38,0.04)", borderRadius: "50%", transform: "translate(3rem, -3rem)", filter: "blur(20px)" }}/>
+                <span style={{ fontSize: "0.5625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: S.blue, fontFamily: "Space Grotesk, sans-serif", display: "block", marginBottom: "0.75rem" }}>Strategic Preview</span>
+                <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.75rem", lineHeight: 1.1, color: S.text, marginBottom: "1rem", textTransform: "uppercase", letterSpacing: "-0.02em" }}>
+                  {prediction.title.replace(/\s*\([\d-]+\)\s*$/, "").slice(0, 60)}
+                </h3>
+                <p style={{ color: S.textMuted, lineHeight: 1.7, fontSize: "0.9375rem", fontFamily: "Inter, sans-serif", marginBottom: "1.5rem" }}>
+                  {prediction.content?.replace(/[#*]/g, "").slice(0, 300)}...
+                </p>
+                {picks.spread_pick && (<div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                    <div style={{ background: S.surfaceHighest, padding: "0.875rem 1.25rem" }}>
+                      <span style={{ display: "block", fontSize: "0.5625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, marginBottom: "0.25rem", fontFamily: "Space Grotesk, sans-serif" }}>Spread Pick</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.25rem", color: S.orange }}>{picks.spread_pick}</span>
+                    </div>
+                    {picks.total_pick && (<div style={{ background: S.surfaceHighest, padding: "0.875rem 1.25rem" }}>
+                        <span style={{ display: "block", fontSize: "0.5625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, marginBottom: "0.25rem", fontFamily: "Space Grotesk, sans-serif" }}>Total</span>
+                        <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.25rem", color: S.text }}>{picks.total_pick}</span>
+                      </div>)}
+                  </div>)}
+              </div>
+            </section>)}
+
+          {/* Prop Market Watch */}
+          {propArticles.length > 0 && (<section>
+              <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "-0.02em", color: S.text, marginBottom: "1.25rem" }}>Prop Market Watch</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1px", background: S.border, border: `1px solid ${S.border}` }}>
+                {propArticles.map((a) => {
+                const propResult = gamePropResults.find((r) => r.slug === a.slug);
+                const img = a.player ? Object.entries(PLAYER_IMAGES).find(([k]) => a.player.toLowerCase().includes(k.toLowerCase().split(" ")[1]))?.[1] : null;
+                const picks = a.key_picks;
+                return (<Link key={a.slug} to={`/predictions/${a.slug}`} style={{ textDecoration: "none" }}>
+                      <div style={{ background: S.surfaceHigh, padding: "1.25rem", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "background 0.15s" }} onMouseEnter={e => (e.currentTarget.style.background = S.surfaceHighest)} onMouseLeave={e => (e.currentTarget.style.background = S.surfaceHigh)}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          {img && <img src={img} alt={a.player} style={{ width: "2.5rem", height: "2.5rem", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}/>}
+                          <div>
+                            <span style={{ display: "block", fontSize: "0.5625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: S.textMuted, fontFamily: "Space Grotesk, sans-serif" }}>{a.player}</span>
+                            <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", color: S.text }}>
+                              {picks?.pick || `${a.prop_type} Prop`}
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.375rem" }}>
+                          {picks?.lean && (<span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1rem", color: picks.lean === "OVER" ? S.green : S.red }}>{picks.lean}</span>)}
+                          {propResult && resultBadge(propResult.result)}
+                        </div>
+                      </div>
+                    </Link>);
+            })}
+              </div>
+            </section>)}
+
+          {/* No articles */}
+          {gameArticles.length === 0 && (<div style={{ background: S.surface, padding: "3rem", textAlign: "center" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "3rem", color: S.textMuted, display: "block", marginBottom: "1rem" }}>analytics</span>
+              <p style={{ color: S.textMuted, fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, textTransform: "uppercase" }}>No articles yet for this game.</p>
+              <p style={{ color: S.textMuted, fontSize: "0.8125rem", fontFamily: "Inter, sans-serif" }}>AI picks drop ~45 minutes before tip-off.</p>
             </div>)}
         </div>
 
-        {/* Odds strip */}
-        {picks.spread_pick && (<div style={{ display: "flex", gap: "1rem", marginTop: "1rem", flexWrap: "wrap" }}>
-            {[
-                { label: "Spread", value: picks.spread_pick, lean: picks.spread_lean, result: gameResult?.spread_result },
-                { label: "Total", value: picks.total_pick, lean: picks.total_lean, result: gameResult?.total_result },
-                { label: "Moneyline", value: picks.moneyline_pick, lean: picks.moneyline_lean, result: gameResult?.moneyline_result },
-            ].map((item) => item.value && (<div key={item.label} style={{ background: "#1f2937", borderRadius: "0.5rem", padding: "0.6rem 0.9rem", minWidth: "120px" }}>
-                <p style={{ color: "#6b7280", fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.25rem" }}>{item.label}</p>
-                <p style={{ color: "#f9fafb", fontSize: "0.9rem", fontWeight: 700, margin: "0 0 0.2rem" }}>{item.value}</p>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <span style={{ color: "#F58426", fontSize: "0.7rem", fontWeight: 600 }}>{item.lean}</span>
-                  {resultBadge(item.result)}
-                </div>
-              </div>))}
-          </div>)}
-      </div>
+        {/* Right: Quick Picks + Editor's Best Bet + Links */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", position: "sticky", top: "4rem" }}>
 
-      {/* Quick picks box */}
-      {(picks.spread_pick || picks.total_pick) && (<div style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)", border: "1px solid #F58426", borderRadius: "0.75rem", padding: "1.25rem", marginBottom: "1.5rem" }}>
-          <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1.1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>QUICK PICKS</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.5rem" }}>
-            {picks.spread_pick && <p style={{ color: "#f9fafb", fontSize: "0.875rem", margin: 0 }}>🏀 <strong>Spread:</strong> {picks.spread_lean} {picks.spread_pick}</p>}
-            {picks.total_pick && <p style={{ color: "#f9fafb", fontSize: "0.875rem", margin: 0 }}>📊 <strong>Total:</strong> {picks.total_lean} {picks.total_pick}</p>}
-            {picks.moneyline_pick && <p style={{ color: "#f9fafb", fontSize: "0.875rem", margin: 0 }}>💰 <strong>ML:</strong> {picks.moneyline_lean} {picks.moneyline_pick}</p>}
-          </div>
-        </div>)}
-
-      {/* Articles grid */}
-      <div style={{ display: "grid", gap: "1.5rem" }}>
-
-        {/* Prediction article */}
-        {prediction && (<div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>GAME PREDICTION</p>
-              {gameResult && (<div style={{ display: "flex", gap: "0.4rem" }}>
-                  {resultBadge(gameResult.spread_result)}
-                  {resultBadge(gameResult.total_result)}
-                </div>)}
-            </div>
-            <h2 style={{ color: "#f9fafb", fontSize: "1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>{prediction.title}</h2>
-            <p style={{ color: "#9ca3af", fontSize: "0.875rem", margin: "0 0 0.75rem", lineHeight: 1.6 }}>
-              {prediction.content?.substring(0, 200)}...
-            </p>
-            <Link to={`/predictions/${prediction.slug}`} style={{ color: "#F58426", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
-              Read Full Prediction →
-            </Link>
-          </div>)}
-
-        {/* Best Bet */}
-        {bestBet && (<div style={{ background: "#111827", border: "1px solid #F58426", borderRadius: "0.75rem", padding: "1.25rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: 0 }}>🔥 BEST BET</p>
-              {gameResult && resultBadge(gameResult.spread_result)}
-            </div>
-            <h2 style={{ color: "#f9fafb", fontSize: "1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>{bestBet.title}</h2>
-            <p style={{ color: "#9ca3af", fontSize: "0.875rem", margin: "0 0 0.75rem", lineHeight: 1.6 }}>
-              {bestBet.content?.substring(0, 200)}...
-            </p>
-            <Link to={`/predictions/${bestBet.slug}`} style={{ color: "#F58426", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
-              Read Full Best Bet →
-            </Link>
-          </div>)}
-
-        {/* Props */}
-        {props.length > 0 && (<div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-            <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.75rem" }}>PLAYER PROPS</p>
-            <div style={{ display: "grid", gap: "0.75rem" }}>
-              {props.map((prop) => {
-                const propResult = gamePropResults.find((r) => r.player === prop.player);
-                const propPicks = prop.key_picks ?? {};
-                return (<div key={prop.slug} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.6rem 0", borderBottom: "1px solid #1f2937" }}>
+          {/* Quick Picks */}
+          {(picks.spread_pick || picks.moneyline_pick) && (<div style={{ background: S.surface, padding: "1.5rem", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: `linear-gradient(to right, ${S.orange}, ${S.blue})` }}/>
+              <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.1rem", textTransform: "uppercase", fontStyle: "italic", letterSpacing: "-0.01em", color: S.text, marginBottom: "1rem" }}>Quick Picks</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                {picks.spread_pick && (<div style={{ background: S.surfaceHigh, padding: "0.875rem 1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <span className="material-symbols-outlined" style={{ color: S.orange, fontSize: "1.125rem" }}>bolt</span>
                     <div>
-                      <p style={{ color: "#f9fafb", fontSize: "0.875rem", fontWeight: 600, margin: "0 0 0.2rem" }}>{prop.player}</p>
-                      {propPicks.pick && (<p style={{ color: "#F58426", fontSize: "0.75rem", margin: 0 }}>{propPicks.lean} {propPicks.pick}</p>)}
+                      <span style={{ display: "block", fontSize: "0.5625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: S.textMuted, fontFamily: "Space Grotesk, sans-serif" }}>Lock of the Night</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", color: S.text }}>{picks.spread_pick}</span>
                     </div>
-                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                      {propResult && (<span style={{ color: "#6b7280", fontSize: "0.75rem" }}>Actual: {propResult.actual_value}</span>)}
-                      {resultBadge(propResult?.result ?? null)}
-                      <Link to={`/predictions/${prop.slug}`} style={{ color: "#6b7280", fontSize: "0.75rem", textDecoration: "none" }}>View →</Link>
+                  </div>)}
+                {picks.total_pick && (<div style={{ background: S.surfaceHigh, padding: "0.875rem 1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <span className="material-symbols-outlined" style={{ color: S.blue, fontSize: "1.125rem" }}>trending_up</span>
+                    <div>
+                      <span style={{ display: "block", fontSize: "0.5625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: S.textMuted, fontFamily: "Space Grotesk, sans-serif" }}>Value Play</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", color: S.text }}>{picks.total_pick}</span>
                     </div>
-                  </div>);
-            })}
-            </div>
-          </div>)}
+                  </div>)}
+              </div>
+            </div>)}
 
-        {/* Parlay */}
-        {parlay && (<div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem", padding: "1.25rem" }}>
-            <p style={{ fontFamily: "Bebas Neue, sans-serif", fontSize: "1rem", letterSpacing: "0.1em", color: "#F58426", margin: "0 0 0.5rem" }}>SAME-GAME PARLAY</p>
-            <h2 style={{ color: "#f9fafb", fontSize: "1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>{parlay.title}</h2>
-            <Link to={`/predictions/${parlay.slug}`} style={{ color: "#F58426", fontSize: "0.8rem", fontWeight: 600, textDecoration: "none" }}>
-              View Parlay →
-            </Link>
-          </div>)}
+          {/* Editor's Best Bet */}
+          {bestBet && (<div style={{ background: S.surfaceHigh, padding: "1.5rem", border: `2px solid ${S.orange}`, position: "relative", overflow: "hidden" }}>
+              <span style={{ position: "absolute", top: 0, left: 0, background: S.orange, color: "#5c2b00", fontSize: "0.5625rem", fontWeight: 900, letterSpacing: "0.2em", textTransform: "uppercase", padding: "0.25rem 0.625rem", fontFamily: "Space Grotesk, sans-serif" }}>Editor's Best Bet</span>
+              <div style={{ marginTop: "1.5rem" }}>
+                <h4 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem", fontStyle: "italic", letterSpacing: "-0.02em", color: S.text, marginBottom: "0.5rem" }}>
+                  {bestBet.key_picks?.spread_pick || bestBet.title.slice(0, 40)}
+                </h4>
+                <p style={{ color: S.textMuted, fontSize: "0.8125rem", lineHeight: 1.6, marginBottom: "1rem", fontFamily: "Inter, sans-serif" }}>
+                  {bestBet.content?.replace(/[#*]/g, "").slice(0, 150)}...
+                </p>
+                <Link to={`/predictions/${bestBet.slug}`} style={{ display: "block", width: "100%", padding: "0.75rem", background: "rgba(245,132,38,0.1)", border: `1px solid rgba(245,132,38,0.3)`, color: S.peach, fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "0.75rem", textAlign: "center", textDecoration: "none", transition: "all 0.15s", boxSizing: "border-box" }} onMouseEnter={e => { e.currentTarget.style.background = S.orange; e.currentTarget.style.color = "#5c2b00"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(245,132,38,0.1)"; e.currentTarget.style.color = S.peach; }}>Tail This Pick</Link>
+              </div>
+            </div>)}
 
-      </div>
-
-      {/* Internal links */}
-      <div style={{ marginTop: "2rem", padding: "1rem", background: "#111827", border: "1px solid #1f2937", borderRadius: "0.75rem" }}>
-        <p style={{ color: "#6b7280", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 0.75rem" }}>More KnicksHub</p>
-        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-          <Link to="/predictions" style={{ color: "#F58426", fontSize: "0.8rem", textDecoration: "none" }}>All Predictions →</Link>
-          <Link to="/knicks-betting-record" style={{ color: "#F58426", fontSize: "0.8rem", textDecoration: "none" }}>Betting Record →</Link>
-          <Link to="/injuries" style={{ color: "#F58426", fontSize: "0.8rem", textDecoration: "none" }}>Injury Report →</Link>
+          {/* Quick Nav */}
+          <div style={{ background: S.surface }}>
+            {[
+            ["/injuries", "Full Injury Report", "medical_services"],
+            ["/knicks-betting-record", "Historical Record", "receipt_long"],
+            ["/predictions", "All Predictions", "analytics"],
+        ].map(([to, label, icon]) => (<Link key={to} to={to} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", borderBottom: `1px solid ${S.border}`, textDecoration: "none", transition: "background 0.15s" }} onMouseEnter={e => (e.currentTarget.style.background = S.surfaceHigh)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem", textTransform: "uppercase", letterSpacing: "0.05em", color: S.text }}>{label}</span>
+                <span className="material-symbols-outlined" style={{ color: S.textMuted, fontSize: "1.125rem" }}>{icon}</span>
+              </Link>))}
+          </div>
         </div>
       </div>
     </div>);
