@@ -1,6 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-import asyncio, logging
+import asyncio, logging, threading
 logger = logging.getLogger(__name__)
 _scheduler = BackgroundScheduler()
 

@@ -902,6 +902,46 @@ async def build_game_context(
     opponent_injury_text = await _fetch_opponent_injuries(opponent)
 
     accuracy_summary = await get_accuracy_summary()
+
+    # Rules-based composite scorer
+    knicks_last_game = None
+    if isinstance(recent_text, str):
+        import re as _re
+        dates = _re.findall(r"\d{4}-\d{2}-\d{2}", recent_text)
+        if dates:
+            knicks_last_game = dates[0]
+
+    try:
+        scoring_result = await compute_game_score(
+            home_team=home_team,
+            away_team=away_team,
+            game_date=str(__import__("datetime").date.today()),
+            knicks_injuries=injuries,
+            opponent_injuries_text=opponent_injury_text,
+            knicks_last_game_date=knicks_last_game,
+            opponent_last_game_date=None,
+        )
+        scoring_block = scoring_result.get("scoring_block", "")
+    except Exception as e:
+        logger.warning(f"Scoring service failed: {e}")
+        scoring_block = ""
+
+    # ML score prediction
+    try:
+        ml_result = await predict_game_score(
+            home_team=home_team,
+            away_team=away_team,
+            recent_games=recent_games if recent_games else [],
+            knicks_last_game_date=knicks_last_game,
+            game_date=str(__import__("datetime").date.today()),
+            spread=None,
+            over_under=over_under,
+        )
+        ml_block = ml_result.get("ml_block", "")
+    except Exception as e:
+        logger.warning(f"ML scoring service failed: {e}")
+        ml_block = ""
+
     return {
         "opponent": opponent,
         "injury_text": _format_injuries(injuries),
@@ -911,6 +951,8 @@ async def build_game_context(
         "team_stats_text": team_stats_text,
         "opponent_injury_text": opponent_injury_text,
         "over_under": over_under or "N/A",
+        "scoring_block": scoring_block,
+        "ml_block": ml_block,
     }
 
 
@@ -1077,15 +1119,15 @@ Guidelines:
 - SHARP ANGLE FIRST: The intro sentence must be the single most compelling reason to bet this game. Make it specific, not generic.
 - SCORE CONSISTENCY: Your ## Final Score Prediction MUST be mathematically consistent with your total_lean in the KEY PICKS JSON. If total_lean is OVER, the combined score must exceed the over/under line. If total_lean is UNDER, the combined score must be below it. Never predict 108-101 and pick OVER 224.5.
 
-IMPORTANT: At the very end, output EXACTLY this format for prop picks (NOT the game picks format):
+Remember: At the very end, include your picks in EXACTLY this JSON format:
 
 === ARTICLE CONTENT END ===
 
 ###KEY PICKS START###
-{{"player": "PLAYER_NAME", "prop_type": "points", "pick": "Over LINE", "lean": "OVER", "confidence": "High"}}
+{{"spread_pick": "Knicks -7.5", "spread_lean": "COVER", "moneyline_pick": "Knicks -280", "moneyline_lean": "WIN", "total_pick": "Over 224.5", "total_lean": "OVER", "confidence": "High"}}
 ###KEY PICKS END###
 
-Use "OVER" or "UNDER" for lean. "Low", "Medium", or "High" for confidence. No other keys allowed."""
+The JSON must use EXACTLY these keys: spread_pick, spread_lean (COVER or NO COVER), moneyline_pick, moneyline_lean (WIN or LOSS), total_pick, total_lean (OVER or UNDER), confidence (Low, Medium, or High). No other keys allowed."""
 
     content, key_picks = await _call_claude_with_timeout(system, user_prompt)
 
@@ -1567,6 +1609,12 @@ No JSON picks needed for history articles."""
 
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+async def generate_postgame_analysis(game_date: str) -> Dict:
+    """Generate post-game analysis article. Placeholder — full implementation TODO."""
+    logger.warning(f"generate_postgame_analysis called for {game_date} but not yet implemented")
+    return {}
 
 
 # ----------------------------------------------------------------------
