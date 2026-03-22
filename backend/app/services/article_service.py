@@ -1082,7 +1082,7 @@ IMPORTANT: At the very end, output EXACTLY this format for prop picks (NOT the g
 === ARTICLE CONTENT END ===
 
 ###KEY PICKS START###
-{"player": "{player}", "prop_type": "{prop_type}", "pick": "Over {line}", "lean": "OVER", "confidence": "High"}
+{{"player": "PLAYER_NAME", "prop_type": "points", "pick": "Over LINE", "lean": "OVER", "confidence": "High"}}
 ###KEY PICKS END###
 
 Use "OVER" or "UNDER" for lean. "Low", "Medium", or "High" for confidence. No other keys allowed."""
