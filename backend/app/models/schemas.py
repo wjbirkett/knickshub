@@ -49,6 +49,10 @@ class TeamStanding(BaseModel):
     win_pct: float
     games_back: float
     conference_rank: int
+    ppg: float = 0.0
+    opp_ppg: float = 0.0
+    streak: str = ""
+
 class PlayerStat(BaseModel):
     player_id: int
     player_name: str

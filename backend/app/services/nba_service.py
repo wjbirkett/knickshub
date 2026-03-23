@@ -161,6 +161,10 @@ async def fetch_standings() -> List[TeamStanding]:
             except:
                 win_pct = 0.0
 
+            ppg = _safe_float(stats.get("avgPointsFor", 0))
+            opp_ppg = _safe_float(stats.get("avgPointsAgainst", 0))
+            streak = stats.get("streak", "")
+
             standings.append(TeamStanding(
                 team_name=team.get("displayName", ""),
                 conference=conf_name,
@@ -170,6 +174,9 @@ async def fetch_standings() -> List[TeamStanding]:
                 win_pct=win_pct,
                 games_back=gb,
                 conference_rank=i + 1,
+                ppg=ppg,
+                opp_ppg=opp_ppg,
+                streak=streak,
             ))
 
     # Re-rank each conference best-to-worst (ESPN order is not reliable)
