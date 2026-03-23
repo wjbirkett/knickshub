@@ -53,6 +53,8 @@ export default function Dashboard() {
   const latestPredictions = (articles as any[])?.filter((a: any) =>
     ["prediction","best_bet","prop"].includes(a.article_type)
   ).slice(0, 3)
+  const TEAM_ABBR: Record<string, string> = {"Atlanta Hawks":"ATL","Boston Celtics":"BOS","Brooklyn Nets":"BKN","Charlotte Hornets":"CHA","Chicago Bulls":"CHI","Cleveland Cavaliers":"CLE","Dallas Mavericks":"DAL","Denver Nuggets":"DEN","Detroit Pistons":"DET","Golden State Warriors":"GS","Houston Rockets":"HOU","Indiana Pacers":"IND","LA Clippers":"LAC","Los Angeles Lakers":"LAL","Memphis Grizzlies":"MEM","Miami Heat":"MIA","Milwaukee Bucks":"MIL","Minnesota Timberwolves":"MIN","New Orleans Pelicans":"NO","New York Knicks":"NY","Oklahoma City Thunder":"OKC","Orlando Magic":"ORL","Philadelphia 76ers":"PHI","Phoenix Suns":"PHX","Portland Trail Blazers":"POR","Sacramento Kings":"SAC","San Antonio Spurs":"SA","Toronto Raptors":"TOR","Utah Jazz":"UTAH","Washington Wizards":"WSH"}
+  const getTeamLogo = (name: string) => `https://a.espncdn.com/i/teamlogos/nba/500/${TEAM_ABBR[name] || "nba"}.png`
   const nextGame  = (schedule as any[])?.find((g: any) => !g.home_score && g.status !== "Final")
   const lastGame  = (schedule as any[])?.filter((g: any) => g.status === "Final" || g.home_score).slice(-1)[0]
   const knicksInj = (injuries as any[])?.slice(0, 4) ?? []
@@ -220,13 +222,15 @@ export default function Dashboard() {
           {nextGame && (
             <div style={{ flex: 1, background: S.surfaceHigh, borderRadius: "0.75rem", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <span style={{ fontSize: "0.5625rem", fontWeight: 900, letterSpacing: "0.2rem", color: S.orange, textTransform: "uppercase" }}>Next Battle</span>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ textAlign: "center" }}>
-                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.75rem" }}>NYK</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "1.5rem" }}>
+                <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.35rem" }}>
+                  <img src={getTeamLogo("New York Knicks")} alt="Knicks" style={{ width: "3.5rem", height: "3.5rem", objectFit: "contain" }} />
+                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.75rem", color: S.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>NYK</span>
                 </div>
                 <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.25rem", color: S.textDim, fontStyle: "italic" }}>VS</span>
-                <div style={{ textAlign: "center" }}>
-                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.75rem" }}>{opp(nextGame)?.split(" ").pop()}</span>
+                <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.35rem" }}>
+                  <img src={getTeamLogo(opp(nextGame) || "")} alt={opp(nextGame) || ""} style={{ width: "3.5rem", height: "3.5rem", objectFit: "contain" }} />
+                  <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.75rem", color: S.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>{opp(nextGame)?.split(" ").pop()}</span>
                 </div>
               </div>
               <p style={{ fontSize: "0.6875rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>
