@@ -185,6 +185,19 @@ async def get_article(slug: str):
         raise HTTPException(status_code=404, detail="Article not found")
     return article
 
+@router.post("/generate/postgame")
+async def generate_postgame(game_date: str = None):
+    """Force-generate postgame analysis for a specific date or today."""
+    from app.services.article_service import generate_postgame_analysis, save_article
+    if not game_date:
+        yesterday = date.today() - timedelta(days=1)
+        game_date = str(yesterday)
+    article = await generate_postgame_analysis(game_date)
+    if not article or not article.get("slug"):
+        raise HTTPException(status_code=500, detail=f"Postgame generation failed for {game_date}")
+    saved = await save_article(article)
+    return {"message": "Postgame article generated", "slug": saved["slug"], "title": saved.get("title", "")}
+
 @router.post("/generate/for-date")
 async def generate_articles_for_date(game_date: str, force: bool = True):
     """Force-generate all articles for a specific game date (YYYY-MM-DD)."""
