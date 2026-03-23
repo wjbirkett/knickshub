@@ -172,9 +172,10 @@ async def fetch_standings() -> List[TeamStanding]:
                 conference_rank=i + 1,
             ))
 
-    # Re-rank each conference best-to-worst (ESPN returns worst-to-best)
-    east = sorted([s for s in standings if s.conference == "East"], key=lambda s: s.wins, reverse=True)
-    west = sorted([s for s in standings if s.conference == "West"], key=lambda s: s.wins, reverse=True)
+    # Re-rank each conference best-to-worst (ESPN order is not reliable)
+    # Sort by wins DESC, then losses ASC for proper tiebreaking
+    east = sorted([s for s in standings if s.conference == "East"], key=lambda s: (-s.wins, s.losses))
+    west = sorted([s for s in standings if s.conference == "West"], key=lambda s: (-s.wins, s.losses))
     for i, s in enumerate(east): s.conference_rank = i + 1
     for i, s in enumerate(west): s.conference_rank = i + 1
     standings = east + west
