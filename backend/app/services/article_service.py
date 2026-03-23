@@ -1820,7 +1820,7 @@ async def get_articles(limit: int = 20, article_type: Optional[str] = None) -> L
         return []
     
     try:
-        query = db.table("articles").select("*").order("created_at", desc=True)
+        query = db.table("articles").select("*").or_("home_team.ilike.%Knicks%,away_team.ilike.%Knicks%,home_team.ilike.%New York Knicks%,away_team.ilike.%New York Knicks%").order("created_at", desc=True)
         if article_type:
             query = query.eq("article_type", article_type)
         result = query.limit(limit).execute()

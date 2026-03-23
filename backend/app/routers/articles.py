@@ -168,8 +168,8 @@ async def get_results():
     from app.db import get_supabase
     db = get_supabase()
     if not db: return []
-    pred = db.table("prediction_results").select("*").order("game_date", desc=True).execute()
-    props = db.table("prop_results").select("*").order("game_date", desc=True).execute()
+    pred = db.table("prediction_results").select("*").or_("home_team.ilike.%Knicks%,away_team.ilike.%Knicks%,home_team.ilike.%New York Knicks%,away_team.ilike.%New York Knicks%").order("game_date", desc=True).execute()
+    props = db.table("prop_results").select("*").or_("home_team.ilike.%Knicks%,away_team.ilike.%Knicks%,home_team.ilike.%New York Knicks%,away_team.ilike.%New York Knicks%").order("game_date", desc=True).execute()
     return {"predictions": pred.data, "props": props.data}
 
 @router.get("/debug-boxscore")
