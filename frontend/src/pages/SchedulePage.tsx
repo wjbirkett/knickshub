@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query"
 import { Helmet } from "react-helmet-async"
 import { getSchedule } from "../utils/api"
 
+const TEAM_ABBR: Record<string, string> = {"Atlanta Hawks":"ATL","Boston Celtics":"BOS","Brooklyn Nets":"BKN","Charlotte Hornets":"CHA","Chicago Bulls":"CHI","Cleveland Cavaliers":"CLE","Dallas Mavericks":"DAL","Denver Nuggets":"DEN","Detroit Pistons":"DET","Golden State Warriors":"GS","Houston Rockets":"HOU","Indiana Pacers":"IND","LA Clippers":"LAC","Los Angeles Lakers":"LAL","Memphis Grizzlies":"MEM","Miami Heat":"MIA","Milwaukee Bucks":"MIL","Minnesota Timberwolves":"MIN","New Orleans Pelicans":"NO","New York Knicks":"NY","Oklahoma City Thunder":"OKC","Orlando Magic":"ORL","Philadelphia 76ers":"PHI","Phoenix Suns":"PHX","Portland Trail Blazers":"POR","Sacramento Kings":"SAC","San Antonio Spurs":"SA","Toronto Raptors":"TOR","Utah Jazz":"UTAH","Washington Wizards":"WSH"}
+const teamLogo = (name: string) => { const abbr = TEAM_ABBR[name]; return abbr ? `https://a.espncdn.com/i/teamlogos/nba/500/${abbr}.png` : null }
+
 const S = {
   bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
   border: "rgba(255,255,255,0.08)", orange: "#F58426", peach: "#ffb786",
@@ -49,7 +52,7 @@ export default function SchedulePage() {
                       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                         <span style={{ fontSize: "0.625rem", color: S.textMuted, fontFamily: "Inter, sans-serif", minWidth: "70px" }}>{fmt(g.game_date)}</span>
                         <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", background: S.surfaceHigh, padding: "0.1rem 0.375rem" }}>{isHome(g) ? "HOME" : "AWAY"}</span>
-                        <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", textTransform: "uppercase", color: S.text }}>vs {opp(g)}</span>
+                        <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", textTransform: "uppercase", color: S.text, display: "flex", alignItems: "center", gap: "0.5rem" }}>vs {teamLogo(opp(g)) && <img src={teamLogo(opp(g))!} alt={opp(g)} style={{ width: "26px", height: "26px", objectFit: "contain" }} />}{opp(g)}</span>
                       </div>
                       <span style={{ fontSize: "0.625rem", color: S.textMuted, fontFamily: "Inter, sans-serif" }}>{g.arena || ""}</span>
                     </div>
@@ -70,7 +73,7 @@ export default function SchedulePage() {
                         <div style={{ display: "flex", alignItems: "center", gap: "1rem", flex: 1 }}>
                           <span style={{ fontSize: "0.625rem", color: S.textMuted, fontFamily: "Inter, sans-serif", minWidth: "70px" }}>{fmt(g.game_date)}</span>
                           <span style={{ fontSize: "0.5625rem", color: S.textMuted, fontWeight: 700, textTransform: "uppercase", background: S.surfaceHigh, padding: "0.1rem 0.375rem" }}>{isHome(g) ? "HOME" : "AWAY"}</span>
-                          <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", textTransform: "uppercase", color: S.text }}>vs {opp(g)}</span>
+                          <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.9375rem", textTransform: "uppercase", color: S.text, display: "flex", alignItems: "center", gap: "0.5rem" }}>vs {teamLogo(opp(g)) && <img src={teamLogo(opp(g))!} alt={opp(g)} style={{ width: "26px", height: "26px", objectFit: "contain" }} />}{opp(g)}</span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                           <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1rem", color: S.text }}>{kScore(g)} - {oScore(g)}</span>

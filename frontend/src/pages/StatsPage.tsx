@@ -3,6 +3,9 @@ import { Helmet } from "react-helmet-async"
 import { getStandings, getStats } from "../utils/api"
 import PLAYER_IMAGES from "../utils/playerImages"
 
+const TEAM_ABBR: Record<string, string> = {"Atlanta Hawks":"ATL","Boston Celtics":"BOS","Brooklyn Nets":"BKN","Charlotte Hornets":"CHA","Chicago Bulls":"CHI","Cleveland Cavaliers":"CLE","Dallas Mavericks":"DAL","Denver Nuggets":"DEN","Detroit Pistons":"DET","Golden State Warriors":"GS","Houston Rockets":"HOU","Indiana Pacers":"IND","LA Clippers":"LAC","Los Angeles Lakers":"LAL","Memphis Grizzlies":"MEM","Miami Heat":"MIA","Milwaukee Bucks":"MIL","Minnesota Timberwolves":"MIN","New Orleans Pelicans":"NO","New York Knicks":"NY","Oklahoma City Thunder":"OKC","Orlando Magic":"ORL","Philadelphia 76ers":"PHI","Phoenix Suns":"PHX","Portland Trail Blazers":"POR","Sacramento Kings":"SAC","San Antonio Spurs":"SA","Toronto Raptors":"TOR","Utah Jazz":"UTAH","Washington Wizards":"WSH"}
+const teamLogo = (name: string) => { const abbr = TEAM_ABBR[name]; return abbr ? `https://a.espncdn.com/i/teamlogos/nba/500/${abbr}.png` : null }
+
 const S = {
   bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
   border: "rgba(255,255,255,0.08)", orange: "#F58426", peach: "#ffb786",
@@ -106,7 +109,7 @@ export default function StatsPage() {
                     return (
                       <div key={i} style={{ display: "grid", gridTemplateColumns: "2rem 1fr 60px 60px 60px", gap: 0, padding: "0.75rem 1rem", borderBottom: i < east.length-1 ? `1px solid ${S.border}` : "none", background: isKnicks ? "rgba(245,132,38,0.05)" : "transparent" }}>
                         <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.8125rem", color: isKnicks ? S.orange : S.textMuted }}>{i+1}</span>
-                        <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", textTransform: "uppercase", color: isKnicks ? S.peach : S.text }}>{t.team_name || t.team || t.teamName}</span>
+                        <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", textTransform: "uppercase", color: isKnicks ? S.peach : S.text, display: "flex", alignItems: "center", gap: "0.5rem" }}>{teamLogo(t.team_name || t.team || t.teamName) && <img src={teamLogo(t.team_name || t.team || t.teamName)!} alt={t.team_name || t.team || t.teamName} style={{ width: "22px", height: "22px", objectFit: "contain" }} />}{t.team_name || t.team || t.teamName}</span>
                         <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", color: S.text, textAlign: "center" }}>{t.wins}</span>
                         <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", color: S.text, textAlign: "center" }}>{t.losses}</span>
                         <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", color: S.text, textAlign: "center" }}>{(t.win_pct || t.winPct) ? ((t.win_pct || t.winPct) * 100).toFixed(0) + "%" : "—"}</span>
