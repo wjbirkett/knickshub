@@ -241,6 +241,8 @@ async def fetch_player_stats() -> List[PlayerStat]:
                 blocks_per_game=_safe_float(g("BLK")),
                 field_goal_pct=_safe_float(g("FG_PCT")),
                 three_point_pct=_safe_float(g("FG3_PCT")),
+                threes_per_game=_safe_float(g("FG3M")),
+                turnovers_per_game=_safe_float(g("TOV")),
                 minutes_per_game=_safe_float(g("MIN")),
             ))
         except Exception as e:

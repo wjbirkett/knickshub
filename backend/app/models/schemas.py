@@ -61,6 +61,8 @@ class PlayerStat(BaseModel):
     blocks_per_game: float
     field_goal_pct: float
     three_point_pct: float
+    threes_per_game: float = 0.0
+    turnovers_per_game: float = 0.0
     minutes_per_game: float
 
 class Tweet(BaseModel):

@@ -44,22 +44,8 @@ PROP_TYPES = {
     "pts_reb_ast": {"key": "combined", "suffix": "PRA", "description": "points+rebounds+assists combined", "stat_type": "combined"},
 }
 
-# TODO: Replace with actual odds API integration
-# Typical prop lines by player (hardcoded for now)
-PROP_LINES = {
-    "Jalen Brunson": {"points": 26.5, "assists": 7.5, "rebounds": 4.5, "threes": 2.5, "pts_reb_ast": 38.5},
-    "Karl-Anthony Towns": {"points": 24.5, "rebounds": 10.5, "assists": 3.5, "threes": 2.5, "pts_reb_ast": 38.5},
-    "Mikal Bridges": {"points": 18.5, "steals": 1.5, "threes": 2.5, "rebounds": 4.5, "pts_reb_ast": 26.5},
-    "OG Anunoby": {"points": 16.5, "steals": 1.5, "blocks": 1.5, "rebounds": 5.5, "threes": 2.5},
-    "Josh Hart": {"points": 10.5, "rebounds": 7.5, "assists": 4.5, "pts_reb_ast": 22.5},
-    "Miles McBride": {"points": 9.5, "assists": 3.5, "threes": 1.5},
-    "Mitchell Robinson": {"rebounds": 8.5, "blocks": 1.5, "points": 8.5},
-    "Jordan Clarkson": {"points": 12.5, "assists": 3.5, "threes": 1.5},
-    "Jose Alvarado": {"steals": 1.5, "assists": 4.5, "points": 8.5},
-    "Jeremy Sochan": {"points": 11.5, "rebounds": 6.5, "assists": 2.5},
-    "Landry Shamet": {"points": 8.5, "threes": 1.5},
-    "Tyler Kolek": {"assists": 3.5, "points": 6.5},
-}
+# Prop lines are now generated dynamically from season averages
+# See prop_lines_service.py — no hardcoded lines
 
 # Which props to generate for each player by default
 DEFAULT_PLAYER_PROPS = {
@@ -586,22 +572,8 @@ PROP_TYPES = {
     "pts_reb_ast": {"key": "combined", "suffix": "PRA", "description": "points+rebounds+assists combined", "stat_type": "combined"},
 }
 
-# TODO: Replace with actual odds API integration
-# Typical prop lines by player (hardcoded for now)
-PROP_LINES = {
-    "Jalen Brunson": {"points": 26.5, "assists": 7.5, "rebounds": 4.5, "threes": 2.5, "pts_reb_ast": 38.5},
-    "Karl-Anthony Towns": {"points": 24.5, "rebounds": 10.5, "assists": 3.5, "threes": 2.5, "pts_reb_ast": 38.5},
-    "Mikal Bridges": {"points": 18.5, "steals": 1.5, "threes": 2.5, "rebounds": 4.5, "pts_reb_ast": 26.5},
-    "OG Anunoby": {"points": 16.5, "steals": 1.5, "blocks": 1.5, "rebounds": 5.5, "threes": 2.5},
-    "Josh Hart": {"points": 10.5, "rebounds": 7.5, "assists": 4.5, "pts_reb_ast": 22.5},
-    "Miles McBride": {"points": 9.5, "assists": 3.5, "threes": 1.5},
-    "Mitchell Robinson": {"rebounds": 8.5, "blocks": 1.5, "points": 8.5},
-    "Jordan Clarkson": {"points": 12.5, "assists": 3.5, "threes": 1.5},
-    "Jose Alvarado": {"steals": 1.5, "assists": 4.5, "points": 8.5},
-    "Jeremy Sochan": {"points": 11.5, "rebounds": 6.5, "assists": 2.5},
-    "Landry Shamet": {"points": 8.5, "threes": 1.5},
-    "Tyler Kolek": {"assists": 3.5, "points": 6.5},
-}
+# Prop lines are now generated dynamically from season averages
+# See prop_lines_service.py — no hardcoded lines
 
 # Which props to generate for each player by default
 DEFAULT_PLAYER_PROPS = {
@@ -1168,19 +1140,13 @@ async def generate_player_prop(
     
     prop_config = PROP_TYPES[prop_type]
     
-    # Get live prop line from BallDontLie, fall back to hardcoded
+    # Get dynamic prop lines from real season averages
     try:
         live_lines = await fetch_live_prop_lines(home_team, away_team)
         line = live_lines.get(player, {}).get(prop_type, "N/A")
-    except Exception:
-        line = PROP_LINES.get(player, {}).get(prop_type, "N/A")
-    if line == "N/A" and prop_type == "pts_reb_ast":
-        player_lines = PROP_LINES.get(player, {})
-        pts = player_lines.get("points", 0)
-        reb = player_lines.get("rebounds", 0)
-        ast = player_lines.get("assists", 0)
-        if pts and reb and ast:
-            line = round(pts + reb + ast, 1)
+    except Exception as e:
+        logger.warning(f"Dynamic prop lines failed: {e}")
+        line = "N/A"
     
     ctx = await build_game_context(home_team, away_team, injuries, top_stats, over_under)
 
