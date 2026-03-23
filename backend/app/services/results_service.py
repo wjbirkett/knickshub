@@ -95,7 +95,9 @@ def _extract_prop_pick_from_content(content: str) -> tuple:
     patterns = [
         r'\*\*(?:PICK|Recommendation|Pick|Best Bet):\s*(Over|Under)\s+([\d.]+)',
         r'\*\*(Over|Under)\s+([\d.]+)\s+\w+\s*\|',
+        r'\*\*(Over|Under)\s+([\d.]+)\s+\w+\*\*',
         r'(?:Pick|Recommendation|Verdict|Best Bet):\s*(Over|Under)\s+([\d.]+)',
+        r'Prop Prediction:\s*(Over|Under)\s+([\d.]+)',
     ]
     for pat in patterns:
         m = re.search(pat, content, re.IGNORECASE)
