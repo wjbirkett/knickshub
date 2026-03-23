@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { Helmet } from "react-helmet-async"
-import { getStandings } from "../utils/api"
+import { getStandings, getStats } from "../utils/api"
 
 const S = {
   bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
@@ -21,6 +21,8 @@ const PLAYER_IMAGES: Record<string, string> = {
 
 export default function StatsPage() {
   const { data: standings, isLoading } = useQuery({ queryKey: ["standings"], queryFn: getStandings })
+  const { data: playerStats } = useQuery({ queryKey: ["stats"], queryFn: getStats })
+  const players = (playerStats as any[])?.filter((p: any) => p.minutes_per_game >= 5) ?? []
 
   const teams = (standings as any[]) ?? []
   const knicks = teams.find((t: any) => (t.team_name || t.team || t.teamName || "").includes("Knicks"))
@@ -68,16 +70,34 @@ export default function StatsPage() {
               </section>
             )}
 
-            {/* Roster leaders */}
-            <section>
-              <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.125rem", textTransform: "uppercase", letterSpacing: "0.05em", color: S.orange, marginBottom: "1rem" }}>Roster</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {Object.entries(PLAYER_IMAGES).map(([name, img]) => (
-                  <div key={name} style={{ background: S.surface, padding: "0.75rem 1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                    <img src={img} alt={name} style={{ width: "2.5rem", height: "2.5rem", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-                    <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", textTransform: "uppercase", color: S.text }}>{name}</span>
-                  </div>
-                ))}
+            {/* Player Stats */}
+            <section style={{ gridColumn: "1 / -1" }}>
+              <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.125rem", textTransform: "uppercase", letterSpacing: "0.05em", color: S.orange, marginBottom: "1rem" }}>Player Stats</h2>
+              <div style={{ background: S.surface, overflow: "auto" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 50px 50px 50px 50px 50px 50px 55px 55px", gap: 0, padding: "0.625rem 1rem", borderBottom: `1px solid ${S.border}`, minWidth: "600px" }}>
+                  {["Player", "GP", "PPG", "RPG", "APG", "SPG", "BPG", "FG%", "MIN"].map(h => (
+                    <span key={h} style={{ fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.12em", color: S.textMuted, fontFamily: "Space Grotesk, sans-serif", textAlign: h !== "Player" ? "center" : "left" }}>{h}</span>
+                  ))}
+                </div>
+                {players.map((p: any, i: number) => {
+                  const img = PLAYER_IMAGES[p.player_name] || "/players/default.png"
+                  return (
+                    <div key={p.player_id || i} style={{ display: "grid", gridTemplateColumns: "1fr 50px 50px 50px 50px 50px 50px 55px 55px", gap: 0, padding: "0.6rem 1rem", borderBottom: i < players.length-1 ? `1px solid ${S.border}` : "none", minWidth: "600px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <img src={img} alt={p.player_name} style={{ width: "1.75rem", height: "1.75rem", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} onError={(e: any) => { e.target.style.display = "none" }} />
+                        <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem", textTransform: "uppercase", color: S.text, whiteSpace: "nowrap" }}>{p.player_name}</span>
+                      </div>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.8125rem", color: S.text, textAlign: "center" }}>{p.games_played}</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.8125rem", color: S.peach, fontWeight: 700, textAlign: "center" }}>{p.points_per_game?.toFixed(1)}</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.8125rem", color: S.text, textAlign: "center" }}>{p.rebounds_per_game?.toFixed(1)}</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.8125rem", color: S.text, textAlign: "center" }}>{p.assists_per_game?.toFixed(1)}</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.8125rem", color: S.text, textAlign: "center" }}>{p.steals_per_game?.toFixed(1)}</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.8125rem", color: S.text, textAlign: "center" }}>{p.blocks_per_game?.toFixed(1)}</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.8125rem", color: S.text, textAlign: "center" }}>{(p.field_goal_pct * 100)?.toFixed(1)}%</span>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "0.8125rem", color: S.textMuted, textAlign: "center" }}>{p.minutes_per_game?.toFixed(1)}</span>
+                    </div>
+                  )
+                })}
               </div>
             </section>
 
