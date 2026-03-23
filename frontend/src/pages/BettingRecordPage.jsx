@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { getResults } from "../utils/api";
+import { getPlayerImage } from "../utils/playerImages";
 const S = {
     bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
     surfaceHighest: "#353534", border: "rgba(255,255,255,0.08)",
@@ -84,9 +85,12 @@ export default function BettingRecordPage() {
                 {["Player", "Type", "Line", "Lean", "Result"].map(h => (<span key={h} style={{ fontSize: "0.5625rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.15em", color: S.textMuted, fontFamily: "Space Grotesk, sans-serif", textAlign: h !== "Player" ? "center" : "left" }}>{h}</span>))}
               </div>
               {props.map((r, i) => (<div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 80px 60px 60px 60px", gap: 0, padding: "0.875rem 1rem", borderBottom: i < props.length - 1 ? `1px solid ${S.border}` : "none", alignItems: "center" }} onMouseEnter={e => (e.currentTarget.style.background = S.surfaceHigh)} onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                  <div>
-                    <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem", color: S.text, textTransform: "uppercase" }}>{r.player}</span>
-                    <span style={{ display: "block", fontSize: "0.5625rem", color: S.textMuted }}>{fmt(r.game_date)}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <img src={getPlayerImage(r.player)} alt={r.player} style={{ width: "1.75rem", height: "1.75rem", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} onError={e => { e.target.style.display = "none" }} />
+                    <div>
+                      <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem", color: S.text, textTransform: "uppercase" }}>{r.player}</span>
+                      <span style={{ display: "block", fontSize: "0.5625rem", color: S.textMuted }}>{fmt(r.game_date)}</span>
+                    </div>
                   </div>
                   <span style={{ fontSize: "0.625rem", color: S.textMuted, textAlign: "center", textTransform: "uppercase", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700 }}>{r.prop_type}</span>
                   <span style={{ fontSize: "0.75rem", color: S.text, textAlign: "center", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700 }}>{r.line}</span>
