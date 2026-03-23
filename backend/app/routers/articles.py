@@ -185,6 +185,52 @@ async def get_article(slug: str):
         raise HTTPException(status_code=404, detail="Article not found")
     return article
 
+@router.post("/generate/for-date")
+async def generate_articles_for_date(game_date: str, force: bool = True):
+    """Force-generate all articles for a specific game date (YYYY-MM-DD)."""
+    from datetime import date as dt
+    target = dt.fromisoformat(game_date)
+    games_raw = await fetch_schedule()
+    games = [to_dict(g) for g in games_raw]
+    def get_date(g):
+        d = g["game_date"]
+        if isinstance(d, dt): return d
+        return dt.fromisoformat(str(d)[:10])
+    game = next((g for g in games if get_date(g) == target), None)
+    if not game:
+        raise HTTPException(status_code=404, detail=f"No game found for {game_date}")
+    injuries_raw = await fetch_injury_report()
+    injuries = [to_dict(i) for i in injuries_raw]
+    stats_raw = await fetch_player_stats()
+    top_stats = [to_dict(s) for s in stats_raw[:8]] if stats_raw else []
+    odds_raw = await fetch_knicks_lines()
+    odds = [to_dict(o) for o in odds_raw]
+    spread = moneyline = over_under = "N/A"
+    if odds:
+        o = odds[0]
+        is_away = "Knicks" in o.get("away_team","") or "New York" in o.get("away_team","")
+        raw_s = o.get("spread"); ml_h = o.get("moneyline_home"); ml_a = o.get("moneyline_away"); ou = o.get("over_under")
+        ks = (-raw_s if is_away else raw_s) if raw_s is not None else None
+        km = ml_a if is_away else ml_h
+        if ks is not None: spread = f"{ks:+.1f}"
+        if km is not None: moneyline = f"{km:+d}"
+        if ou is not None: over_under = f"{ou}"
+    gd = game_date
+    art = await generate_game_preview(home_team=game["home_team"],away_team=game["away_team"],game_date=gd,spread=spread,moneyline=moneyline,over_under=over_under,injuries=injuries,recent_games=games,top_stats=top_stats)
+    await save_article(art)
+    from app.services.article_service import generate_best_bet, generate_daily_props
+    pred_picks = art.get("key_picks") or {}
+    forced_total_lean = pred_picks.get("total_lean") if isinstance(pred_picks, dict) else None
+    forced_total_pick = pred_picks.get("total_pick") if isinstance(pred_picks, dict) else None
+    bb = await generate_best_bet(home_team=game["home_team"],away_team=game["away_team"],game_date=gd,spread=spread,moneyline=moneyline,over_under=over_under,injuries=injuries,top_stats=top_stats,forced_total_lean=forced_total_lean,forced_total_pick=forced_total_pick)
+    await save_article(bb)
+    prop_players = ["Jalen Brunson","Karl-Anthony Towns","OG Anunoby","Mikal Bridges","Josh Hart"]
+    active = [pl for pl in prop_players if not any(pl.split()[0].lower() in inj.get("player_name","").lower() and "out" in inj.get("status","").lower() for inj in injuries)]
+    props = await generate_daily_props(home_team=game["home_team"],away_team=game["away_team"],game_date=gd,players=active,over_under=over_under,injuries=injuries,top_stats=top_stats,max_props_per_player=1)
+    for p in props:
+        await save_article(p)
+    return {"message": f"Generated {2 + len(props)} articles for {game_date}", "prediction": art["slug"], "best_bet": bb["slug"], "props": [p["slug"] for p in props]}
+
 @router.post("/generate/next-game")
 async def generate_next_game_article(background_tasks: BackgroundTasks, force: bool = False):
     today = date.today()
