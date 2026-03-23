@@ -168,9 +168,14 @@ async def get_results():
     from app.db import get_supabase
     db = get_supabase()
     if not db: return []
-    pred = db.table("prediction_results").select("*").or_("home_team.ilike.%Knicks%,away_team.ilike.%Knicks%,home_team.ilike.%New York Knicks%,away_team.ilike.%New York Knicks%").order("game_date", desc=True).execute()
-    props = db.table("prop_results").select("*").or_("home_team.ilike.%Knicks%,away_team.ilike.%Knicks%,home_team.ilike.%New York Knicks%,away_team.ilike.%New York Knicks%").order("game_date", desc=True).execute()
-    return {"predictions": pred.data, "props": props.data}
+    pred = db.table("prediction_results").select("*").order("game_date", desc=True).execute()
+    props = db.table("prop_results").select("*").order("game_date", desc=True).execute()
+    # Filter to Knicks results only (prediction_results has 'opponent', prop_results has 'player')
+    # Knicks-specific players and opponents filter out Reds data
+    knicks_players = {"Jalen Brunson", "Karl-Anthony Towns", "Mikal Bridges", "OG Anunoby", "Josh Hart", "Miles McBride", "Mitchell Robinson", "Jordan Clarkson"}
+    pred_data = pred.data or []
+    props_data = [p for p in (props.data or []) if p.get("player") in knicks_players]
+    return {"predictions": pred_data, "props": props_data}
 
 @router.get("/debug-boxscore")
 async def debug_boxscore(game_id: str, player: str):
