@@ -1643,19 +1643,60 @@ async def generate_postgame_analysis(game_date: str) -> Dict:
             line_scores += f"{team_name}: {' | '.join(quarters)} = {c.get('score', '0')}\n"
 
     result = "won" if knicks_won else "lost"
+    total_points = int(knicks_score) + int(opponent_score)
 
-    system = BASE_SYSTEM + "\nYou specialize in post-game analysis and recap articles."
+    # ── Pull our pre-game predictions to grade them ──
+    picks_review = ""
+    try:
+        db = get_supabase()
+        if db:
+            pre_articles = db.table("articles").select("*").eq("game_date", game_date).in_("article_type", ["prediction", "best_bet", "prop"]).execute()
+            if pre_articles.data:
+                picks_review = "\n\nOUR PRE-GAME PICKS (grade each one):\n"
+                for art in pre_articles.data:
+                    kp = art.get("key_picks")
+                    if not kp or not isinstance(kp, dict):
+                        continue
+                    atype = art.get("article_type", "")
+
+                    if atype in ("prediction", "best_bet"):
+                        # Grade spread pick
+                        spread_pick = kp.get("spread_pick", "")
+                        spread_lean = kp.get("spread_lean", "")
+                        total_pick = kp.get("total_pick", "")
+                        total_lean = kp.get("total_lean", "")
+                        confidence = kp.get("confidence", "")
+                        if spread_pick or total_pick:
+                            picks_review += f"\n[{atype.upper()}] Spread: {spread_pick} ({spread_lean}) | Total: {total_pick} ({total_lean}) | Confidence: {confidence}"
+                            picks_review += f"\n  Actual result: Knicks {'won' if knicks_won else 'lost'} {knicks_score}-{opponent_score} (total: {total_points})"
+
+                    elif atype == "prop":
+                        player = art.get("player", kp.get("player", "Unknown"))
+                        prop_type = art.get("prop_type", kp.get("best_prop_type", "points"))
+                        pick = kp.get("pick", kp.get("points_pick", ""))
+                        lean = kp.get("lean", kp.get("points_lean", ""))
+                        line = kp.get("line", "")
+                        picks_review += f"\n[PROP] {player} {prop_type}: {pick} ({lean}) line={line}"
+
+                if picks_review:
+                    picks_review += "\n\nFor each pick, clearly state whether it HIT or MISSED based on the actual results above. If you don't have the specific player stat to verify a prop, say 'Unverified — check box score.'"
+    except Exception as e:
+        logger.warning(f"Postgame: Could not fetch pre-game picks: {e}")
+
+    system = BASE_SYSTEM + "\nYou specialize in post-game analysis, recap articles, and grading betting predictions."
 
     user_prompt = f"""Write a post-game analysis article for the Knicks game:
 
 Result: New York Knicks {result} {knicks_score}-{opponent_score} vs {opponent}
 Date: {game_date}
+Combined total: {total_points} points
 
 Quarter Scores:
 {line_scores}
 
 Statistical Leaders:
 {leaders_text}
+{picks_review}
 
 {SEASON_FACTS}
 
@@ -1663,14 +1704,16 @@ Write the article in this structure:
 1. A compelling headline-style intro (2-3 sentences) — lead with the result and the most notable storyline
 2. ## Game Recap (flow of the game, turning points, key runs)
 3. ## Top Performers (highlight 2-3 standout players with specific stats)
-4. ## Key Takeaways (2-3 bullet points about what this means going forward)
-5. ## What's Next (next game preview teaser)
+4. ## How Our Picks Did (grade EVERY pre-game prediction — spread, total, props — with checkmark or X emoji and the actual result. Be honest about misses.)
+5. ## Key Takeaways (2-3 bullet points about what this means going forward)
+6. ## What's Next (next game preview teaser)
 
 Guidelines:
-- Write 500-700 words
+- Write 600-900 words
 - Use markdown formatting
 - Be specific with scores, stats, and quarter-by-quarter flow
 - Mention the final score prominently
+- The "How Our Picks Did" section is CRITICAL — readers want to see accountability. Grade every pick honestly.
 - If the Knicks won, be excited but analytical. If they lost, be honest about what went wrong.
 - Target keywords: Knicks recap, Knicks post-game, Knicks vs {opponent} result
 - Do NOT invent stats you don't have — only use the data provided above"""
