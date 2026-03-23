@@ -1578,9 +1578,119 @@ No JSON picks needed for history articles."""
 
 
 async def generate_postgame_analysis(game_date: str) -> Dict:
-    """Generate post-game analysis article. Placeholder — full implementation TODO."""
-    logger.warning(f"generate_postgame_analysis called for {game_date} but not yet implemented")
-    return {}
+    """Generate post-game analysis article from box score data."""
+    import httpx
+
+    # Fetch the game from ESPN scoreboard
+    ds = game_date.replace("-", "")
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={ds}")
+            data = r.json()
+    except Exception as e:
+        logger.error(f"Postgame: ESPN fetch failed: {e}")
+        return {}
+
+    game_event = None
+    for ev in data.get("events", []):
+        comp = ev["competitions"][0]
+        ids = [x.get("team", {}).get("id") for x in comp.get("competitors", [])]
+        if "18" in ids:
+            game_event = ev
+            break
+
+    if not game_event:
+        logger.warning(f"Postgame: No Knicks game found for {game_date}")
+        return {}
+
+    comp = game_event["competitions"][0]
+    competitors = comp.get("competitors", [])
+
+    home_data = next((c for c in competitors if c.get("homeAway") == "home"), {})
+    away_data = next((c for c in competitors if c.get("homeAway") == "away"), {})
+    home_team = home_data.get("team", {}).get("displayName", "Home")
+    away_team = away_data.get("team", {}).get("displayName", "Away")
+    home_score = home_data.get("score", "0")
+    away_score = away_data.get("score", "0")
+
+    knicks_won = ("Knicks" in home_team and int(home_score) > int(away_score)) or \
+                 ("Knicks" in away_team and int(away_score) > int(home_score))
+    knicks_score = home_score if "Knicks" in home_team else away_score
+    opponent_score = away_score if "Knicks" in home_team else home_score
+    opponent = away_team if "Knicks" in home_team else home_team
+
+    # Get box score leaders from ESPN
+    leaders_text = ""
+    for c in competitors:
+        team_name = c.get("team", {}).get("displayName", "")
+        leaders = c.get("leaders", [])
+        for leader_cat in leaders:
+            cat = leader_cat.get("name", "")
+            leader_items = leader_cat.get("leaders", [])
+            if leader_items:
+                top = leader_items[0]
+                athlete = top.get("athlete", {}).get("displayName", "")
+                value = top.get("displayValue", "")
+                leaders_text += f"{team_name} {cat}: {athlete} — {value}\n"
+
+    # Get quarter scores
+    line_scores = ""
+    for c in competitors:
+        team_name = c.get("team", {}).get("abbreviation", "")
+        linescores = c.get("linescores", [])
+        quarters = [str(q.get("value", 0)) for q in linescores] if linescores else []
+        if quarters:
+            line_scores += f"{team_name}: {' | '.join(quarters)} = {c.get('score', '0')}\n"
+
+    result = "won" if knicks_won else "lost"
+
+    system = BASE_SYSTEM + "\nYou specialize in post-game analysis and recap articles."
+
+    user_prompt = f"""Write a post-game analysis article for the Knicks game:
+
+Result: New York Knicks {result} {knicks_score}-{opponent_score} vs {opponent}
+Date: {game_date}
+
+Quarter Scores:
+{line_scores}
+
+Statistical Leaders:
+{leaders_text}
+
+{SEASON_FACTS}
+
+Write the article in this structure:
+1. A compelling headline-style intro (2-3 sentences) — lead with the result and the most notable storyline
+2. ## Game Recap (flow of the game, turning points, key runs)
+3. ## Top Performers (highlight 2-3 standout players with specific stats)
+4. ## Key Takeaways (2-3 bullet points about what this means going forward)
+5. ## What's Next (next game preview teaser)
+
+Guidelines:
+- Write 500-700 words
+- Use markdown formatting
+- Be specific with scores, stats, and quarter-by-quarter flow
+- Mention the final score prominently
+- If the Knicks won, be excited but analytical. If they lost, be honest about what went wrong.
+- Target keywords: Knicks recap, Knicks post-game, Knicks vs {opponent} result
+- Do NOT invent stats you don't have — only use the data provided above"""
+
+    content, _ = await _call_claude_with_timeout(system, user_prompt)
+
+    title = f"Knicks {'Win' if knicks_won else 'Fall'} {knicks_score}-{opponent_score} vs {opponent} — Post-Game Analysis ({game_date})"
+    slug = slugify(f"knicks-vs-{opponent}-postgame-{game_date}")
+
+    return {
+        "slug": slug,
+        "title": title,
+        "content": content,
+        "key_picks": None,
+        "game_date": game_date,
+        "home_team": home_team,
+        "away_team": away_team,
+        "article_type": "postgame",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 # ----------------------------------------------------------------------
