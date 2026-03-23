@@ -23,8 +23,8 @@ export default function StatsPage() {
   const { data: standings, isLoading } = useQuery({ queryKey: ["standings"], queryFn: getStandings })
 
   const teams = (standings as any[]) ?? []
-  const knicks = teams.find((t: any) => (t.team || t.teamName || "").includes("Knicks"))
-  const east = teams.filter((t: any) => t.conference === "East" || t.conferenceRank).slice(0, 15)
+  const knicks = teams.find((t: any) => (t.team_name || t.team || t.teamName || "").includes("Knicks"))
+  const east = teams.filter((t: any) => t.conference === "East" || t.conference_rank || t.conferenceRank).slice(0, 15)
 
   return (
     <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
@@ -52,8 +52,8 @@ export default function StatsPage() {
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "1rem" }}>
                     {[
                       ["W-L", `${knicks.wins}-${knicks.losses}`],
-                      ["Win %", knicks.winPct ? `${(knicks.winPct * 100).toFixed(1)}%` : "—"],
-                      ["Seed", `#${knicks.conferenceRank || knicks.rank || "—"}`],
+                      ["Win %", (knicks.win_pct || knicks.winPct) ? `${((knicks.win_pct || knicks.winPct) * 100).toFixed(1)}%` : "—"],
+                      ["Seed", `#${knicks.conference_rank || knicks.conferenceRank || knicks.rank || "—"}`],
                       ["PPG", knicks.ppg ? knicks.ppg.toFixed(1) : "—"],
                       ["OPP PPG", knicks.oppPpg ? knicks.oppPpg.toFixed(1) : "—"],
                       ["Streak", knicks.streak || "—"],
@@ -92,14 +92,14 @@ export default function StatsPage() {
                     ))}
                   </div>
                   {east.map((t: any, i: number) => {
-                    const isKnicks = (t.team || t.teamName || "").includes("Knicks")
+                    const isKnicks = (t.team_name || t.team || t.teamName || "").includes("Knicks")
                     return (
                       <div key={i} style={{ display: "grid", gridTemplateColumns: "2rem 1fr 60px 60px 60px", gap: 0, padding: "0.75rem 1rem", borderBottom: i < east.length-1 ? `1px solid ${S.border}` : "none", background: isKnicks ? "rgba(245,132,38,0.05)" : "transparent" }}>
                         <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.8125rem", color: isKnicks ? S.orange : S.textMuted }}>{i+1}</span>
                         <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", textTransform: "uppercase", color: isKnicks ? S.peach : S.text }}>{t.team || t.teamName}</span>
                         <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", color: S.text, textAlign: "center" }}>{t.wins}</span>
                         <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", color: S.text, textAlign: "center" }}>{t.losses}</span>
-                        <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", color: S.text, textAlign: "center" }}>{t.winPct ? (t.winPct * 100).toFixed(0) + "%" : "—"}</span>
+                        <span style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.875rem", color: S.text, textAlign: "center" }}>{(t.win_pct || t.winPct) ? ((t.win_pct || t.winPct) * 100).toFixed(0) + "%" : "—"}</span>
                       </div>
                     )
                   })}
