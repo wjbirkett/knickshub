@@ -47,7 +47,7 @@ export default function StatsPage() {
                     ["Win %", (knicks.win_pct || knicks.winPct) ? `${((knicks.win_pct || knicks.winPct) * 100).toFixed(1)}%` : "—"],
                     ["Seed", `#${knicks.conference_rank || knicks.conferenceRank || knicks.rank || "—"}`],
                     ["PPG", knicks.ppg ? knicks.ppg.toFixed(1) : "—"],
-                    ["OPP PPG", knicks.oppPpg ? knicks.oppPpg.toFixed(1) : "—"],
+                    ["OPP PPG", (knicks.opp_ppg || knicks.oppPpg) ? (knicks.opp_ppg || knicks.oppPpg).toFixed(1) : "—"],
                     ["Streak", knicks.streak || "—"],
                 ].map(([label, val]) => (<div key={label} style={{ textAlign: "center" }}>
                         <span style={{ display: "block", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "1.5rem", color: S.peach }}>{val}</span>
