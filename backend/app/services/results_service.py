@@ -1,4 +1,5 @@
 import logging
+import re
 import httpx
 import asyncio
 from datetime import date, datetime, timezone
@@ -62,7 +63,7 @@ async def fetch_player_stats_from_boxscore(game_id: str, player_name: str) -> Op
                     name = athlete.get("athlete", {}).get("displayName", "").lower()
                     if first_name in name and last_name in name:
                         stats = athlete.get("stats", [])
-                        # ESPN box score stat order: MIN,FG,3PT,FT,OREB,DREB,REB,AST,STL,BLK,TO,PF,PTS,+/-
+                        # ESPN box score stat order: MIN,PTS,FG,3PT,FT,REB,AST,TO,STL,BLK,OREB,DREB,PF,+/-
                         if len(stats) >= 13:
                             return {
                                 "points": _safe_int(stats[1]),
@@ -83,6 +84,29 @@ def _safe_int(val) -> int:
         return int(str(val).split("-")[0])
     except:
         return 0
+
+
+def _extract_prop_pick_from_content(content: str) -> tuple:
+    """Extract prop lean and line from article content when key_picks lacks prop fields.
+    Looks for patterns like '**PICK: Over 26.5 Points**' or '**Recommendation: Over 24.5 Points**'
+    or '**Over 24.5 Points | Confidence: ...**'
+    Returns (lean, line) or (None, None).
+    """
+    patterns = [
+        r'\*\*(?:PICK|Recommendation|Pick|Best Bet):\s*(Over|Under)\s+([\d.]+)',
+        r'\*\*(Over|Under)\s+([\d.]+)\s+\w+\s*\|',
+        r'(?:Pick|Recommendation|Verdict|Best Bet):\s*(Over|Under)\s+([\d.]+)',
+    ]
+    for pat in patterns:
+        m = re.search(pat, content, re.IGNORECASE)
+        if m:
+            lean = m.group(1).upper()
+            try:
+                line = float(m.group(2))
+                return lean, line
+            except ValueError:
+                continue
+    return None, None
 
 
 def _check_result(lean: str, pick_line: float, actual: float) -> str:
@@ -184,25 +208,21 @@ async def resolve_game_predictions(game_date: str) -> dict:
             }
             existing = db.table("prediction_results").select("slug").eq("slug", row["slug"]).execute()
             if not existing.data:
-                db.table("prediction_results").upsert(row, on_conflict="slug")
+                db.table("prediction_results").upsert(row, on_conflict="slug").execute()
                 resolved["prediction_results"] += 1
 
         # Process prop articles
         for article in articles:
             if article["article_type"] != "prop":
                 continue
-            if not article.get("key_picks") or not article.get("player"):
+            if not article.get("player"):
                 continue
 
-            picks = article["key_picks"]
+            picks = article.get("key_picks") or {}
             if not isinstance(picks, dict):
-                continue
-            # Skip articles with game-format key_picks (no prop-specific fields)
-            if "lean" not in picks and "pick" not in picks:
-                logger.warning(f"Skipping {article.get('slug')} — no prop-format key_picks")
-                continue
+                picks = {}
             player = article["player"]
-            prop_type = article.get("prop_type") or (article.get("key_picks") or {}).get("best_prop_type") or "points"
+            prop_type = article.get("prop_type") or picks.get("best_prop_type") or "points"
 
             # Fetch player box score
             player_stats = await fetch_player_stats_from_boxscore(game_id, player)
@@ -230,12 +250,25 @@ async def resolve_game_predictions(game_date: str) -> dict:
             if actual_value is None:
                 continue
 
-            # Get the line from key_picks
+            # Get the line from key_picks (prop-specific fields)
             pick_str = picks.get("pick") or picks.get(f"{prop_type}_pick") or picks.get("points_pick") or picks.get("rebounds_pick") or picks.get("threes_pick") or ""
             lean = picks.get("lean") or picks.get(f"{prop_type}_lean") or picks.get("points_lean") or picks.get("rebounds_lean") or picks.get("threes_lean") or ""
+            line = None
             try:
                 line = float(str(pick_str).replace("Over", "").replace("Under", "").strip())
-            except:
+            except (ValueError, AttributeError):
+                pass
+
+            # Fallback: extract prop pick from article content when key_picks lacks prop fields
+            if line is None or not lean:
+                content_lean, content_line = _extract_prop_pick_from_content(article.get("content") or "")
+                if content_lean and content_line is not None:
+                    lean = lean or content_lean
+                    line = line if line is not None else content_line
+                    logger.info(f"Extracted prop pick from content for {player}: {lean} {line}")
+
+            if line is None or not lean:
+                logger.warning(f"Skipping {article.get('slug')} — could not determine prop pick (no lean/line in key_picks or content)")
                 continue
 
             result_str = _check_result(lean, line, actual_value)
@@ -253,7 +286,7 @@ async def resolve_game_predictions(game_date: str) -> dict:
             }
             existing2 = db.table("prop_results").select("slug").eq("slug", row["slug"]).execute()
             if not existing2.data:
-                db.table("prop_results").upsert(row, on_conflict="slug")
+                db.table("prop_results").upsert(row, on_conflict="slug").execute()
                 resolved["prop_results"] += 1
             logger.info(f"{player} {prop_type}: {lean} {line} — actual {actual_value} — {result_str}")
 

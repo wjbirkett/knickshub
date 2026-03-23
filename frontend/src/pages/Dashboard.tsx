@@ -28,9 +28,10 @@ const badge = (type: string) => {
     best_bet:   ["#06bb55", "#00431a"],
     prop:       ["#93000a", "#ffdad6"],
     history:    ["#4a1d96", "#d8b4fe"],
+    postgame:   ["#F58426", "#5c2b00"],
   }
   const labels: Record<string, string> = {
-    prediction: "PREDICTION", best_bet: "BEST BET", prop: "PROP BET", history: "HISTORY"
+    prediction: "PREDICTION", best_bet: "BEST BET", prop: "PROP BET", history: "HISTORY", postgame: "POST-GAME"
   }
   return { bg: map[type]?.[0] ?? "#333", color: map[type]?.[1] ?? "#fff", label: labels[type] ?? type.toUpperCase() }
 }
@@ -47,7 +48,8 @@ export default function Dashboard() {
   const knicks = (standings as any[])?.find((t: any) =>
     (t.team_name || t.team || t.teamName || "").includes("Knicks")
   )
-  const todayBestBet      = (articles as any[])?.find((a: any) => a.article_type === "best_bet")
+  const latestPostgame    = (articles as any[])?.find((a: any) => a.article_type === "postgame")
+  const todayBestBet      = latestPostgame || (articles as any[])?.find((a: any) => a.article_type === "best_bet")
   const latestPredictions = (articles as any[])?.filter((a: any) =>
     ["prediction","best_bet","prop"].includes(a.article_type)
   ).slice(0, 3)
@@ -133,46 +135,61 @@ export default function Dashboard() {
       {/* Hero Bento Grid */}
       <div style={{ padding: "0 2rem 0", display: "grid", gridTemplateColumns: "1fr minmax(0, 320px)", gap: "1.5rem", maxWidth: "1400px", margin: "0 auto", alignItems: "start" }}>
 
-        {/* AI Best Bet Hero */}
+        {/* AI Best Bet / Postgame Hero */}
         {todayBestBet ? (
           <Link to={`/predictions/${todayBestBet.slug}`} style={{ textDecoration: "none" }}>
-            <div style={{ position: "relative", overflow: "hidden", backgroundImage: `url(/players/msg-court.jpg)`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.75rem", padding: "2rem", borderLeft: `4px solid ${S.orange}`, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", minHeight: "280px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: S.orange, color: "#5c2b00", padding: "0.25rem 0.75rem", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: "0.25rem", marginBottom: "1.25rem", fontFamily: "Space Grotesk, sans-serif", fontStyle: "italic" }}>
-                <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>auto_awesome</span>
-                AI Recommended Best Bet
-              </span>
-              {todayBestBet.key_picks?.spread_pick ? (
-                <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 4rem)", letterSpacing: "-0.04em", lineHeight: 0.9, marginBottom: "1rem", color: S.text, textTransform: "uppercase" }}>
-                  {todayBestBet.key_picks.spread_lean === "COVER" ? "KNICKS" : opp(todayBestBet).split(" ").pop()}<br/>
-                  <span style={{ color: S.orange }}>{todayBestBet.key_picks.spread_pick.replace(/Knickss*/i,"").replace(/.*?s/,"")}</span> SPREAD
-                </h2>
+            <div style={{ position: "relative", overflow: "hidden", backgroundImage: `url(/players/msg-court.jpg)`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: "0.75rem", padding: "2rem", borderLeft: `4px solid ${todayBestBet.article_type === "postgame" ? S.green : S.orange}`, boxShadow: "0 25px 50px rgba(0,0,0,0.5)", minHeight: "280px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              {todayBestBet.article_type === "postgame" ? (
+                <>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: S.green, color: "#003915", padding: "0.25rem 0.75rem", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: "0.25rem", marginBottom: "1.25rem", fontFamily: "Space Grotesk, sans-serif", fontStyle: "italic" }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>sports_score</span>
+                    Post-Game Recap
+                  </span>
+                  <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(1.25rem, 2.5vw, 2.5rem)", letterSpacing: "-0.02em", lineHeight: 1.1, marginBottom: "1rem", color: S.text }}>
+                    {todayBestBet.title}
+                  </h2>
+                  <p style={{ color: S.textMuted, fontSize: "0.8125rem" }}>{fmt(todayBestBet.game_date)} · Read full post-game analysis →</p>
+                </>
               ) : (
-                <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(1.25rem, 2.5vw, 2rem)", letterSpacing: "-0.02em", lineHeight: 1.15, marginBottom: "1rem", color: S.text }}>
-                  {todayBestBet.title}
-                </h2>
+                <>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: S.orange, color: "#5c2b00", padding: "0.25rem 0.75rem", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: "0.25rem", marginBottom: "1.25rem", fontFamily: "Space Grotesk, sans-serif", fontStyle: "italic" }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: "0.875rem" }}>auto_awesome</span>
+                    AI Recommended Best Bet
+                  </span>
+                  {todayBestBet.key_picks?.spread_pick ? (
+                    <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(2rem, 4vw, 4rem)", letterSpacing: "-0.04em", lineHeight: 0.9, marginBottom: "1rem", color: S.text, textTransform: "uppercase" }}>
+                      {todayBestBet.key_picks.spread_lean === "COVER" ? "KNICKS" : opp(todayBestBet).split(" ").pop()}<br/>
+                      <span style={{ color: S.orange }}>{todayBestBet.key_picks.spread_pick.replace(/Knickss*/i,"").replace(/.*?s/,"")}</span> SPREAD
+                    </h2>
+                  ) : (
+                    <h2 style={{ fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "clamp(1.25rem, 2.5vw, 2rem)", letterSpacing: "-0.02em", lineHeight: 1.15, marginBottom: "1rem", color: S.text }}>
+                      {todayBestBet.title}
+                    </h2>
+                  )}
+                  {todayBestBet.key_picks && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+                      {todayBestBet.key_picks.spread_pick && (
+                        <span style={{ background: S.surfaceHighest, padding: "0.375rem 0.75rem", borderRadius: "0.25rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem" }}>
+                          {todayBestBet.key_picks.spread_pick}
+                          <span style={{ marginLeft: "0.5rem", color: todayBestBet.key_picks.spread_lean === "COVER" ? S.green : S.red, fontSize: "0.6875rem" }}>{todayBestBet.key_picks.spread_lean}</span>
+                        </span>
+                      )}
+                      {todayBestBet.key_picks.total_pick && (
+                        <span style={{ background: S.surfaceHighest, padding: "0.375rem 0.75rem", borderRadius: "0.25rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem" }}>
+                          {todayBestBet.key_picks.total_pick}
+                          <span style={{ marginLeft: "0.5rem", color: todayBestBet.key_picks.total_lean === "OVER" ? S.green : S.red, fontSize: "0.6875rem" }}>{todayBestBet.key_picks.total_lean}</span>
+                        </span>
+                      )}
+                      {todayBestBet.key_picks.confidence && (
+                        <span style={{ background: todayBestBet.key_picks.confidence === "High" ? S.greenBg : S.surfaceHighest, color: todayBestBet.key_picks.confidence === "High" ? "#00431a" : S.textMuted, padding: "0.375rem 0.75rem", borderRadius: "0.25rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.6875rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                          {todayBestBet.key_picks.confidence} Confidence
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <p style={{ color: S.textMuted, fontSize: "0.8125rem" }}>vs {opp(todayBestBet)} · {fmt(todayBestBet.game_date)} · Read full analysis →</p>
+                </>
               )}
-              {todayBestBet.key_picks && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
-                  {todayBestBet.key_picks.spread_pick && (
-                    <span style={{ background: S.surfaceHighest, padding: "0.375rem 0.75rem", borderRadius: "0.25rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem" }}>
-                      {todayBestBet.key_picks.spread_pick}
-                      <span style={{ marginLeft: "0.5rem", color: todayBestBet.key_picks.spread_lean === "COVER" ? S.green : S.red, fontSize: "0.6875rem" }}>{todayBestBet.key_picks.spread_lean}</span>
-                    </span>
-                  )}
-                  {todayBestBet.key_picks.total_pick && (
-                    <span style={{ background: S.surfaceHighest, padding: "0.375rem 0.75rem", borderRadius: "0.25rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 700, fontSize: "0.8125rem" }}>
-                      {todayBestBet.key_picks.total_pick}
-                      <span style={{ marginLeft: "0.5rem", color: todayBestBet.key_picks.total_lean === "OVER" ? S.green : S.red, fontSize: "0.6875rem" }}>{todayBestBet.key_picks.total_lean}</span>
-                    </span>
-                  )}
-                  {todayBestBet.key_picks.confidence && (
-                    <span style={{ background: todayBestBet.key_picks.confidence === "High" ? S.greenBg : S.surfaceHighest, color: todayBestBet.key_picks.confidence === "High" ? "#00431a" : S.textMuted, padding: "0.375rem 0.75rem", borderRadius: "0.25rem", fontFamily: "Space Grotesk, sans-serif", fontWeight: 900, fontSize: "0.6875rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                      {todayBestBet.key_picks.confidence} Confidence
-                    </span>
-                  )}
-                </div>
-              )}
-              <p style={{ color: S.textMuted, fontSize: "0.8125rem" }}>vs {opp(todayBestBet)} · {fmt(todayBestBet.game_date)} · Read full analysis →</p>
             </div>
           </Link>
         ) : (
