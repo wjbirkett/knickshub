@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Helmet } from "react-helmet-async"
 import { getInjuries } from "../utils/api"
+import { getPlayerImage } from "../utils/playerImages"
 
 const S = {
   bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
@@ -18,22 +19,6 @@ const STATUS_STYLE = (status: string) => {
   return { bg: S.surfaceHigh, color: S.textMuted }
 }
 
-const PLAYER_IMAGES: Record<string, string> = {
-  "Jalen Brunson": "/players/jalen.png",
-  "Karl-Anthony Towns": "/players/KAT.png",
-  "Mikal Bridges": "/players/mikal.png",
-  "OG Anunoby": "/players/OG.png",
-  "Josh Hart": "/players/josh.png",
-  "Miles McBride": "/players/miles.png",
-  "Mitchell Robinson": "/players/mitchell.png",
-  "Jordan Clarkson": "/players/jordan.png",
-  "Jose Alvarado": "/players/jose.png",
-  "Landry Shamet": "/players/landry.png",
-  "Jeremy Sochan": "/players/jeremy.png",
-  "Tyler Kolek": "/players/tyler.png",
-  "Mohamed Diawara": "/players/mohamed.png",
-}
-
 export default function InjuriesPage() {
   const { data: injuries, isLoading } = useQuery({ queryKey: ["injuries"], queryFn: getInjuries })
 
@@ -42,10 +27,7 @@ export default function InjuriesPage() {
 
   const [leagueFilter, setLeagueFilter] = useState("ALL")
   const filteredOthers = leagueFilter === "ALL" ? others : others.filter((i: any) => i.status?.toLowerCase().includes(leagueFilter.toLowerCase()))
-  const getImg = (name: string) => {
-    const key = Object.keys(PLAYER_IMAGES).find(k => name?.toLowerCase().includes(k.toLowerCase().split(" ")[1]))
-    return key ? PLAYER_IMAGES[key] : null
-  }
+  const getImg = (name: string) => getPlayerImage(name)
 
   return (
     <div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>

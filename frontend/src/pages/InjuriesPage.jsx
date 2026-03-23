@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { getInjuries } from "../utils/api";
+import { getPlayerImage } from "../utils/playerImages";
 const S = {
     bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
     border: "rgba(255,255,255,0.08)", orange: "#F58426", peach: "#ffb786",
@@ -18,31 +19,13 @@ const STATUS_STYLE = (status) => {
         return { bg: "#14532d", color: S.green };
     return { bg: S.surfaceHigh, color: S.textMuted };
 };
-const PLAYER_IMAGES = {
-    "Jalen Brunson": "/players/jalen.png",
-    "Karl-Anthony Towns": "/players/KAT.png",
-    "Mikal Bridges": "/players/mikal.png",
-    "OG Anunoby": "/players/OG.png",
-    "Josh Hart": "/players/josh.png",
-    "Miles McBride": "/players/miles.png",
-    "Mitchell Robinson": "/players/mitchell.png",
-    "Jordan Clarkson": "/players/jordan.png",
-    "Jose Alvarado": "/players/jose.png",
-    "Landry Shamet": "/players/landry.png",
-    "Jeremy Sochan": "/players/jeremy.png",
-    "Tyler Kolek": "/players/tyler.png",
-    "Mohamed Diawara": "/players/mohamed.png",
-};
 export default function InjuriesPage() {
     const { data: injuries, isLoading } = useQuery({ queryKey: ["injuries"], queryFn: getInjuries });
     const knicks = injuries?.filter((i) => i.team === "New York Knicks" || i.is_knicks) ?? [];
     const others = injuries?.filter((i) => i.team !== "New York Knicks" && !i.is_knicks) ?? [];
     const [leagueFilter, setLeagueFilter] = useState("ALL");
     const filteredOthers = leagueFilter === "ALL" ? others : others.filter((i) => i.status?.toLowerCase().includes(leagueFilter.toLowerCase()));
-    const getImg = (name) => {
-        const key = Object.keys(PLAYER_IMAGES).find(k => name?.toLowerCase().includes(k.toLowerCase().split(" ")[1]));
-        return key ? PLAYER_IMAGES[key] : null;
-    };
+    const getImg = (name) => getPlayerImage(name);
     return (<div className="main-content" style={{ background: S.bg, minHeight: "100vh" }}>
       <Helmet>
         <title>Knicks Injury Report | KnicksHub</title>

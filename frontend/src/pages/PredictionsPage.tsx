@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import { Helmet } from "react-helmet-async"
 import { getArticles } from "../utils/api"
+import PLAYER_IMAGES, { getPlayerImage } from "../utils/playerImages"
 
 const S = {
   bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
@@ -14,28 +15,6 @@ const S = {
 }
 
 
-const PLAYER_IMAGES: Record<string, string> = {
-  "Jalen Brunson":       "/players/jalen.png",
-  "Karl-Anthony Towns":  "/players/KAT.png",
-  "Mikal Bridges":       "/players/mikal.png",
-  "OG Anunoby":          "/players/OG.png",
-  "Josh Hart":           "/players/josh.png",
-  "Miles McBride":       "/players/miles.png",
-  "Mitchell Robinson":   "/players/mitchell.png",
-  "Jordan Clarkson":     "/players/jordan.png",
-  "Jose Alvarado":       "/players/jose.png",
-  "Landry Shamet":       "/players/landry.png",
-  "Jeremy Sochan":       "/players/jeremy.png",
-  "Tyler Kolek":         "/players/tyler.png",
-  "Mohamed Diawara":     "/players/mohamed.png",
-  "Pacome Dadiet":       "/players/pacome.png",
-  "Ariel Hukporti":      "/players/ariel.png",
-}
-const getPlayerImage = (name: string): string | null => {
-  if (!name) return null
-  const key = Object.keys(PLAYER_IMAGES).find(k => name.toLowerCase().includes(k.toLowerCase().split(" ")[1]))
-  return key ? PLAYER_IMAGES[key] : null
-}
 
 const BADGES: Record<string, { bg: string; color: string; label: string }> = {
   prediction: { bg: S.blueBg,  color: "#dbe9ff", label: "PREDICTION" },

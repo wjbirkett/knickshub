@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { getArticles, getResults, getSchedule } from "../utils/api"
 import { Helmet } from "react-helmet-async"
+import PLAYER_IMAGES, { getPlayerImage } from "../utils/playerImages"
 
 const S = {
   bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
@@ -9,16 +10,6 @@ const S = {
   orange: "#F58426", peach: "#ffb786", green: "#4ae176",
   greenBg: "#06bb55", red: "#ffb4ab", redBg: "#93000a",
   blue: "#a0caff", text: "#e5e2e1", textMuted: "#ddc1b1",
-}
-
-const PLAYER_IMAGES: Record<string, string> = {
-  "Jalen Brunson": "/players/jalen.png",
-  "Karl-Anthony Towns": "/players/KAT.png",
-  "Mikal Bridges": "/players/mikal.png",
-  "OG Anunoby": "/players/OG.png",
-  "Josh Hart": "/players/josh.png",
-  "Miles McBride": "/players/miles.png",
-  "Mitchell Robinson": "/players/mitchell.png",
 }
 
 export default function GameHubPage() {

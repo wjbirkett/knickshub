@@ -1,20 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { getStandings } from "../utils/api";
+import PLAYER_IMAGES from "../utils/playerImages";
 const S = {
     bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
     border: "rgba(255,255,255,0.08)", orange: "#F58426", peach: "#ffb786",
     green: "#4ae176", text: "#e5e2e1", textMuted: "#ddc1b1",
-};
-const PLAYER_IMAGES = {
-    "Jalen Brunson": "/players/jalen.png",
-    "Karl-Anthony Towns": "/players/KAT.png",
-    "Mikal Bridges": "/players/mikal.png",
-    "OG Anunoby": "/players/OG.png",
-    "Josh Hart": "/players/josh.png",
-    "Miles McBride": "/players/miles.png",
-    "Mitchell Robinson": "/players/mitchell.png",
-    "Jordan Clarkson": "/players/jordan.png",
 };
 export default function StatsPage() {
     const { data: standings, isLoading } = useQuery({ queryKey: ["standings"], queryFn: getStandings });

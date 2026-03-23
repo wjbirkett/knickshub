@@ -2,22 +2,13 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { getArticles, getResults } from "../utils/api";
+import { getPlayerImage } from "../utils/playerImages";
 const S = {
     bg: "#131313", surface: "#1c1b1b", surfaceHigh: "#2a2a2a",
     surfaceHighest: "#353534", border: "rgba(255,255,255,0.08)",
     orange: "#F58426", peach: "#ffb786", green: "#4ae176",
     greenBg: "#06bb55", red: "#ffb4ab", redBg: "#93000a",
     text: "#e5e2e1", textMuted: "#ddc1b1",
-};
-const PLAYER_IMAGES = {
-    "jalen-brunson": "/players/jalen.png",
-    "karl-anthony-towns": "/players/KAT.png",
-    "mikal-bridges": "/players/mikal.png",
-    "og-anunoby": "/players/OG.png",
-    "josh-hart": "/players/josh.png",
-    "miles-mcbride": "/players/miles.png",
-    "mitchell-robinson": "/players/mitchell.png",
-    "jordan-clarkson": "/players/jordan.png",
 };
 const PLAYER_NAMES = {
     "jalen-brunson": "Jalen Brunson",
@@ -36,7 +27,7 @@ const PROP_LABELS = {
 export default function PlayerArchivePage() {
     const { player } = useParams();
     const playerName = PLAYER_NAMES[player ?? ""] ?? "";
-    const heroImg = PLAYER_IMAGES[player ?? ""] ?? "/players/msg-court.jpg";
+    const heroImg = getPlayerImage(playerName);
     const { data: articles, isLoading } = useQuery({
         queryKey: ["articles", 200],
         queryFn: () => getArticles(200),
