@@ -1820,11 +1820,13 @@ async def get_articles(limit: int = 20, article_type: Optional[str] = None) -> L
         return []
     
     try:
-        query = db.table("articles").select("*").or_("home_team.ilike.%Knicks%,away_team.ilike.%Knicks%").order("created_at", desc=True)
+        query = db.table("articles").select("*").order("created_at", desc=True)
         if article_type:
             query = query.eq("article_type", article_type)
-        result = query.limit(limit).execute()
-        return result.data
+        result = query.limit(limit * 2).execute()
+        # Filter to Knicks articles only (shared DB with RedsHub)
+        knicks_articles = [a for a in (result.data or []) if "Knicks" in (a.get("home_team") or "") or "Knicks" in (a.get("away_team") or "")]
+        return knicks_articles[:limit]
     except Exception as e:
         logger.error(f"Failed to fetch articles: {e}")
         return []
