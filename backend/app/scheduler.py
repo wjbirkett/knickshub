@@ -253,59 +253,59 @@ def resolve_results():
             logger.error(f"Results resolution failed: {e}")
     _run_async(_resolve())
 
-def generate_postgame_article():
-    """Runs every 15min. Generates post-game analysis ~3hrs after tip-off."""
-    from app.scheduler import _run_async
-    async def _gen():
-        try:
-            import httpx
-            from datetime import date as dt, timedelta, datetime, timezone
-            now_utc = datetime.now(timezone.utc)
-            today = dt.today()
-            yesterday = today - timedelta(days=1)
-            # Check today and yesterday for a completed Knicks game
-            for check_date in [today, yesterday]:
-                ds = check_date.strftime("%Y%m%d")
-                async with httpx.AsyncClient(timeout=15) as client:
-                    r = await client.get(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={ds}")
-                    data = r.json()
-                for ev in data.get("events", []):
-                    comp = ev["competitions"][0]
-                    ids = [x.get("team",{}).get("id") for x in comp.get("competitors",[])]
-                    if "18" not in ids: continue
-                    completed = comp.get("status",{}).get("type",{}).get("completed", False)
-                    if not completed: continue
-                    # Get tip-off time
-                    try:
-                        tip_utc = datetime.fromisoformat(ev.get("date","").replace("Z","+00:00"))
-                    except:
-                        continue
-                    minutes_since_tip = (now_utc - tip_utc).total_seconds() / 60
-                    # Window: 170-200 minutes after tip (roughly 3hrs, catches the 15min cron)
-                    if not (170 <= minutes_since_tip <= 200):
-                        logger.info(f"Postgame: {minutes_since_tip:.0f}min since tip — not in window")
-                        continue
-                    game_date = ev.get("date","")[:10]
-                    # Check if postgame article already exists
-                    from app.db import get_supabase
-                    db = get_supabase()
-                    if db:
-                        existing = db.table("articles").select("slug").eq("game_date", game_date).eq("article_type", "postgame").execute()
-                        if existing.data:
-                            logger.info(f"Postgame: article already exists for {game_date}")
-                            return
-                    from app.services.article_service import generate_postgame_analysis, save_article
-                    logger.info(f"Postgame: generating analysis for {game_date}")
-                    article = await generate_postgame_analysis(game_date)
-                    if article and article.get("slug"):
-                        await save_article(article)
-                        logger.info(f"Postgame: article saved for {game_date}")
-                    return
-        except Exception as e:
-            logger.error(f"Postgame generation failed: {e}", exc_info=True)
-    threading.Thread(target=lambda: _run_async(_gen()), daemon=True).start()
-
-
+def generate_postgame_article():
+    """Runs every 15min. Generates post-game analysis ~3hrs after tip-off."""
+    from app.scheduler import _run_async
+    async def _gen():
+        try:
+            import httpx
+            from datetime import date as dt, timedelta, datetime, timezone
+            now_utc = datetime.now(timezone.utc)
+            today = dt.today()
+            yesterday = today - timedelta(days=1)
+            # Check today and yesterday for a completed Knicks game
+            for check_date in [today, yesterday]:
+                ds = check_date.strftime("%Y%m%d")
+                async with httpx.AsyncClient(timeout=15) as client:
+                    r = await client.get(f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={ds}")
+                    data = r.json()
+                for ev in data.get("events", []):
+                    comp = ev["competitions"][0]
+                    ids = [x.get("team",{}).get("id") for x in comp.get("competitors",[])]
+                    if "18" not in ids: continue
+                    completed = comp.get("status",{}).get("type",{}).get("completed", False)
+                    if not completed: continue
+                    # Get tip-off time
+                    try:
+                        tip_utc = datetime.fromisoformat(ev.get("date","").replace("Z","+00:00"))
+                    except:
+                        continue
+                    minutes_since_tip = (now_utc - tip_utc).total_seconds() / 60
+                    # Window: 30-360 minutes after tip — wide enough for OT games and late starts
+                    if not (30 <= minutes_since_tip <= 360):
+                        logger.info(f"Postgame: {minutes_since_tip:.0f}min since tip — not in window")
+                        continue
+                    game_date = ev.get("date","")[:10]
+                    # Check if postgame article already exists
+                    from app.db import get_supabase
+                    db = get_supabase()
+                    if db:
+                        existing = db.table("articles").select("slug").eq("game_date", game_date).eq("article_type", "postgame").execute()
+                        if existing.data:
+                            logger.info(f"Postgame: article already exists for {game_date}")
+                            return
+                    from app.services.article_service import generate_postgame_analysis, save_article
+                    logger.info(f"Postgame: generating analysis for {game_date}")
+                    article = await generate_postgame_analysis(game_date)
+                    if article and article.get("slug"):
+                        await save_article(article)
+                        logger.info(f"Postgame: article saved for {game_date}")
+                    return
+        except Exception as e:
+            logger.error(f"Postgame generation failed: {e}", exc_info=True)
+    threading.Thread(target=lambda: _run_async(_gen()), daemon=True).start()
+
+
 def start_scheduler():
     _scheduler.add_job(refresh_news,             CronTrigger(minute="*/15"))
     _scheduler.add_job(refresh_injuries,         CronTrigger(hour="*/3"))
@@ -314,7 +314,7 @@ def start_scheduler():
     _scheduler.add_job(generate_article,         CronTrigger(minute="*/15"))
     # History articles: off days only, 10am ET (15:00 UTC)
     _scheduler.add_job(generate_history_article, CronTrigger(hour=15, minute=0, timezone="UTC"))
-    _scheduler.add_job(resolve_results, CronTrigger(hour=4, minute=0, timezone="UTC"))  # 11pm ET - resolve last night
+    _scheduler.add_job(resolve_results, CronTrigger(hour=4, minute=0, timezone="UTC"))  # 11pm ET - resolve last night
     _scheduler.add_job(generate_postgame_article, CronTrigger(minute="*/15"))  # Check every 15min for postgame window
     _scheduler.start()
     logger.info("Scheduler started")
